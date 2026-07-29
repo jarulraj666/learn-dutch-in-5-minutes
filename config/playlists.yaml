@@ -1,0 +1,9 @@
+playlists:
+  A1:
+    introductions: "Dutch A1 - Introductions"
+    shopping: "Dutch A1 - Shopping"
+    transport: "Dutch A1 - Transport"
+    food: "Dutch A1 - Food and Cafe"
+    daily_life: "Dutch A1 - Daily Life"
+  fallback:
+    default: "Dutch A1 - Complete Course"

@@ -1,0 +1,30 @@
+style: cartoon_flat
+palette:
+  background_primary: "#F4F0E6"
+  dialogue_accent: "#1F6B5C"
+  quiz_accent: "#D97B29"
+  grammar_accent: "#2E4A7D"
+  correction_accent: "#C94747"
+fonts:
+  subtitle: "Noto Sans"
+  heading: "Lexend"
+render:
+  width: 1920
+  height: 1080
+  fps: 30
+  codec: h264
+  crf: 19
+  preset: slow
+scenes:
+  - home_kitchen
+  - cafe_counter
+  - supermarket_aisle
+  - train_platform
+  - office_reception
+  - classroom
+  - street_directions
+  - pharmacy
+  - restaurant_table
+  - weather_smalltalk
+  - weekend_market
+  - phone_call_split

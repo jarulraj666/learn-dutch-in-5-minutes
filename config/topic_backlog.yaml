@@ -1,0 +1,23 @@
+topics:
+  - id: intro_name_origin
+    track: introductions
+    title_hint: "Introduce yourself"
+    prerequisites: []
+  - id: cafe_order_basic
+    track: food
+    title_hint: "Order in a cafe"
+    prerequisites: []
+  - id: supermarket_help
+    track: shopping
+    title_hint: "Ask for help in a supermarket"
+    prerequisites: []
+  - id: train_ticket
+    track: transport
+    title_hint: "Buy a train ticket"
+    prerequisites: []
+  - id: asking_directions
+    track: daily_life
+    title_hint: "Ask for directions"
+    prerequisites: []
+cooldown_last_topics: 4
+max_similarity_threshold: 0.75

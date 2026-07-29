@@ -1,0 +1,17 @@
+multi_agent:
+  enabled: true
+  use_for_steps:
+    - conversation
+    - grammar_review
+    - vocabulary
+    - quiz
+    - voice
+    - subtitle
+    - assemble_video
+    - upload_prep
+  model: qwen3:8b
+  llm_steps:
+    - conversation
+    - grammar_review
+    - vocabulary
+    - quiz

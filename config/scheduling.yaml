@@ -1,0 +1,5 @@
+publish:
+  cadence_days: 2
+  preferred_hour_24: 18
+  preferred_minute: 0
+  timezone: Europe/Amsterdam
