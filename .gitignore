@@ -1,5 +1,42 @@
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+
+# Environment
 .env
-db/content.db
-output/
+*.env
+
+# Database
+db/*.db
+db/*.sqlite
+
+# Output files (generated content)
+output/audio/
+output/videos/
+output/visuals/
+output/archive/
+output/scripts/
+output/*.json
+
+# Python packaging
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# Logs
+*.log
+
+# IDEs
+.vscode/settings.json
+.idea/
+
+# Model cache
+*.ckpt
+*.safetensors
