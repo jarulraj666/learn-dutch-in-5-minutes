@@ -23,7 +23,9 @@ output/*.json
 dist/
 build/
 .venv/
+.venv*/
 venv/
+venv*/
 env/
 
 # macOS
