@@ -20,21 +20,21 @@ speech:
       # Google Gemini 3.1 Flash TTS (PRIMARY)
       # Voices: Kore, Puck, Charon, Fenrir, Orion
       # Automatic fallback to Parkiet if quota exceeded or 400 errors
-      SpeakerA: Kore
-      SpeakerB: Puck
+      Speaker1: Kore
+      Speaker2: Puck
     parkiet:
       # Parkiet: Dutch TTS (FALLBACK - proven reliable on Colab)
       # Runs via ngrok tunnel or locally
-      SpeakerA: default       # Maps to [S1]
-      SpeakerB: default       # Maps to [S2]
+      Speaker1: default       # Maps to [S1]
+      Speaker2: default       # Maps to [S2]
     kokoro:
       # Kokoro v1.0: English TTS (local ONNX)
-      SpeakerA: af_bella
-      SpeakerB: am_michael
+      Speaker1: af_bella
+      Speaker2: am_michael
     macos_say:
       # macOS built-in voices (last resort)
-      SpeakerA: Samantha
-      SpeakerB: Samantha
+      Speaker1: Samantha
+      Speaker2: Samantha
 subtitles:
   bilingual_enabled: true
 quiz:

@@ -27,12 +27,26 @@ def init_db() -> None:
 
 
 def _ensure_runtime_migrations(conn: sqlite3.Connection) -> None:
-    # Keep migration logic lightweight for local-first development.
-    columns = {
-        row["name"]
-        for row in conn.execute("PRAGMA table_info(publish_jobs)").fetchall()
+    # topics table — new columns for level/category/status/order
+    topic_cols = {row["name"] for row in conn.execute("PRAGMA table_info(topics)").fetchall()}
+    topic_required = {
+        "level": "TEXT NOT NULL DEFAULT 'A1'",
+        "category": "TEXT NOT NULL DEFAULT 'dialogue'",
+        "status": "TEXT NOT NULL DEFAULT 'pending'",
+        "order_index": "INTEGER NOT NULL DEFAULT 0",
     }
+    for col, col_def in topic_required.items():
+        if col not in topic_cols:
+            conn.execute(f"ALTER TABLE topics ADD COLUMN {col} {col_def}")
 
+    # Create pick index if missing
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_topics_pick "
+        "ON topics(level, category, status, order_index)"
+    )
+
+    # publish_jobs table — existing migrations
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(publish_jobs)").fetchall()}
     required_columns = {
         "playlist_name": "TEXT",
         "artifact_path": "TEXT",
@@ -51,11 +65,33 @@ def seed_topics_from_config() -> None:
         for topic in topics:
             conn.execute(
                 """
-                INSERT OR IGNORE INTO topics (id, track, title_hint)
-                VALUES (?, ?, ?)
+                INSERT OR IGNORE INTO topics
+                  (id, track, title_hint, level, category, status, order_index)
+                VALUES (?, ?, ?, ?, ?, 'pending', ?)
                 """,
-                (topic["id"], topic["track"], topic["title_hint"]),
+                (
+                    topic["id"],
+                    topic.get("track", "daily_life"),
+                    topic["title_hint"],
+                    topic.get("level", "A1"),
+                    topic.get("category", "dialogue"),
+                    int(topic.get("order_index", 0)),
+                ),
             )
+
+
+def mark_topic_done(topic_id: str) -> None:
+    """Mark a topic as done after successful generation."""
+    from pipeline.utils import now_utc_iso
+    with get_connection() as conn:
+        conn.execute(
+            """
+            UPDATE topics
+            SET status = 'done', last_used_at = ?, use_count = use_count + 1
+            WHERE id = ?
+            """,
+            (now_utc_iso(), topic_id),
+        )
 
 
 def main() -> None:

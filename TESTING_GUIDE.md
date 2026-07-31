@@ -59,8 +59,8 @@ speech:
     nl: parkiet                  # Dutch → Parkiet (HIGH QUALITY)
   voice_map:
     parkiet:
-      SpeakerA: default          # → [S1] tag in prompt
-      SpeakerB: default          # → [S2] tag in prompt
+      Speaker1: default          # → [S1] tag in prompt
+      Speaker2: default          # → [S2] tag in prompt
 ```
 
 ## Troubleshooting

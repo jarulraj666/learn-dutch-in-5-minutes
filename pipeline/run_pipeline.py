@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from pipeline import settings
-from pipeline.db import init_db, seed_topics_from_config
+from pipeline.db import init_db, mark_topic_done, seed_topics_from_config
 from pipeline.generate_metadata import generate_metadata
 from pipeline.generate_subtitles import plan_subtitles
 from pipeline.generate_voice import generate_voice_assets
@@ -88,7 +88,7 @@ def _build_unique_dialogue(dialogue: list[dict]) -> list[dict]:
         key = _normalize_line(line)
         if key in seen:
             continue
-        unique_dialogue.append({"speaker": turn.get("speaker", "SpeakerA"), "line": line})
+        unique_dialogue.append({"speaker": turn.get("speaker", "Speaker1"), "line": line})
         seen.add(key)
     return unique_dialogue
 
@@ -111,7 +111,7 @@ def _generate_dialogue_extension(script: dict, current_dialogue: list[dict], sho
         f"Generate between {min_turns} and {max_turns} new turns.\n"
         "Rules:\n"
         "- Output ONLY JSON object with key dialogue.\n"
-        "- JSON format: {\"dialogue\": [{\"speaker\": \"SpeakerA|SpeakerB\", \"line\": \"...\"}]}\n"
+        "- JSON format: {\"dialogue\": [{\"speaker\": \"Speaker1|Speaker2\", \"line\": \"...\"}]}\n"
         "- Every line must be unique and short (max 10 words).\n"
         "- No filler instructions like 'repeat after me'.\n"
         "- Keep pace slow and beginner-friendly.\n"
@@ -167,7 +167,7 @@ def _expand_script_to_target_duration(script: dict, target_seconds: int) -> dict
 
         added = 0
         for item in extension:
-            speaker = item.get("speaker", "SpeakerA")
+            speaker = item.get("speaker", "Speaker1")
             line = str(item.get("line", "")).strip()
             if not line:
                 continue
@@ -280,13 +280,12 @@ def _save_script_exports(
     }
 
 
-def run(language: str, level: str, skill_type: str = "listening", use_multi_agent: bool = True) -> Path:
+def run(language: str, level: str, use_multi_agent: bool = True) -> Path:
     run_start = time.perf_counter()
     LOGGER.info(
-        "pipeline.start language=%s level=%s skill=%s mode=%s",
+        "pipeline.start language=%s level=%s mode=%s",
         language,
         level,
-        skill_type,
         "multi_agent" if use_multi_agent else "single_agent",
     )
 
@@ -295,8 +294,11 @@ def run(language: str, level: str, skill_type: str = "listening", use_multi_agen
         seed_topics_from_config()
 
     with _stage("topic_selection"):
-        topic = choose_next_topic()
-        LOGGER.info("topic.selected id=%s track=%s title=%s", topic.topic_id, topic.track, topic.title_hint)
+        topic = choose_next_topic(level=level)
+        LOGGER.info(
+            "topic.selected id=%s level=%s category=%s track=%s title=%s",
+            topic.topic_id, topic.level, topic.category, topic.track, topic.title_hint,
+        )
 
     with _stage("script_generation"):
         if use_multi_agent:
@@ -309,7 +311,7 @@ def run(language: str, level: str, skill_type: str = "listening", use_multi_agen
                 )
             )
         else:
-            script = generate_script(topic, language=language, level=level, skill_type=skill_type)
+            script = generate_script(topic, language=language, level=topic.level)
 
     with _stage("script_expansion"):
         conversation_target_seconds = _conversation_target_seconds()
@@ -463,6 +465,9 @@ def run(language: str, level: str, skill_type: str = "listening", use_multi_agen
         out_path,
     )
 
+    mark_topic_done(topic.topic_id)
+    LOGGER.info("topic.done id=%s", topic.topic_id)
+
     return out_path
 
 
@@ -470,12 +475,6 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run Dutch video content MVP pipeline")
     parser.add_argument("--language", default="nl")
     parser.add_argument("--level", default="A1", choices=["A1", "A2", "B1", "B2"])
-    parser.add_argument(
-        "--skill",
-        default="listening",
-        choices=["listening", "speaking", "reading", "writing"],
-        help="Skill focus for the episode prompt",
-    )
     parser.add_argument("--single-agent", action="store_true", help="Use original one-shot generation")
     parser.add_argument("--log-level", default="INFO", help="DEBUG, INFO, WARNING, ERROR")
     args = parser.parse_args()
@@ -485,7 +484,7 @@ def main() -> None:
         format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
     )
 
-    out_path = run(language=args.language, level=args.level, skill_type=args.skill, use_multi_agent=not args.single_agent)
+    out_path = run(language=args.language, level=args.level, use_multi_agent=not args.single_agent)
     print(f"Pipeline completed. Artifact: {out_path}")
 
 

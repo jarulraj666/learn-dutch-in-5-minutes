@@ -100,7 +100,7 @@ def plan_subtitles(script: dict[str, Any]) -> dict[str, Any]:
         subtitles.append(
             {
                 "index": idx,
-                "speaker": item.get("speaker", "SpeakerA"),
+                "speaker": item.get("speaker", "Speaker1"),
                 "text": item.get("line", ""),
             }
         )

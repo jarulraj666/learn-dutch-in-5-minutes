@@ -70,7 +70,7 @@ class VoiceAgent:
             segments.append(
                 {
                     "segment": idx,
-                    "speaker": item.get("speaker", "SpeakerA"),
+                    "speaker": item.get("speaker", "Speaker1"),
                     "text": item.get("line", ""),
                     "tts_status": "planned",
                 }

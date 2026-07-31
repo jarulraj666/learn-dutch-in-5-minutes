@@ -1,23 +1,253 @@
 topics:
-  - id: intro_name_origin
+
+  # ── COMMON WORDS (A1) ────────────────────────────────────────────────────
+  - id: cw_pronouns
+    level: A1
+    category: common_words
+    order_index: 1
+    track: daily_life
+    title_hint: "Personal pronouns: ik, jij, hij, zij, wij, jullie, zij"
+
+  - id: cw_numbers_1_20
+    level: A1
+    category: common_words
+    order_index: 2
+    track: daily_life
+    title_hint: "Numbers 1 to 20"
+
+  - id: cw_colors
+    level: A1
+    category: common_words
+    order_index: 3
+    track: daily_life
+    title_hint: "Basic colors: rood, blauw, groen, geel, zwart, wit, oranje"
+
+  - id: cw_days_of_week
+    level: A1
+    category: common_words
+    order_index: 4
+    track: daily_life
+    title_hint: "Days of the week: maandag tot en met zondag"
+
+  - id: cw_months
+    level: A1
+    category: common_words
+    order_index: 5
+    track: daily_life
+    title_hint: "Months of the year: januari tot december"
+
+  - id: cw_prepositions
+    level: A1
+    category: common_words
+    order_index: 6
+    track: daily_life
+    title_hint: "Common prepositions: in, op, aan, bij, van, naar, voor, met"
+
+  - id: cw_question_words
+    level: A1
+    category: common_words
+    order_index: 7
+    track: daily_life
+    title_hint: "Question words: wie, wat, waar, wanneer, hoe, waarom"
+
+  - id: cw_top_verbs
+    level: A1
+    category: common_words
+    order_index: 8
+    track: daily_life
+    title_hint: "Top 10 Dutch verbs: zijn, hebben, gaan, komen, doen, zeggen, zien, weten, willen, kunnen"
+
+  # ── VOCABULARY (A1) ──────────────────────────────────────────────────────
+  - id: vocab_greetings
+    level: A1
+    category: vocabulary
+    order_index: 1
     track: introductions
-    title_hint: "Introduce yourself"
-    prerequisites: []
-  - id: cafe_order_basic
+    title_hint: "Greetings and farewells: hallo, goedemorgen, tot ziens, dag"
+
+  - id: vocab_family
+    level: A1
+    category: vocabulary
+    order_index: 2
+    track: daily_life
+    title_hint: "Family members: vader, moeder, broer, zus, oma, opa"
+
+  - id: vocab_food_drinks
+    level: A1
+    category: vocabulary
+    order_index: 3
     track: food
-    title_hint: "Order in a cafe"
-    prerequisites: []
+    title_hint: "Food and drinks: brood, kaas, melk, water, koffie, thee, appel"
+
+  - id: vocab_clothing
+    level: A1
+    category: vocabulary
+    order_index: 4
+    track: shopping
+    title_hint: "Clothing items: broek, shirt, jas, schoenen, trui, jurk"
+
+  - id: vocab_body_parts
+    level: A1
+    category: vocabulary
+    order_index: 5
+    track: daily_life
+    title_hint: "Body parts: hoofd, hand, voet, oog, oor, mond, neus"
+
+  - id: vocab_weather
+    level: A1
+    category: vocabulary
+    order_index: 6
+    track: daily_life
+    title_hint: "Weather words: zon, regen, wind, bewolkt, koud, warm, sneeuw"
+
+  - id: vocab_home_rooms
+    level: A1
+    category: vocabulary
+    order_index: 7
+    track: daily_life
+    title_hint: "Rooms and furniture: keuken, slaapkamer, woonkamer, tafel, stoel, bed"
+
+  - id: vocab_transport
+    level: A1
+    category: vocabulary
+    order_index: 8
+    track: transport
+    title_hint: "Transport words: trein, bus, fiets, auto, tram, metro, vliegtuig"
+
+  - id: vocab_time
+    level: A1
+    category: vocabulary
+    order_index: 9
+    track: daily_life
+    title_hint: "Time expressions: nu, later, vandaag, morgen, gisteren, vroeg, laat"
+
+  # ── GRAMMAR (A1) ─────────────────────────────────────────────────────────
+  - id: grammar_de_het
+    level: A1
+    category: grammar
+    order_index: 1
+    track: daily_life
+    title_hint: "Dutch articles: de and het — when to use each"
+
+  - id: grammar_present_tense
+    level: A1
+    category: grammar
+    order_index: 2
+    track: daily_life
+    title_hint: "Present tense of regular verbs: werken, wonen, leven"
+
+  - id: grammar_zijn_hebben
+    level: A1
+    category: grammar
+    order_index: 3
+    track: daily_life
+    title_hint: "Irregular verbs zijn and hebben in the present tense"
+
+  - id: grammar_negation
+    level: A1
+    category: grammar
+    order_index: 4
+    track: daily_life
+    title_hint: "Negation in Dutch: niet and geen"
+
+  - id: grammar_word_order
+    level: A1
+    category: grammar
+    order_index: 5
+    track: daily_life
+    title_hint: "Basic Dutch word order: subject-verb-object"
+
+  - id: grammar_questions
+    level: A1
+    category: grammar
+    order_index: 6
+    track: daily_life
+    title_hint: "Forming simple questions with inversion"
+
+  - id: grammar_plural
+    level: A1
+    category: grammar
+    order_index: 7
+    track: daily_life
+    title_hint: "Plural nouns in Dutch: -en and -s endings"
+
+  # ── DIALOGUE (A1) ────────────────────────────────────────────────────────
+  - id: intro_name_origin
+    level: A1
+    category: dialogue
+    order_index: 1
+    track: introductions
+    title_hint: "Introduce yourself: name, age, nationality"
+
+  - id: cafe_order_basic
+    level: A1
+    category: dialogue
+    order_index: 2
+    track: food
+    title_hint: "Order in a café: coffee, tea, and a snack"
+
   - id: supermarket_help
+    level: A1
+    category: dialogue
+    order_index: 3
     track: shopping
     title_hint: "Ask for help in a supermarket"
-    prerequisites: []
+
   - id: train_ticket
+    level: A1
+    category: dialogue
+    order_index: 4
     track: transport
     title_hint: "Buy a train ticket"
-    prerequisites: []
+
   - id: asking_directions
+    level: A1
+    category: dialogue
+    order_index: 5
     track: daily_life
-    title_hint: "Ask for directions"
-    prerequisites: []
+    title_hint: "Ask for directions on the street"
+
+  - id: weather_chat
+    level: A1
+    category: dialogue
+    order_index: 6
+    track: daily_life
+    title_hint: "Talk about the weather: mooi weer, regen, temperatuur"
+
+  - id: making_appointment
+    level: A1
+    category: dialogue
+    order_index: 7
+    track: daily_life
+    title_hint: "Make a simple appointment by phone"
+
+  - id: at_the_doctor
+    level: A1
+    category: dialogue
+    order_index: 8
+    track: daily_life
+    title_hint: "At the doctor: describe a simple symptom"
+
+  - id: hotel_checkin
+    level: A1
+    category: dialogue
+    order_index: 9
+    track: daily_life
+    title_hint: "Check in at a hotel: reservation, room, key"
+
+  - id: phone_call_basic
+    level: A1
+    category: dialogue
+    order_index: 10
+    track: daily_life
+    title_hint: "Make a simple phone call: greeting, asking for someone"
+
+  - id: at_the_market
+    level: A1
+    category: dialogue
+    order_index: 11
+    track: shopping
+    title_hint: "Shopping at a street market: price, quantity, payment"
+
 cooldown_last_topics: 4
 max_similarity_threshold: 0.75

@@ -14,15 +14,17 @@ from typing import Any
 LOGGER = logging.getLogger(__name__)
 
 _PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
-_TTS_PACING_PROMPT_FILE = _PROMPTS_DIR / "tts_pacing_prompt.md"
 
 
-def _load_tts_prompt_template() -> str:
-    """Load TTS pacing prompt template from file."""
+def _load_tts_prompt_template(level: str = "A1") -> str:
+    """Load the level-specific TTS pacing prompt template."""
+    level_path = _PROMPTS_DIR / level / "tts_pacing.md"
+    fallback_path = _PROMPTS_DIR / "tts_pacing_prompt.md"
+    path = level_path if level_path.exists() else fallback_path
     try:
-        return _TTS_PACING_PROMPT_FILE.read_text(encoding="utf-8")
+        return path.read_text(encoding="utf-8")
     except Exception as e:
-        LOGGER.warning("Could not load TTS prompt template from %s: %s", _TTS_PACING_PROMPT_FILE, e)
+        LOGGER.warning("Could not load TTS prompt from %s: %s", path, e)
         return "{dialogue}"
 
 
@@ -34,16 +36,16 @@ class GeminiTTSClient:
     FALLBACK_MODEL = "gemini-2.5-flash-preview-tts"
     
     # Voice mapping for different languages and speaker roles
-    # SpeakerA = male (Rasalgethi — Informative): knowledgeable teacher
-    # SpeakerB = female (Sulafat — Warm): warm, encouraging language partner
+    # Speaker1 = female soft (Aoede — Soft): calm teacher
+    # Speaker2 = female warm (Sulafat — Warm): warm language partner
     VOICE_MAP = {
         "nl": {
-            "SpeakerA": "Rasalgethi",   # Male — Informative
-            "SpeakerB": "Sulafat"        # Female — Warm
+            "Speaker1": "Aoede",    # Female — Soft
+            "Speaker2": "Sulafat"   # Female — Warm
         },
         "en": {
-            "SpeakerA": "Rasalgethi",   # Male — Informative
-            "SpeakerB": "Sulafat"        # Female — Warm
+            "Speaker1": "Aoede",    # Female — Soft
+            "Speaker2": "Sulafat"   # Female — Warm
         }
     }
     
@@ -69,42 +71,17 @@ class GeminiTTSClient:
             LOGGER.error("Failed to initialize Gemini client: %s", str(e))
             self.api_available = False
     
-    def format_dialogue(self, dialogue: list[dict], language: str = "nl") -> str:
-        """Format dialogue list into conversation text for Gemini TTS.
-        
-        Args:
-            dialogue: List of dialogue items with 'speaker' and 'line' fields
-            language: Language code (nl, en)
-        
-        Returns:
-            Formatted dialogue string ready for TTS
-        """
-        if not dialogue:
-            LOGGER.error("Empty dialogue provided")
-            return ""
-        
-        lines = []
-        for item in dialogue:
-            speaker = item.get("speaker", "Unknown")
-            text = item.get("line", "")
-
-            if text:
-                lines.append(f"{speaker}: {text}")
-
-        formatted = "\n\n".join(lines)
-        LOGGER.debug("Formatted dialogue (%d lines, %d chars)", len(lines), len(formatted))
-        return formatted
-    
     def generate_dialogue_audio(
         self,
         dialogue: list[dict],
         output_path: str,
-        language: str = "nl"
+        language: str = "nl",
+        level: str = "A1",
     ) -> bool:
         """Generate audio from full dialogue using Gemini TTS.
         
         Args:
-            dialogue: List of dialogue items {'speaker': 'SpeakerA'/'SpeakerB', 'line': 'text'}
+            dialogue: List of dialogue items {'speaker': 'Speaker1'/'Speaker2', 'line': 'text'}
             output_path: Output WAV file path
             language: Language code (nl for Dutch, en for English)
         
@@ -116,12 +93,16 @@ class GeminiTTSClient:
             return False
         
         try:
-            # Format dialogue
-            dialogue_text = self.format_dialogue(dialogue, language)
-            if not dialogue_text:
-                LOGGER.error("Failed to format dialogue")
+            if not dialogue:
+                LOGGER.error("Empty dialogue provided")
                 return False
-            
+
+            dialogue_text = "\n\n".join(
+                f"{item.get('speaker', 'Unknown')}: {item.get('line', '')}"
+                for item in dialogue
+                if item.get("line", "")
+            )
+
             LOGGER.info("Generating multi-speaker audio for %d dialogue lines", len(dialogue))
             
             # Get voice configuration for speakers
@@ -131,25 +112,37 @@ class GeminiTTSClient:
             speakers = []
             seen_speakers = set()
             for item in dialogue:
-                speaker = item.get("speaker", "SpeakerA")
+                speaker = item.get("speaker", "Speaker1")
                 if speaker not in seen_speakers:
                     voice = voices.get(speaker, "Kore")
                     speakers.append({"speaker": speaker, "voice": voice})
                     seen_speakers.add(speaker)
-                    LOGGER.debug("Adding speaker: %s → voice: %s", speaker, voice)
+                    LOGGER.info("Adding speaker: %s → voice: %s", speaker, voice)
             
             # Load prompt template from file and inject dialogue
-            prompt_template = _load_tts_prompt_template()
+            prompt_template = _load_tts_prompt_template(level)
             prompt = prompt_template.replace("{dialogue}", dialogue_text)
 
-            LOGGER.debug("Calling Gemini TTS with %d speakers", len(speakers))
-            LOGGER.debug("Prompt length: %d chars", len(prompt))
+            LOGGER.info("Calling Gemini TTS with %d speakers", len(speakers))
+            LOGGER.info("Prompt length: %d chars", len(prompt))
 
-            # Flat speech_config list as required by the Interactions API
-            speech_config = [
-                {"speaker": s["speaker"], "voice": s["voice"]}
-                for s in speakers
-            ]
+            # Check your input speakers array
+            # Inspect the incoming speakers list
+            if len(speakers) == 1:
+                # Single Speaker format for Interactions API must be a list containing a flat voice dictionary
+                speech_config = [
+                    {"voice": speakers[0]["voice"]}
+                ]
+            elif len(speakers) == 2:
+                # Multi-speaker flat list format matches perfectly
+                speech_config = [
+                    {"speaker": s["speaker"], "voice": s["voice"]}
+                    for s in speakers
+                ]
+            else:
+                raise ValueError(f"The Interactions API requires exactly 1 or 2 speakers. Found: {len(speakers)}")
+
+
 
             import base64
             from google.genai import types
@@ -165,7 +158,8 @@ class GeminiTTSClient:
             for strategy, model_name in strategies:
                 try:
                     LOGGER.info("Attempting Gemini TTS — strategy=%s model=%s", strategy, model_name)
-
+                    LOGGER.info("prompt=%s%", prompt)
+                    LOGGER.info("speech_config=%s", speech_config)
                     if strategy == "interactions":
                         # Interactions API: returns base64 audio in interaction.output_audio.data
                         interaction = self.client.interactions.create(
@@ -247,7 +241,7 @@ class GeminiTTSClient:
                         continue
                     if "400" in error_msg or "invalid" in error_msg.lower():
                         LOGGER.warning("Gemini API error (400) on %s/%s: %s",
-                                       strategy, model_name, error_msg[:100])
+                                       strategy, model_name, error_msg[:5000])
                         continue
                     LOGGER.error("Gemini TTS error on %s/%s: %s", strategy, model_name, error_msg)
                     continue
@@ -259,7 +253,7 @@ class GeminiTTSClient:
         except Exception as e:
             LOGGER.error("Error generating dialogue audio: %s", str(e))
             import traceback
-            LOGGER.debug("Traceback: %s", traceback.format_exc())
+            LOGGER.info("Traceback: %s", traceback.format_exc())
             return False
     
     def generate_dialogue_with_fallback(
@@ -287,7 +281,7 @@ class GeminiTTSClient:
             try:
                 # Fallback: Try generating segments individually with fallback provider
                 for item in dialogue:
-                    success = fallback_provider(item.get("line", ""), item.get("speaker", "SpeakerA"))
+                    success = fallback_provider(item.get("line", ""), item.get("speaker", "Speaker1"))
                     if not success:
                         LOGGER.warning("Fallback provider also failed for segment: %s", item)
                         return False

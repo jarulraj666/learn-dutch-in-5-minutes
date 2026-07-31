@@ -111,31 +111,38 @@ def _extract_json(text: str) -> dict[str, Any]:
 
 
 
-def _prompt_for_topic(topic: TopicChoice, language: str, level: str = "A1", skill_type: str = "listening") -> str:
-    base_prompt = (settings.ROOT / "prompts/base_template.md").read_text(encoding="utf-8")
-
-    skill_prompt_path = settings.ROOT / f"prompts/{level}/{skill_type}.md"
-    if not skill_prompt_path.exists():
+def _prompt_for_topic(topic: TopicChoice, language: str, level: str = "A1") -> str:
+    category = getattr(topic, "category", "dialogue")
+    prompt_path = settings.ROOT / f"prompts/{level}/{category}.md"
+    if not prompt_path.exists():
         raise FileNotFoundError(
-            f"No prompt found for level={level!r} skill={skill_type!r}. "
-            f"Expected: {skill_prompt_path}"
+            f"No prompt found for level={level!r} category={category!r}. "
+            f"Expected: {prompt_path}"
         )
-    skill_prompt = skill_prompt_path.read_text(encoding="utf-8")
+    prompt = prompt_path.read_text(encoding="utf-8")
 
     lang_instructions = {
         "nl": "Generate dialogue in Dutch. All vocabulary should have 'nl' and 'en' translations.",
         "en": "Generate dialogue in English. All vocabulary should have 'en' and 'nl' translations.",
     }
-
     lang_instr = lang_instructions.get(language, lang_instructions["nl"])
 
+    # A1 override: teacher explains in English, demonstrates in Dutch
+    if level == "A1":
+        lang_instr = (
+            "Language rule: Speaker1 uses ENGLISH for all explanations, instructions, and transitions. "
+            "Use DUTCH only for target words, example sentences, and demonstrations. "
+            "After every Dutch sentence, say the English translation. "
+            "All vocabulary must have 'nl' and 'en' translations."
+        )
+
     return (
-        f"{base_prompt}\n\n"
-        f"{skill_prompt}\n"
-        f"\n{lang_instr}\n"
+        f"{prompt}\n\n"
+        f"---\n"
+        f"{lang_instr}\n"
         f"Topic id: {topic.topic_id}\n"
         f"Topic hint: {topic.title_hint}\n"
-        f"Track: {topic.track}\n"
+        f"Category: {category}\n"
         f'Set the "language" field in JSON to "{language}".\n'
         f"Keep content at CEFR {level} and output strict JSON only."
     )
@@ -144,17 +151,24 @@ def _prompt_for_topic(topic: TopicChoice, language: str, level: str = "A1", skil
 
 
 
-def generate_script(topic: TopicChoice, language: str = "nl", level: str = "A1", skill_type: str = "listening") -> dict[str, Any]:
-    prompt = _prompt_for_topic(topic, language, level=level, skill_type=skill_type)
+def generate_script(topic: TopicChoice, language: str = "nl", level: str = "A1") -> dict[str, Any]:
+    effective_level = getattr(topic, "level", None) or level
+    prompt = _prompt_for_topic(topic, language, level=effective_level)
 
     # Try Gemini first (handles long JSON outputs reliably), fall back to Ollama
     if settings.GEMINI_API_KEY:
         try:
-            return _generate_script_gemini(prompt)
+            script = _generate_script_gemini(prompt)
         except Exception as e:
             LOGGER.warning("Gemini script generation failed, falling back to Ollama: %s", str(e))
+            script = _generate_script_ollama(prompt)
+    else:
+        script = _generate_script_ollama(prompt)
 
-    return _generate_script_ollama(prompt)
+    # Inject level and category into script so downstream stages (TTS, subtitles) can use them
+    script.setdefault("level", effective_level)
+    script.setdefault("category", getattr(topic, "category", "dialogue"))
+    return script
 
 
 def _generate_script_gemini(prompt: str) -> dict[str, Any]:
