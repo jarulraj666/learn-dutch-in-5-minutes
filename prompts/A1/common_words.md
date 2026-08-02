@@ -4,7 +4,7 @@ You are generating an A1-level Dutch lesson for Gemini TTS single-speaker audio 
 Narrate a clear, slow Dutch word lesson directly to the viewer. Speaker1 only — no dialogue partner.
 
 ## Speaker
-**Speaker1** — Calm, knowledgeable Dutch teacher (female voice). Speaks slowly and clearly.
+**Speaker1** — Calm, knowledgeable Dutch teacher.
 
 ## TTS Audio Tags
 
@@ -22,10 +22,11 @@ Example: `{"speaker": "Speaker1", "line": "[pause for 1 second] [slow] [excited]
 **Target Dutch words and example sentences → Dutch**
 **After every Dutch sentence → provide the English translation**
 
+
 Example pattern:
 ```
 "Today we learn the word IK."
-"IK means I in English."
+"[pause for 1 second] [slow] I in English."
 "IK lees een boek." → "I read a book."
 "IK drink water." → "I drink water."
 "Remember: IK = I."
@@ -38,19 +39,30 @@ This bilingual approach ensures complete beginners can follow without prior Dutc
 **Constraints:** Max 8 words/line · Present tense only · 500-word vocabulary · Numbers 1–20 · No idioms
 
 ### Content Focus
-- Say each word slowly, repeat it 3 times in different short sentences
-- Give the English translation after each word
+- Say each word once slowly with pause, immediately give English translation
+- Use it in 2-3 short example sentences with English translations
 - Group words naturally (by person, sequence, frequency)
 - End with a spoken recap: "Vandaag leerden we: [word1], [word2], ..."
 
-### Episode Structure (2 phases, ~80 lines)
+### Episode Structure (2 phases, ~115 lines)
 
 | Phase | Lines | Content |
 |-------|-------|---------|
-| Introduction | ~10 | Welcome, name the word group to be learned today |
-| Core Narration | ~70 | Each word: say it, use in 2–3 sentences, repeat, English translation |
+| Introduction | ~15 | Welcome, name the word group to be learned today |
+| Core Narration | ~100 | Each word: say it, use in 2–3 sentences, English translation |
 
 Transition line example: `"[pause for 1 second] [slow] Laten we beginnen!"`
+
+## Realistic Image Prompt Generation
+
+Generate a detailed text prompt for an accompanying background/topic image under the root key `"image_prompt"`.
+
+**Image Guidelines:**
+- **Style:** 3D cartoon style — vibrant colors, soft rounded forms, Pixar/Disney-quality 3D rendering.
+- **Subject:** A friendly, professional female Dutch teacher (woman in her early 30s) rendered as a 3D cartoon character in a colorful 3D classroom with a board for topic `"topic_title"`.
+- **Composition & Framing:** 
+  - **Speaker Position:** The female class room instructor MUST be positioned on the **LEFT SIDE** of the frame, looking toward the viewer with a warm, friendly expression. Keep the image straight.
+  - **RIGHT Side:** Keep the **RIGHT SIDE** clean, uncluttered, or softly blurred with neutral background space to accommodate on-screen subtitle graphics and overlays.
 
 ## Output JSON Structure
 
@@ -60,6 +72,7 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
 {
   "topic_id": "string",
   "topic_title": "string",
+  "image_prompt": "3D cartoon render in Pixar/Disney style of a friendly female Dutch teacher in her early 30s with a warm smile, rendered as a vibrant 3D cartoon character with soft rounded features, positioned on the LEFT SIDE of the frame in a bright, colorful 3D cartoon classroom. She is looking toward the viewer with an engaging expression. Behind her on the RIGHT SIDE of the frame is a visible blackboard or whiteboard displaying the topic '{topic_title}' in clear, legible text. The right side features open space for subtitle overlays. Soft warm lighting, high detail, cinematic 3D cartoon quality.",
   "language": "nl",
   "dialogue": [
     {"speaker": "Speaker1", "line": "[pause for 1 second] [slow] Goedemorgen!"}
@@ -69,15 +82,3 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
   "quiz": [],
   "grammar_notes": [{"title": "rule", "explanation": "...", "examples": ["ex1", "ex2"]}]
 }
-```
-
-- `quiz`: empty array `[]` for A1 episodes (no quiz phase)
-- `vocabulary`: include ALL new Dutch words introduced
-- `grammar_notes`: 1–3 grammar points covered
-
-## Critical Rules
-
-- **Speaker1 only** — no Speaker2 lines
-- Every Dutch dialogue line begins with `[pause for 1 second] [slow]`
-- All Dutch text must be correct standard Dutch (geen Vlaams dialect)
-- Output strict JSON only — no markdown, no code blocks

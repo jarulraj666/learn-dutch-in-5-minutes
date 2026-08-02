@@ -9,6 +9,7 @@ from pipeline import settings
 from pipeline.db import get_connection, init_db, seed_topics_from_config
 from pipeline.store_content import update_publish_job_status
 from pipeline.upload_youtube import build_upload_payload, upload_video
+from pipeline.utils import now_utc_iso
 
 
 def _due_jobs(include_future: bool = False, job_id: int | None = None) -> list[dict]:
@@ -19,7 +20,8 @@ def _due_jobs(include_future: bool = False, job_id: int | None = None) -> list[d
         with get_connection() as conn:
             rows = conn.execute(
                 """
-                SELECT id, canonical_script_id, scheduled_at, status, artifact_path, video_file_path
+                SELECT id, canonical_script_id, scheduled_at, status, 
+                       artifact_json, artifact_file_path, video_file_path
                 FROM publish_jobs
                 WHERE id = ?
                 """,
@@ -31,9 +33,10 @@ def _due_jobs(include_future: bool = False, job_id: int | None = None) -> list[d
         if include_future:
             rows = conn.execute(
                 """
-                SELECT id, canonical_script_id, scheduled_at, status, artifact_path, video_file_path
+                SELECT id, canonical_script_id, scheduled_at, status, 
+                       artifact_json, artifact_file_path, video_file_path
                 FROM publish_jobs
-                WHERE status IN (?, ?, ?)
+                WHERE status IN (?, ?, ?, ?)
                 ORDER BY scheduled_at ASC
                 """,
                 statuses,
@@ -41,9 +44,10 @@ def _due_jobs(include_future: bool = False, job_id: int | None = None) -> list[d
         else:
             rows = conn.execute(
                 """
-                SELECT id, canonical_script_id, scheduled_at, status, artifact_path, video_file_path
+                SELECT id, canonical_script_id, scheduled_at, status, 
+                       artifact_json, artifact_file_path, video_file_path
                 FROM publish_jobs
-                WHERE status IN (?, ?, ?)
+                WHERE status IN (?, ?, ?, ?)
                   AND scheduled_at <= ?
                 ORDER BY scheduled_at ASC
                 """,
@@ -53,20 +57,74 @@ def _due_jobs(include_future: bool = False, job_id: int | None = None) -> list[d
     return [dict(r) for r in rows]
 
 
+def _load_artifact(row: dict) -> dict | None:
+    """Load artifact from database JSON string or file fallback.
+    
+    Args:
+        row: Database row with artifact_json and artifact_file_path
+    
+    Returns:
+        Artifact dict or None if cannot be loaded
+    """
+    # Try loading from database JSON first
+    if row.get("artifact_json"):
+        try:
+            if isinstance(row["artifact_json"], str):
+                return json.loads(row["artifact_json"])
+            else:
+                return row["artifact_json"]
+        except (json.JSONDecodeError, TypeError):
+            pass
+    
+    # Fallback: load from file
+    if row.get("artifact_file_path"):
+        artifact_path = Path(row["artifact_file_path"])
+        if artifact_path.exists():
+            try:
+                return json.loads(artifact_path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, IOError):
+                pass
+    
+    return None
+
+
 def _artifact_path(row: dict) -> Path:
-    if row.get("artifact_path"):
-        return Path(row["artifact_path"])
+    """Get artifact file path from database or construct fallback."""
+    if row.get("artifact_file_path"):
+        return Path(row["artifact_file_path"])
     out_dir = settings.OUTPUT_DIR
     if not out_dir.is_absolute():
         out_dir = settings.ROOT / out_dir
     return out_dir / f"episode_{row['canonical_script_id']}.json"
 
 
-def _video_path(row: dict, artifact: dict) -> Path | None:
+def _video_path(row: dict, artifact: dict | None) -> Path | None:
+    """Extract video file path from database or artifact.
+    
+    Args:
+        row: Database row with video_file_path
+        artifact: Artifact dict loaded from database/file
+    
+    Returns:
+        Path to video file or None
+    """
+    # Primary: use database video_file_path if set
     if row.get("video_file_path"):
         return Path(row["video_file_path"])
-    planned = artifact.get("render", {}).get("planned_video_file", "")
-    return Path(planned) if planned else None
+    
+    # Secondary: extract from artifact
+    if artifact:
+        planned = artifact.get("render", {}).get("planned_video_file", "")
+        if planned:
+            return Path(planned)
+        
+        # Try storage.archived_video_file
+        archived = artifact.get("storage", {}).get("archived_video_file", "")
+        if archived:
+            return Path(archived)
+    
+    return None
+
 
 
 def process_pending(dry_run: bool = True, include_future: bool = False, job_id: int | None = None) -> list[dict]:
@@ -75,14 +133,15 @@ def process_pending(dry_run: bool = True, include_future: bool = False, job_id: 
 
     for job in jobs:
         job_id = int(job["id"])
-        artifact_path = _artifact_path(job)
-
-        if not artifact_path.exists():
-            update_publish_job_status(job_id, "upload_failed", f"Missing artifact: {artifact_path}")
-            results.append({"job_id": job_id, "status": "upload_failed", "reason": "artifact_missing"})
+        
+        # Load artifact from database JSON or file
+        artifact = _load_artifact(job)
+        if not artifact:
+            update_publish_job_status(job_id, "upload_failed", "Failed to load artifact JSON")
+            results.append({"job_id": job_id, "status": "upload_failed", "reason": "artifact_load_failed"})
             continue
-
-        artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+        
+        artifact_path = _artifact_path(job)
         video_path = _video_path(job, artifact)
 
         if dry_run:
@@ -111,6 +170,7 @@ def process_pending(dry_run: bool = True, include_future: bool = False, job_id: 
                 "uploaded",
                 "Uploaded to YouTube and playlist processed",
                 youtube_video_id=uploaded.get("video_id"),
+                published_at=now_utc_iso(),
             )
             results.append(
                 {
@@ -118,6 +178,7 @@ def process_pending(dry_run: bool = True, include_future: bool = False, job_id: 
                     "status": "uploaded",
                     "video_id": uploaded.get("video_id"),
                     "playlist_id": uploaded.get("playlist_id"),
+                    "published_at": now_utc_iso(),
                 }
             )
         except Exception as exc:

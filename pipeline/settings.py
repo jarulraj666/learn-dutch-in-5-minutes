@@ -38,13 +38,16 @@ VIDEO_OUTPUT_DIR = Path(os.getenv("VIDEO_OUTPUT_DIR", "output/videos"))
 VIDEO_ARCHIVE_DIR = Path(os.getenv("VIDEO_ARCHIVE_DIR", "output/archive"))
 
 # TTS Provider Configuration
-TTS_PROVIDER = os.getenv("TTS_PROVIDER", "macos_say")  # Options: macos_say, gemini, kokoro, parkiet
+TTS_PROVIDER = os.getenv("TTS_PROVIDER", "gemini")  # Options: macos_say, gemini, kokoro
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_IMAGE_CREATION_API_KEY = os.getenv("GEMINI_IMAGE_CREATION_API_KEY", "")
+GEMINI_TTS_API_KEY = os.getenv("GEMINI_TTS_API_KEY", "")
 # Note: Kokoro TTS runs locally, no API key needed
 
-# Remote Parkiet TTS Configuration (Google Colab via ngrok)
-PARKIET_COLAB_URL = os.getenv("PARKIET_COLAB_URL", "https://cahoots-spearmint-blatancy.ngrok-free.dev")
-# Colab remote Parkiet server via ngrok tunnel
+# STT: WhisperX (medium model). Device is auto-detected (CUDA if available, else CPU).
+# Override compute type via WHISPERX_COMPUTE_TYPE (default: float16 on GPU, int8 on CPU).
+WHISPERX_MODEL = os.getenv("WHISPERX_MODEL", "medium")
+WHISPERX_COMPUTE_TYPE = os.getenv("WHISPERX_COMPUTE_TYPE", "")
 
 PEDAGOGY_CONFIG = load_yaml(ROOT / "config/pedagogy.yaml")
 SCHEDULING_CONFIG = load_yaml(ROOT / "config/scheduling.yaml")

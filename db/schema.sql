@@ -43,6 +43,10 @@ CREATE TABLE IF NOT EXISTS publish_jobs (
   youtube_video_id TEXT,
   artifact_path TEXT,
   video_file_path TEXT,
+  artifact_json TEXT,
+  artifact_file_path TEXT,
+  status_history TEXT,
+  published_at TEXT,
   status_detail TEXT,
   updated_at TEXT,
   created_at TEXT NOT NULL,
@@ -60,3 +64,4 @@ CREATE TABLE IF NOT EXISTS content_metrics (
 
 CREATE INDEX IF NOT EXISTS idx_canonical_topic ON canonical_scripts(topic_id);
 CREATE INDEX IF NOT EXISTS idx_publish_scheduled ON publish_jobs(scheduled_at);
+CREATE INDEX IF NOT EXISTS idx_publish_status ON publish_jobs(status);

@@ -7,74 +7,44 @@ import subprocess
 import time
 from pathlib import Path
 
-from pipeline.generate_visual_image import generate_topic_image
 from pipeline import settings
 from pipeline.utils import command_exists
-
 
 LOGGER = logging.getLogger(__name__)
 
 
 def _format_subtitle_filter_path(path: Path) -> str:
-    # ffmpeg subtitles filter uses colon-separated options; escape characters accordingly.
+    """FFmpeg subtitle/ass filters require escaped path characters."""
     return path.resolve().as_posix().replace("\\", "\\\\").replace(":", "\\:").replace("'", "\\'")
 
 
-def _supports_subtitles_filter() -> bool:
+def _supports_ass_filter() -> bool:
+    """Checks if installed FFmpeg has the ass/subtitles filter available."""
     try:
         proc = subprocess.run(
             ["ffmpeg", "-hide_banner", "-filters"],
-            check=True,
             capture_output=True,
             text=True,
         )
-        filters_text = (proc.stdout or "") + "\n" + (proc.stderr or "")
-        return " subtitles " in filters_text
+        output = (proc.stdout or "") + "\n" + (proc.stderr or "")
+        return any(f" {name} " in output for name in ("ass", "subtitles"))
     except Exception:
         return False
 
 
-def _concat_audio(segment_paths: list[str], output_audio: Path) -> tuple[bool, str]:
-    if not segment_paths:
-        return False, "No audio segments provided"
-
-    list_file = output_audio.parent / "concat_list.txt"
-    lines = [f"file '{Path(p).resolve().as_posix()}'" for p in segment_paths if Path(p).exists()]
-    if not lines:
-        return False, "No existing audio files for concat"
-    list_file.write_text("\n".join(lines), encoding="utf-8")
-
-    cmd = [
-        "ffmpeg",
-        "-y",
-        "-f",
-        "concat",
-        "-safe",
-        "0",
-        "-i",
-        str(list_file),
-        "-ar",
-        "44100",
-        "-ac",
-        "1",
-        str(output_audio),
-    ]
-    try:
-        subprocess.run(cmd, check=True, capture_output=True, text=True)
-        return True, ""
-    except Exception as exc:
-        return False, str(exc)
-
-
-def _build_video(
+def _build_video_with_karaoke(
     audio_path: Path,
-    srt_path: Path,
+    ass_path: Path,
     output_mp4: Path,
     burn_subtitles: bool,
-    image_path: Path | None = None,
+    image_path: Path,
 ) -> tuple[bool, str]:
-    if not audio_path.exists() or not srt_path.exists():
-        return False, "Missing audio or subtitle file"
+    if not audio_path.exists():
+        return False, f"Missing audio file: {audio_path}"
+    if burn_subtitles and not ass_path.exists():
+        return False, f"Missing subtitle file: {ass_path}"
+    if not image_path or not image_path.exists():
+        return False, f"Missing image file: {image_path}"
 
     render_cfg = settings.load_yaml(settings.ROOT / "config/visual_style.yaml").get("render", {})
     width = int(render_cfg.get("width", 1920))
@@ -82,106 +52,60 @@ def _build_video(
     fps = int(render_cfg.get("fps", 30))
     crf = int(render_cfg.get("crf", 19))
     preset = str(render_cfg.get("preset", "slow"))
-    target_duration = int(settings.PEDAGOGY_CONFIG.get("target_duration_seconds", 300))
 
-    # Cartoon/paint style fallback scene built from simple vector-like shapes.
-    base_visual_filter = (
-        "drawbox=x=0:y=0:w=1920:h=1080:color=#F4F0E6:t=fill,"
-        "drawbox=x=0:y=0:w=1920:h=420:color=#CFE8F6:t=fill,"
-        "drawbox=x=0:y=760:w=1920:h=320:color=#DCECCB:t=fill,"
-        "drawbox=x=220:y=380:w=560:h=360:color=#F2D0A4:t=fill,"
-        "drawbox=x=190:y=320:w=620:h=80:color=#C94747:t=fill,"
-        "drawbox=x=390:y=500:w=140:h=240:color=#8B5A2B:t=fill,"
-        "drawbox=x=980:y=430:w=210:h=300:color=#8CB3D9:t=fill,"
-        "drawbox=x=1260:y=470:w=260:h=260:color=#F6B26B:t=fill,"
-        "drawbox=x=1180:y=420:w=420:h=40:color=#2E4A7D:t=fill"
+    vf_chain = (
+        f"scale={width}:{height},"
+        "eq=saturation=1.12:contrast=1.06:brightness=0.01,"
+        "unsharp=5:5:0.45:3:3:0.0"
     )
+    input_args = ["-loop", "1", "-framerate", str(fps), "-i", str(image_path)]
 
-    use_image_source = bool(image_path and image_path.exists())
-    if use_image_source:
-        base_filter = (
-            f"scale={width}:{height},"
-            "eq=saturation=1.12:contrast=1.06:brightness=0.01,"
-            "unsharp=5:5:0.45:3:3:0.0"
-        )
-        cmd = [
-            "ffmpeg",
-            "-y",
-            "-loop",
-            "1",
-            "-framerate",
-            str(fps),
-            "-i",
-            str(image_path),
-            "-i",
-            str(audio_path),
-            "-af",
-            f"apad=pad_dur={target_duration}",
-            "-vf",
-            base_filter,
-            "-c:v",
-            "libx264",
-            "-preset",
-            preset,
-            "-crf",
-            str(crf),
-            "-pix_fmt",
-            "yuv420p",
-            "-c:a",
-            "aac",
-            "-b:a",
-            "192k",
-            "-t",
-            str(target_duration),
-            str(output_mp4),
-        ]
-    else:
-        cmd = [
-            "ffmpeg",
-            "-y",
-            "-f",
-            "lavfi",
-            "-i",
-            f"color=c=#F4F0E6:s={width}x{height}:r={fps}",
-            "-i",
-            str(audio_path),
-            "-af",
-            f"apad=pad_dur={target_duration}",
-            "-vf",
-            base_visual_filter,
-            "-c:v",
-            "libx264",
-            "-preset",
-            preset,
-            "-crf",
-            str(crf),
-            "-pix_fmt",
-            "yuv420p",
-            "-c:a",
-            "aac",
-            "-b:a",
-            "192k",
-            "-t",
-            str(target_duration),
-            str(output_mp4),
-        ]
+    # Add single full WAV audio input
+    input_args.extend(["-i", str(audio_path)])
 
+    # Add Karaoke ASS Filter (Anchored top-middle to top-right flow)
     if burn_subtitles:
-        subtitle_path = _format_subtitle_filter_path(srt_path)
-        subtitle_filter = (
-            f"subtitles=filename='{subtitle_path}':"
-            "force_style='FontName=Noto Sans,FontSize=42,PrimaryColour=&H00FFFFFF,"
-            "OutlineColour=&H00000000,BorderStyle=3,Outline=2,MarginV=80,Alignment=2'"
-        )
-        if use_image_source:
-            cmd[13] = f"{cmd[13]},{subtitle_filter}"
-        else:
-            cmd[12] = f"{base_visual_filter},{subtitle_filter}"
+        formatted_ass_path = _format_subtitle_filter_path(ass_path)
+        ass_filter = f"ass='{formatted_ass_path}'"
+        vf_chain += f",{ass_filter}"
+
+    cmd = [
+        "ffmpeg",
+        "-y",
+        *input_args,
+        "-map", "0:v",
+        "-map", "1:a",
+        "-vf",
+        vf_chain,
+        "-c:v",
+        "libx264",
+        "-preset",
+        preset,
+        "-crf",
+        str(crf),
+        "-pix_fmt",
+        "yuv420p",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-ar",
+        "48000",   # Resample to 48kHz (standard for video)
+        "-ac",
+        "2",       # Upmix mono to stereo
+        "-shortest",  # Sync video duration to audio file length
+        str(output_mp4),
+    ]
+
+    LOGGER.info("ffmpeg.cmd %s", " ".join(cmd))
     try:
-        subprocess.run(cmd, check=True, capture_output=True, text=True)
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        if result.stderr:
+            LOGGER.debug("ffmpeg.stderr %s", result.stderr[-2000:])
         return True, ""
     except subprocess.CalledProcessError as exc:
-        return False, (exc.stderr or exc.stdout or str(exc))
+        LOGGER.error("ffmpeg.failed stderr=%s", (exc.stderr or exc.stdout or "")[-2000:])
+        return False, exc.stderr or exc.stdout or str(exc)
     except Exception as exc:
         return False, str(exc)
 
@@ -190,100 +114,109 @@ def render_from_artifact(artifact_path: Path) -> Path:
     render_start = time.perf_counter()
     LOGGER.info("render.start artifact=%s", artifact_path)
     data = json.loads(artifact_path.read_text(encoding="utf-8"))
+
     out_dir = settings.OUTPUT_DIR
     if not out_dir.is_absolute():
         out_dir = settings.ROOT / out_dir
-    out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Create video output directory
-    video_dir = settings.VIDEO_OUTPUT_DIR
-    if not video_dir.is_absolute():
-        video_dir = settings.ROOT / video_dir
+    # Determine hierarchical video output path from artifact context
+    topic_data = data.get("topic", {})
+    level = data.get("level") or topic_data.get("level", "")
+    category = data.get("category") or topic_data.get("category", "")
+    topic_id = data.get("topic_id") or topic_data.get("id", "")
+    title_slug = data.get("title_slug") or topic_data.get("title_slug", "")
+
+    if not (level and category and topic_id and title_slug):
+        raise ValueError(
+            "Artifact must contain level, category, topic_id, and title_slug "
+            f"(got level={level!r}, category={category!r}, topic_id={topic_id!r}, title_slug={title_slug!r})"
+        )
+
+    video_dir = out_dir / level / category / "videos"
+    output_mp4 = video_dir / f"episode_{topic_id}_{title_slug}.mp4"
     video_dir.mkdir(parents=True, exist_ok=True)
 
-    episode_id = data.get("canonical_script_id")
-    if not episode_id:
-        episode_id = 0
-    output_mp4 = video_dir / f"episode_{episode_id}.mp4"
-    output_audio = out_dir / f"episode_{episode_id}.wav"
-    ffmpeg_available = command_exists("ffmpeg")
+    # Use audio_file from artifact as primary source
+    audio_path = Path(data["audio_file"]) if data.get("audio_file") else None
+    if not audio_path or not audio_path.exists():
+        raise FileNotFoundError(
+            f"Audio file not found: {audio_path}. Ensure voice generation has run."
+        )
 
-    segment_paths = [
-        seg.get("audio_file", "")
-        for seg in data.get("voice", {}).get("voice_segments", [])
-        if seg.get("status") == "generated"
-    ]
-    srt_file = data.get("subtitles", {}).get("srt_file", "")
+    # Retrieve karaoke ASS subtitle file
+    ass_file = data.get("karaoke_file") or data.get("srt_files", {}).get("ass_karaoke")
+    if not ass_file:
+        raise ValueError("Artifact must contain 'karaoke_file' or 'srt_files.ass_karaoke'.")
+
+    ass_path = Path(ass_file).resolve()
+    if not ass_path.exists():
+        candidate = (settings.ROOT / ass_file).resolve()
+        if not candidate.exists():
+            raise FileNotFoundError(f"Subtitle file not found: {ass_file}")
+        ass_path = candidate
+
+    ffmpeg_available = command_exists("ffmpeg")
+    subtitles_filter_available = _supports_ass_filter() if ffmpeg_available else False
+
+    # Require pre-generated background image in artifact
+    image_file = data.get("generated_image_file")
+    if not image_file:
+        raise ValueError("Artifact must contain 'generated_image_file'. Run Stage 3b first.")
+
+    ip = Path(image_file)
+    if not ip.is_absolute():
+        ip = (settings.ROOT / image_file).resolve()
+    if not ip.exists():
+        raise FileNotFoundError(f"Image file not found: {image_file}")
+    image_path = ip
 
     assembled = False
-    concat_error = ""
     render_error = ""
-    subtitles_filter_available = _supports_subtitles_filter() if ffmpeg_available else False
     subtitle_burned_in = False
-    generated_image_file = ""
-    image_render_used = False
+
+    if not ffmpeg_available:
+        raise RuntimeError("ffmpeg is not installed or not on PATH.")
+
+    assembled, render_error = _build_video_with_karaoke(
+        audio_path=audio_path,
+        ass_path=ass_path,
+        output_mp4=output_mp4,
+        burn_subtitles=subtitles_filter_available,
+        image_path=image_path,
+    )
+    subtitle_burned_in = assembled and subtitles_filter_available
+    if not assembled:
+        raise RuntimeError(f"Video render failed: {render_error}")
 
     topic_data = data.get("topic", {})
-    topic_id = topic_data.get("id", "fallback_topic")
-    topic_title = topic_data.get("title_hint", "Dutch Lesson")
-    LOGGER.info("render.topic id=%s title=%s", topic_id, topic_title)
-    image_path = generate_topic_image(
-        topic_id=topic_id,
-        topic_title=topic_title,
-        episode_id=int(episode_id),
-        output_root=out_dir,
-    )
-    generated_image_file = str(image_path)
-    LOGGER.info("render.image.generated file=%s", generated_image_file)
-
-    if ffmpeg_available and segment_paths and srt_file:
-        concat_ok, concat_error = _concat_audio(segment_paths, output_audio)
-        LOGGER.info("render.audio.concat ok=%s segments=%d", concat_ok, len(segment_paths))
-        if concat_ok:
-            assembled, render_error = _build_video(
-                output_audio,
-                Path(srt_file),
-                output_mp4,
-                burn_subtitles=subtitles_filter_available,
-                image_path=image_path,
-            )
-            image_render_used = assembled and image_path.exists()
-            subtitle_burned_in = assembled and subtitles_filter_available
-            LOGGER.info("render.video.assembled=%s subtitle_burned_in=%s", assembled, subtitle_burned_in)
-            if not assembled:
-                raise RuntimeError(f"Video render failed: {render_error}")
-
     render_manifest = {
-        "note": "FFmpeg render completed",
-        "topic": data.get("topic", {}),
+        "note": "FFmpeg Karaoke render completed",
+        "topic": topic_data,
         "planned_video_file": str(output_mp4),
-        "video_directory": str(video_dir),
-        "visual_style": (settings.ROOT / "config/visual_style.yaml").as_posix(),
+        "input_audio_file": str(audio_path),
+        "ass_subtitle_file": str(ass_path) if ass_path else "",
         "ffmpeg_available": ffmpeg_available,
-        "audio_segments_found": len(segment_paths),
-        "srt_file": srt_file,
         "assembled": assembled,
-        "subtitles_filter_available": subtitles_filter_available,
         "subtitle_burned_in": subtitle_burned_in,
-        "generated_image_file": generated_image_file,
-        "image_render_used": image_render_used,
-        "concat_error": concat_error,
+        "generated_image_file": str(image_path) if image_path else "",
         "render_error": render_error,
     }
 
-    path = out_dir / f"render_manifest_{episode_id}.json"
-    path.write_text(json.dumps(render_manifest, indent=2), encoding="utf-8")
+    manifest_path = out_dir / level / category / f"episode_{topic_id}_{title_slug}_render_manifest.json"
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(json.dumps(render_manifest, indent=2), encoding="utf-8")
+    
     LOGGER.info(
         "render.done assembled=%s elapsed_sec=%.2f manifest=%s",
         assembled,
         time.perf_counter() - render_start,
-        path,
+        manifest_path,
     )
-    return path
+    return manifest_path
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Render step placeholder")
+    parser = argparse.ArgumentParser(description="Render full dialogue video with karaoke subtitles")
     parser.add_argument("artifact", help="Path to episode artifact JSON")
     args = parser.parse_args()
 

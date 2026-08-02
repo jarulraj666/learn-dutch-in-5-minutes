@@ -11,6 +11,7 @@ from pipeline import settings
 from pipeline.db import init_db, seed_topics_from_config
 from pipeline.generate_script import generate_script
 from pipeline.select_topic import choose_next_topic
+from pipeline.store_content import create_title_slug
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,16 +33,26 @@ def main():
     topic = choose_next_topic()
     LOGGER.info("✓ Selected topic: %s (%s)", topic.title_hint, topic.topic_id)
 
-    # Generate script in Dutch with Parkiet
+    # Generate script in Dutch
     language = "nl"
     LOGGER.info("Generating script in language: %s", language)
     script = generate_script(topic, language=language)
     LOGGER.info("✓ Script generated successfully")
 
+    # Enrich script with pipeline context for downstream stages
+    title_slug = create_title_slug(script.get("topic_title", topic.title_hint))
+    script["_pipeline_context"] = {
+        "topic_id": topic.topic_id,
+        "level": topic.level,
+        "category": topic.category,
+        "title_slug": title_slug,
+    }
+
     # Show results
     LOGGER.info("\n=== GENERATED SCRIPT ===")
     LOGGER.info("Language: %s", script.get("language"))
     LOGGER.info("Topic: %s", script.get("topic_title"))
+    LOGGER.info("Level: %s | Category: %s | Slug: %s", topic.level, topic.category, title_slug)
     dialogue = script.get("dialogue", [])
     LOGGER.info("Dialogue lines: %d", len(dialogue))
     

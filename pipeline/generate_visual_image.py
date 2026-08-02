@@ -1,319 +1,260 @@
 from __future__ import annotations
 
+import argparse
+import json
 import logging
-import re
-import shutil
-import subprocess
+import sys
 import time
+from io import BytesIO
 from pathlib import Path
+from typing import Any, Optional
+
+from PIL import Image
 
 from pipeline import settings
-from pipeline.utils import command_exists
 
-
-_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp")
 LOGGER = logging.getLogger(__name__)
 
 
-def _load_prompt_template() -> str:
-    prompt_path = settings.ROOT / "prompts" / "image_prompt.md"
-    if prompt_path.exists():
-        return prompt_path.read_text(encoding="utf-8")
-    return (
-        "Create one cartoon image background for a Dutch A1 lesson.\n"
-        "Topic id: {{TOPIC_ID}}\n"
-        "Topic title: {{TOPIC_TITLE}}\n"
-        "Background brief: {{BACKGROUND_BRIEF}}\n"
-        "Include one male and one female cartoon human talking.\n"
-    )
-
-
-def _background_brief(topic_title: str, topic_id: str) -> str:
-    key = f"{topic_title} {topic_id}".lower()
-    if "cafe" in key or "coffee" in key or "order" in key:
-        return "Warm Dutch cafe interior with menu board, coffee counter, and soft hanging lamps"
-    if "train" in key or "ticket" in key or "station" in key:
-        return "Dutch train platform with departure board, tracks, and ticket machine"
-    if "supermarket" in key or "market" in key or "grocery" in key:
-        return "Colorful supermarket aisle with shelves, signs, and shopping baskets"
-    if "direction" in key or "street" in key or "map" in key:
-        return "City street corner with signposts, zebra crossing, and map panel"
-    if "introduce" in key or "name" in key or "origin" in key:
-        return "Friendly neighborhood square with benches and small Dutch houses"
-    if "restaurant" in key or "dinner" in key or "food" in key:
-        return "Cosy Dutch restaurant interior with table settings and a chalkboard menu"
-    if "office" in key or "work" in key or "reception" in key:
-        return "Modern Dutch office reception with desk, plants, and company signage"
-    if "classroom" in key or "school" in key or "learn" in key:
-        return "Bright Dutch classroom with whiteboard, desks, and educational posters"
-    if "pharmacy" in key or "medicine" in key or "health" in key:
-        return "Clean Dutch pharmacy with shelves of products and a service counter"
-    if "phone" in key or "call" in key:
-        return "Split-screen Dutch living room and street scene for a phone conversation"
-    if "weather" in key or "rain" in key or "sun" in key:
-        return "Dutch street with canal and typical row houses under a partly cloudy sky"
-    if "weekend" in key or "market" in key:
-        return "Outdoor Dutch weekend market with stalls, flowers, and canal in the background"
-    if "kitchen" in key or "home" in key or "house" in key:
-        return "Cosy Dutch home kitchen with tiled walls, wooden counter, and window overlooking canal"
-    return "Clean Dutch daily-life scene matching the topic title with clear environment cues"
-
-
-# Dutch signs per scene type, derived from visual_style.yaml scenes and topic tracks
-_DUTCH_SIGNS: dict[str, list[str]] = {
-    "cafe": [
-        "Koffie €2,50", "Thee €2,00", "Dagschotel €8,50",
-        "OPEN", "Welkom!", "Menukaart", "Kassa →",
-    ],
-    "train": [
-        "Amsterdam Centraal", "Vertrek / Departure", "Spoor 4",
-        "Kaartjes kopen", "Instappen", "Uitstappen", "NS",
-        "Let op! Deuren sluiten automatisch.",
-    ],
-    "supermarket": [
-        "Aanbiedingen", "Kassa", "Groente & Fruit",
-        "Zuivel", "Brood & Banket", "Biologisch",
-        "2 voor €3,00", "Vandaag vers",
-    ],
-    "street": [
-        "Centrum →", "Fietspad", "Oversteken",
-        "Stop", "Parkeren verboden", "Straat",
-        "← Markt", "Bushalte",
-    ],
-    "restaurant": [
-        "Menu", "Dagmenu €12,50", "Reserveren",
-        "Welkom bij Restaurant De Tulp", "Vandaag open: 17:00–22:00",
-        "Betalen bij de kassa", "Toiletten →",
-    ],
-    "office": [
-        "Receptie", "Bezoeker aanmelden", "Vergaderzaal A",
-        "Nooduitgang →", "Welkom!", "Lift", "Kantoor 101",
-    ],
-    "classroom": [
-        "Nederlands voor beginners", "Les 1: Begroeten",
-        "Huiswerk: bladzijde 5", "Goed gedaan!",
-        "Woordenschat", "Grammatica",
-    ],
-    "pharmacy": [
-        "Apotheek", "Openingstijden: ma–vr 9:00–18:00",
-        "Op recept", "Vrij verkrijgbaar",
-        "Pijnstillers", "Vitaminespoor", "Wachtrij hier →",
-    ],
-    "home": [
-        "Welkom thuis", "Boodschappenlijstje",
-        "Maandag: soep", "Niet vergeten!", "Afval: dinsdag",
-    ],
-    "weather": [
-        "Weerbericht", "Verwacht: bewolkt met regen",
-        "Max. 14°C", "KNMI", "Paraplu meenemen!",
-    ],
-    "market": [
-        "Markt", "Zaterdag 9:00–17:00",
-        "Verse bloemen €5,–", "Biologische groenten",
-        "Hollandse kaas", "Stroopwafels 3 voor €2,–",
-    ],
-    "default": [
-        "Welkom", "Info", "Open", "Gesloten",
-        "Let op", "→ Uitgang", "Informatie",
-    ],
-}
-
-
-def _dutch_signs(topic_title: str, topic_id: str) -> str:
-    """Return Dutch sign text relevant to the scene, drawn from visual_style.yaml scene types."""
-    key = f"{topic_title} {topic_id}".lower()
-    if "cafe" in key or "coffee" in key or "order" in key:
-        signs = _DUTCH_SIGNS["cafe"]
-    elif "train" in key or "ticket" in key or "station" in key:
-        signs = _DUTCH_SIGNS["train"]
-    elif "supermarket" in key or "grocery" in key:
-        signs = _DUTCH_SIGNS["supermarket"]
-    elif "direction" in key or "street" in key or "map" in key:
-        signs = _DUTCH_SIGNS["street"]
-    elif "restaurant" in key or "dinner" in key or "food" in key:
-        signs = _DUTCH_SIGNS["restaurant"]
-    elif "office" in key or "work" in key or "reception" in key:
-        signs = _DUTCH_SIGNS["office"]
-    elif "classroom" in key or "school" in key or "learn" in key:
-        signs = _DUTCH_SIGNS["classroom"]
-    elif "pharmacy" in key or "medicine" in key or "health" in key:
-        signs = _DUTCH_SIGNS["pharmacy"]
-    elif "kitchen" in key or "home" in key or "house" in key:
-        signs = _DUTCH_SIGNS["home"]
-    elif "weather" in key or "rain" in key or "sun" in key:
-        signs = _DUTCH_SIGNS["weather"]
-    elif "market" in key or "weekend" in key:
-        signs = _DUTCH_SIGNS["market"]
-    elif "introduce" in key or "name" in key or "origin" in key:
-        signs = _DUTCH_SIGNS["street"]  # neighborhood square uses street signs
-    else:
-        signs = _DUTCH_SIGNS["default"]
-    return ", ".join(f'"{s}"' for s in signs)
-
-
-def _build_prompt(topic_id: str, topic_title: str, width: int, height: int) -> str:
-    template = _load_prompt_template()
-    return (
-        template.replace("{{TOPIC_ID}}", topic_id)
-        .replace("{{TOPIC_TITLE}}", topic_title)
-        .replace("{{WIDTH}}", str(width))
-        .replace("{{HEIGHT}}", str(height))
-        .replace("{{BACKGROUND_BRIEF}}", _background_brief(topic_title, topic_id))
-        .replace("{{DUTCH_SIGNS}}", _dutch_signs(topic_title, topic_id))
-    )
-
-
-def _collect_image_paths(text: str, cwd: Path) -> list[Path]:
-    candidates: list[Path] = []
-
-    # Match absolute/relative file paths printed by CLI.
-    path_pattern = r"([^\s'\"]+\.(?:png|jpg|jpeg|webp))"
-    for raw in re.findall(path_pattern, text, flags=re.IGNORECASE):
-        candidate = Path(raw)
-        if not candidate.is_absolute():
-            candidate = (cwd / candidate).resolve()
-        if candidate.exists() and candidate.suffix.lower() in _IMAGE_EXTENSIONS:
-            candidates.append(candidate)
-
-    # Keep order while removing duplicates.
-    deduped: list[Path] = []
-    seen: set[str] = set()
-    for path in candidates:
-        key = str(path)
-        if key in seen:
-            continue
-        seen.add(key)
-        deduped.append(path)
-    return deduped
-
-
-def _newest_image_file(folder: Path, started_at: float) -> Path | None:
-    if not folder.exists():
-        return None
-
-    newest_path: Path | None = None
-    newest_mtime = 0.0
-    for ext in _IMAGE_EXTENSIONS:
-        for path in folder.glob(f"*{ext}"):
-            try:
-                stat = path.stat()
-            except FileNotFoundError:
-                continue
-            if stat.st_mtime + 0.5 < started_at:
-                continue
-            if stat.st_mtime > newest_mtime:
-                newest_mtime = stat.st_mtime
-                newest_path = path
-    return newest_path
-
-
-def _run_ollama_image_generation(prompt: str, output_dir: Path, timeout_seconds: int) -> Path | None:
-    if not command_exists("ollama"):
-        LOGGER.error("image_generation.ollama_missing")
-        return None
-
-    model = settings.OLLAMA_IMAGE_MODEL
-    command = ["ollama", "run", model, prompt]
-    started_at = time.time()
-    LOGGER.info("image_generation.start model=%s output_dir=%s", model, output_dir)
-
-    try:
-        proc = subprocess.run(
-            command,
-            cwd=str(output_dir),
-            capture_output=True,
-            text=True,
-            timeout=timeout_seconds,
-            check=False,
+def generate_topic_image(
+    *,
+    topic_id: str,
+    topic_title: str,
+    output_root: Path,
+    image_prompt: str,
+    file_naming_context: dict[str, str] | None = None,
+) -> Path:
+    """Generate and save a visual image for a topic using Gemini 2.5 Flash Image.
+    
+    Args:
+        topic_id: Unique topic identifier
+        topic_title: Topic title for logging
+        output_root: Root directory for output files (e.g., output/A1/common_words)
+        image_prompt: Full image generation prompt with {topic_title} already substituted
+        file_naming_context: Dict with 'id' and 'slug' keys for output filename
+    
+    Returns:
+        Path to generated PNG image file
+    """
+    if not image_prompt or not image_prompt.strip():
+        raise ValueError(
+            f"Image generation failed for topic {topic_id}: 'image_prompt' is empty"
         )
-    except Exception:
-        LOGGER.exception("image_generation.subprocess_failed")
-        return None
 
-    elapsed = time.time() - started_at
-    LOGGER.info("image_generation.subprocess_done returncode=%s elapsed_sec=%.2f", proc.returncode, elapsed)
+    if not settings.GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY is not set in settings/environment.")
 
-    combined_output = f"{proc.stdout or ''}\n{proc.stderr or ''}"
-    for path in _collect_image_paths(combined_output, output_dir):
-        LOGGER.info("image_generation.file_detected file=%s", path)
-        return path
-
-    newest = _newest_image_file(output_dir, started_at=started_at)
-    if newest:
-        LOGGER.info("image_generation.file_detected_newest file=%s", newest)
-    else:
-        LOGGER.error("image_generation.no_output_file")
-    return newest
-
-
-def _normalize_to_png(source: Path, destination_png: Path) -> Path | None:
-    destination_png.parent.mkdir(parents=True, exist_ok=True)
-    if source.suffix.lower() == ".png":
-        if source.resolve() == destination_png.resolve():
-            return source
-        shutil.copy2(source, destination_png)
-        return destination_png
-
-    if command_exists("ffmpeg"):
-        command = [
-            "ffmpeg",
-            "-y",
-            "-i",
-            str(source),
-            "-frames:v",
-            "1",
-            str(destination_png),
-        ]
-        try:
-            subprocess.run(command, capture_output=True, text=True, check=True)
-            if destination_png.exists():
-                return destination_png
-        except Exception:
-            return None
-
-    return None
-
-
-def generate_topic_image(*, topic_id: str, topic_title: str, episode_id: int, output_root: Path) -> Path:
     started_at = time.perf_counter()
-    render_cfg = settings.load_yaml(settings.ROOT / "config/visual_style.yaml").get("render", {})
-    width = int(render_cfg.get("width", 1920))
-    height = int(render_cfg.get("height", 1080))
-
     visuals_dir = output_root / "visuals"
     visuals_dir.mkdir(parents=True, exist_ok=True)
-    output_png = visuals_dir / f"episode_{episode_id}_scene.png"
+    
+    # Use naming context if provided, otherwise use topic_id
+    if file_naming_context and "id" in file_naming_context and "slug" in file_naming_context:
+        episode_id = file_naming_context["id"]
+        title_slug = file_naming_context["slug"]
+        output_png = visuals_dir / f"episode_{episode_id}_{title_slug}.png"
+    else:
+        output_png = visuals_dir / f"episode_{topic_id}_visual.png"
 
-    prompt = _build_prompt(topic_id, topic_title, width, height)
     LOGGER.info(
-        "image_generation.request episode=%s topic_id=%s topic_title=%s size=%sx%s",
-        episode_id,
+        "image_generation.request topic_id=%s topic_title=%s output=%s",
         topic_id,
         topic_title,
-        width,
-        height,
+        output_png,
     )
-    LOGGER.debug("image_generation.prompt_chars=%d", len(prompt))
-    generated_file = _run_ollama_image_generation(prompt, visuals_dir, timeout_seconds=180)
 
-    if not generated_file or not generated_file.exists():
-        LOGGER.error("image_generation.failed_no_file episode=%s", episode_id)
-        raise RuntimeError(
-            f"Image generation failed for episode {episode_id}: model '{settings.OLLAMA_IMAGE_MODEL}' did not produce an image file"
+    try:
+        from google import genai
+
+        client = genai.Client(api_key=settings.GEMINI_IMAGE_CREATION_API_KEY)
+
+        # Using Gemini 2.5 Flash Image
+        response = client.models.generate_content(
+            model="gemini-2.5-flash-image",
+            contents=f"Generate a 16:9 image: {image_prompt}",
         )
 
-    normalized = _normalize_to_png(generated_file, output_png)
-    if not normalized or not normalized.exists():
-        LOGGER.error("image_generation.failed_normalize episode=%s source=%s", episode_id, generated_file)
-        raise RuntimeError(
-            f"Image generation failed for episode {episode_id}: unable to normalize generated file '{generated_file}' to PNG"
+        image_bytes = None
+        if response.candidates:
+            for part in response.candidates[0].content.parts:
+                if hasattr(part, "inline_data") and part.inline_data:
+                    image_bytes = part.inline_data.data
+                    break
+
+        if not image_bytes:
+            raise RuntimeError("No image data returned from Gemini 2.5 Flash Image.")
+
+        image = Image.open(BytesIO(image_bytes))
+        image.save(output_png, format="PNG")
+
+    except Exception as e:
+        LOGGER.error(
+            "image_generation.failed topic_id=%s error=%s",
+            topic_id,
+            str(e),
         )
+        raise RuntimeError(
+            f"Image generation failed for topic {topic_id}: {str(e)}"
+        ) from e
 
     LOGGER.info(
-        "image_generation.done episode=%s output=%s elapsed_sec=%.2f",
-        episode_id,
-        normalized,
+        "image_generation.done topic_id=%s output=%s elapsed_sec=%.2f",
+        topic_id,
+        output_png,
         time.perf_counter() - started_at,
     )
 
-    return normalized
+    return output_png
+
+
+def load_artifact_from_file(artifact_path: Path) -> dict[str, Any]:
+    """Load artifact JSON from file."""
+    if not artifact_path.exists():
+        raise FileNotFoundError(f"Artifact file not found: {artifact_path}")
+    
+    with open(artifact_path, "r", encoding="utf-8") as f:
+        artifact = json.load(f)
+    
+    LOGGER.info("Loaded artifact from file: %s", artifact_path)
+    return artifact
+
+
+def load_artifact_from_database(topic_id: str) -> dict[str, Any]:
+    """Load artifact JSON from database canonical_scripts table."""
+    try:
+        from pipeline.db import get_db
+        
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute(
+            "SELECT script_json FROM canonical_scripts WHERE topic_id = ?",
+            (topic_id,)
+        )
+        row = cursor.fetchone()
+        if not row:
+            raise ValueError(f"No script found for topic_id: {topic_id}")
+        
+        script_json = json.loads(row[0])
+        LOGGER.info("Loaded artifact from database for topic_id: %s", topic_id)
+        return script_json
+    except ImportError:
+        raise RuntimeError("Database not available; cannot load artifact from DB")
+
+
+def generate_image_from_artifact(
+    artifact: dict[str, Any],
+    output_root: Optional[Path] = None,
+) -> Path:
+    """Generate image from an artifact dict (loaded from file or DB).
+    
+    Args:
+        artifact: Artifact dict containing topic_id, topic_title, level, category, image_prompt
+        output_root: Override output root directory (defaults to output/{level}/{category})
+    
+    Returns:
+        Path to generated image file
+    """
+    topic_id = artifact.get("topic_id", "unknown")
+    topic_title = artifact.get("topic_title", "Untitled")
+    level = artifact.get("level", "A1")
+    category = artifact.get("category", "dialogue")
+    image_prompt = artifact.get("image_prompt", "")
+    
+    # Default output root based on level/category
+    if output_root is None:
+        output_root = settings.OUTPUT_DIR / level / category
+    
+    # File naming context from artifact
+    file_naming_context = None
+    if "files" in artifact and "image" in artifact["files"]:
+        # Extract id and slug from image path (e.g., episode_123_common_words.png)
+        image_path = artifact["files"]["image"]
+        image_name = Path(image_path).stem
+        if image_name.startswith("episode_"):
+            parts = image_name.replace("episode_", "").rsplit("_", 1)
+            if len(parts) == 2:
+                file_naming_context = {"id": parts[0], "slug": parts[1]}
+    
+    image_file = generate_topic_image(
+        topic_id=topic_id,
+        topic_title=topic_title,
+        output_root=output_root,
+        image_prompt=image_prompt,
+        file_naming_context=file_naming_context,
+    )
+    
+    # Update artifact with generated image path
+    if "files" not in artifact:
+        artifact["files"] = {}
+    artifact["files"]["image"] = str(image_file.relative_to(settings.ROOT))
+    
+    return image_file
+
+
+def main():
+    """CLI entry point for standalone image generation."""
+    parser = argparse.ArgumentParser(
+        description="Generate visual image from artifact (file or database)"
+    )
+    parser.add_argument(
+        "--artifact-file",
+        type=Path,
+        help="Path to artifact JSON file (e.g., output/A1/common_words/episode_123_common_words.json)"
+    )
+    parser.add_argument(
+        "--topic-id",
+        type=str,
+        help="Topic ID to load artifact from database"
+    )
+    parser.add_argument(
+        "--db",
+        action="store_true",
+        help="Load artifact from database (requires --topic-id)"
+    )
+    parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="Enable verbose logging"
+    )
+    
+    args = parser.parse_args()
+    
+    # Setup logging
+    log_level = logging.DEBUG if args.verbose else logging.INFO
+    logging.basicConfig(
+        level=log_level,
+        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+    )
+    
+    try:
+        # Load artifact
+        if args.artifact_file:
+            artifact = load_artifact_from_file(args.artifact_file)
+            output_root = args.artifact_file.parent
+        elif args.db and args.topic_id:
+            artifact = load_artifact_from_database(args.topic_id)
+            level = artifact.get("level", "A1")
+            category = artifact.get("category", "dialogue")
+            output_root = settings.OUTPUT_DIR / level / category
+        else:
+            parser.print_help()
+            sys.exit(1)
+        
+        # Generate image
+        image_file = generate_image_from_artifact(artifact, output_root=output_root)
+        print(f"✓ Image generated: {image_file}")
+        
+        # Optionally save updated artifact
+        if args.artifact_file:
+            artifact_path = Path(args.artifact_file)
+            with open(artifact_path, "w", encoding="utf-8") as f:
+                json.dump(artifact, f, indent=2, ensure_ascii=False)
+            print(f"✓ Artifact updated: {artifact_path}")
+        
+    except Exception as e:
+        LOGGER.error("Image generation failed: %s", str(e))
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

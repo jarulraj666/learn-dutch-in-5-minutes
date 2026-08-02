@@ -1,30 +1,16 @@
-# TTS RENDERING INSTRUCTIONS — A1 Beginner
+Read the following transcript based on the audio profile and director's note.
 
-## Purpose
-This is a rendering instruction for Gemini TTS. It controls how the audio is spoken — not what is said. The dialogue content is provided below.
+# Audio Profile
+For Speaker 1: A patient and encouraging Dutch language teacher. Speaks as if explaining to someone hearing Dutch for the very first time. Should speak clear, textbook Dutch with an authentic Amsterdam Dutch accent.
 
-## Speaker Profiles
+# Director's note
+For Speaker 1: Style: Empathetic & Encouraging. Pace: Slow & Patient. Accent: Amsterdam Dutch. Pacing Tags: Honour all inline timing and style tags such as `[pause]`, `[slow]`, and `[breath]` precisely.
 
-**Speaker1** — Male. Calm, patient Dutch teacher. Speaks as if explaining to someone hearing Dutch for the very first time. Every single word is deliberate. Warm and encouraging.
+## Scene:
+A friendly, bright classroom setting, learning a new language together.
 
-## Rendering Style
+## Sample Context:
+Clear, crisp Dutch pronunciation. Long vowels held, word endings fully spoken, and consonant clusters distinct. Patient pacing with noticeable breath pauses between sentences to give A1 beginner learners time to process every syllable.
 
-**Pacing:** Extremely slow and deliberate. Every word is fully pronounced — no elision, no contraction. Treat each sentence as if the listener needs time to register every syllable before the next begins.
-
-**Pauses:** Long, noticeable breath pause between every speaker turn. The listener is a complete beginner who needs time to process each line.
-
-**Articulation:** Crisp, textbook Dutch pronunciation. Long vowels held. Word endings fully spoken — never swallowed. Consonant clusters clear.
-
-**Tone:** Encouraging and patient. Never rushed. Never condescending. Like a kind teacher on lesson one.
-
-## Pacing Tags
-Honour all `[pause for 1 second]`, `[medium slow]`, and `[pause for 3 seconds]` tags in the transcript precisely.
-
-## Scene
-A quiet, sunlit Dutch classroom. No background noise. Learners are watching and will replay each line many times.
-
----
-
-TTS the following conversation:
-
+## Transcript:
 {dialogue}

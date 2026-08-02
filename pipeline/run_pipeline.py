@@ -21,6 +21,10 @@ from pipeline.render_video import render_from_artifact
 from pipeline.schedule_publish import next_publish_slot
 from pipeline.select_topic import choose_next_topic
 from pipeline.store_content import (
+    create_title_slug,
+    ensure_output_dir,
+    get_artifact_path,
+    save_episode_artifact,
     store_canonical_script,
     store_publish_job,
     update_publish_job_artifacts,
@@ -343,17 +347,48 @@ def run(language: str, level: str, use_multi_agent: bool = True) -> Path:
     if description_errors:
         raise ValueError(f"Description validation failed: {description_errors}")
 
-    out_dir = settings.OUTPUT_DIR
-    if not out_dir.is_absolute():
-        out_dir = settings.ROOT / out_dir
-    out_dir.mkdir(parents=True, exist_ok=True)
+    # Prepare hierarchical output directory structure: output/{level}/{category}/{type}/
+    level = topic.level
+    category = topic.category
+    title_slug = create_title_slug(metadata.get("title", topic.title_hint))
+    
+    out_dir = ensure_output_dir(level, category)
+    
+    # Also ensure subdirectories for different file types
+    audio_dir = ensure_output_dir(level, category, "audio")
+    visuals_dir = ensure_output_dir(level, category, "visuals")
+    videos_dir = ensure_output_dir(level, category, "videos")
+    subtitles_dir = ensure_output_dir(level, category, "subtitles")
+    
+    LOGGER.info(
+        "output.dirs.ready level=%s category=%s slug=%s base=%s",
+        level, category, title_slug, out_dir
+    )
 
     with _stage("voice_generation"):
-        voice_plan = generate_voice_assets(script, output_root=str(out_dir))
+        voice_plan = generate_voice_assets(
+            script,
+            output_root=str(out_dir),
+            level=level,
+            category=category,
+            topic_id=topic.topic_id,
+            title_slug=title_slug,
+        )
         LOGGER.info("voice.ready segments=%d", len(voice_plan.get("voice_segments", [])))
 
     with _stage("subtitle_generation"):
-        subtitle_plan = plan_subtitles(script)
+        dialogue_audio_path = voice_plan.get("dialogue_audio")
+        if not dialogue_audio_path:
+            raise RuntimeError("No dialogue audio path from voice generation")
+        subtitle_plan = plan_subtitles(
+            dialogue_audio_path,
+            output_root=str(out_dir),
+            level=level,
+            category=category,
+            topic_id=topic.topic_id,
+            title_slug=title_slug,
+            script_dialogue=script.get("dialogue"),
+        )
         LOGGER.info("subtitles.ready file=%s", subtitle_plan.get("srt_file", ""))
 
     with _stage("db_store_script"):
@@ -408,7 +443,11 @@ def run(language: str, level: str, use_multi_agent: bool = True) -> Path:
         },
     }
 
-    out_path = out_dir / f"episode_{canonical_script_id}.json"
+    # Generate artifact path using new naming convention: episode_{topic_id}_{slug}.json
+    # (title_slug was already calculated in output.dirs.ready stage)
+    out_path = out_dir / f"episode_{topic.topic_id}_{title_slug}.json"
+    artifact["storage"]["artifact_file"] = str(out_path)
+    
     with _stage("artifact_write_initial"):
         out_path.write_text(json.dumps(artifact, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -436,6 +475,15 @@ def run(language: str, level: str, use_multi_agent: bool = True) -> Path:
 
     with _stage("artifact_write_final"):
         out_path.write_text(json.dumps(artifact, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    with _stage("db_save_artifact"):
+        # Persist artifact JSON and path to database for later publishing
+        save_episode_artifact(
+            publish_job_id=publish_job_id,
+            artifact_json=artifact,
+            artifact_file_path=str(out_path),
+        )
+        LOGGER.info("artifact.persisted job_id=%s path=%s", publish_job_id, out_path)
 
     with _stage("db_update_artifacts"):
         update_publish_job_artifacts(
