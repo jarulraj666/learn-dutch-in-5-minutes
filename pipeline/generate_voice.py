@@ -116,8 +116,8 @@ if __name__ == "__main__":
         "language": "nl",
         "level": "A1",
         "dialogue": [
-            {"speaker": "Speaker1", "line": "Hallo! Welkom bij de les van vandaag."},
-            {"speaker": "Speaker2", "line": "Hallo docent, ik ben er klaar voor."},
+            {"Speaker1" : "Hallo! Welkom bij de les van vandaag."},
+            { "Speaker2" : "Hallo docent, ik ben er klaar voor."},
         ],
     }
 

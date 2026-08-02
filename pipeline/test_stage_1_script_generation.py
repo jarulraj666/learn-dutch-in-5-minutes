@@ -12,6 +12,7 @@ from pipeline.db import init_db, seed_topics_from_config
 from pipeline.generate_script import generate_script
 from pipeline.select_topic import choose_next_topic
 from pipeline.store_content import create_title_slug
+from pipeline.utils import iter_dialogue_turns
 
 logging.basicConfig(
     level=logging.INFO,
@@ -57,8 +58,8 @@ def main():
     LOGGER.info("Dialogue lines: %d", len(dialogue))
     
     LOGGER.info("\nDialogue content:")
-    for i, turn in enumerate(dialogue, 1):
-        LOGGER.info("  %d. [%s] %s", i, turn.get("speaker"), turn.get("line"))
+    for i, (speaker, line) in enumerate(iter_dialogue_turns(dialogue), 1):
+        LOGGER.info("  %d. %s: %s", i, speaker, line)
 
     # Save for next stage
     out_dir = Path(settings.OUTPUT_DIR)

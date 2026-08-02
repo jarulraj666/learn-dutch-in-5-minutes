@@ -15,6 +15,7 @@ from typing import Any
 from google import genai
 
 from pipeline import settings
+from pipeline.utils import iter_dialogue_turns
 
 LOGGER = logging.getLogger(__name__)
 
@@ -79,9 +80,9 @@ class GeminiTTSClient:
         prompt_template = level_path.read_text(encoding="utf-8")
 
         formatted_dialogue = "\n\n".join(
-            f"{item.get('speaker', 'Speaker1')}: {item.get('line', '')}"
-            for item in dialogue
-            if item.get("line")
+            f"{speaker}: {line}"
+            for speaker, line in iter_dialogue_turns(dialogue)
+            if line
         )
 
         return prompt_template.replace("{dialogue}", formatted_dialogue)
@@ -130,7 +131,10 @@ class GeminiTTSClient:
         current_word_count = 0
 
         for item in dialogue:
-            line = item.get("line", "")
+            parsed = iter_dialogue_turns([item])
+            if not parsed:
+                continue
+            _, line = parsed[0]
             line_word_count = len(line.split())
 
             # Finalize chunk if adding this line exceeds bounds
@@ -188,7 +192,7 @@ class GeminiTTSClient:
 
         for idx, chunk in enumerate(dialogue_chunks, start=1):
             prompt = self._load_prompt(chunk, level=level)
-            chunk_word_count = sum(len(item.get("line", "").split()) for item in chunk)
+            chunk_word_count = sum(len(line.split()) for _, line in iter_dialogue_turns(chunk))
 
             LOGGER.info(
                 "Processing chunk %d/%d (%d dialogue lines, ~%d words)",

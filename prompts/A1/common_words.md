@@ -14,7 +14,7 @@ Add one emotion/expression tag every 5–8 lines where it fits naturally:
 - `[laughs]` `[giggles]` `[sighs]` `[curious]` `[excited]` `[gasp]` `[amazed]` `[whispers]` `[serious]`
 
 Tag order: `[pause for 1 second] [slow]` first for Dutch conversation, then optional emotion tag.
-Example: `{"speaker": "Speaker1", "line": "[pause for 1 second] [slow] [excited] Heel goed!"}`
+Example: `{ "Speaker1" : "[pause for 1 second] [slow] [excited] Heel goed!"}`
 
 ## Language of Instruction (A1)
 
@@ -25,10 +25,12 @@ Example: `{"speaker": "Speaker1", "line": "[pause for 1 second] [slow] [excited]
 
 Example pattern:
 ```
-"Today we learn the word IK."
-"[pause for 1 second] [slow] I in English."
-"IK lees een boek." → "I read a book."
-"IK drink water." → "I drink water."
+"Our first word is IK."
+"Ik means I in English."
+"Let's listen to three simple example sentences with IK."
+"[pause for 1 second] [slow] Ik lees een boek." → "I read a book."
+"[pause for 1 second] [slow] Ik drink water." → "I drink water."
+"[pause for 1 second] [slow] Ik heet Anna." → "My name is Anna."
 "Remember: IK = I."
 ```
 
@@ -36,10 +38,10 @@ This bilingual approach ensures complete beginners can follow without prior Dutc
 
 ## Level: A1 | Category: Common Words
 
-**Constraints:** Max 8 words/line · Present tense only · 500-word vocabulary · Numbers 1–20 · No idioms
+**Constraints:** Max 8 words/line · Present tense only · 500-word vocabulary · Numbers 1–20 · No idioms · **Never generate a line that contains only a single Dutch word** (e.g. `[pause for 1 second] [slow] ik` alone is forbidden — always use the word inside a full sentence)
 
 ### Content Focus
-- Say each word once slowly with pause, immediately give English translation
+- Say each word and immediately give its English translation **within a sentence** — never echo the bare word on its own line
 - Use it in 2-3 short example sentences with English translations
 - Group words naturally (by person, sequence, frequency)
 - End with a spoken recap: "Vandaag leerden we: [word1], [word2], ..."
@@ -48,7 +50,7 @@ This bilingual approach ensures complete beginners can follow without prior Dutc
 
 | Phase | Lines | Content |
 |-------|-------|---------|
-| Introduction | ~15 | Welcome, name the word group to be learned today |
+| Introduction | ~15 | Welcome, name the word group to be learned today — **no English translations, just proceed** |
 | Core Narration | ~100 | Each word: say it, use in 2–3 sentences, English translation |
 
 Transition line example: `"[pause for 1 second] [slow] Laten we beginnen!"`
@@ -58,13 +60,20 @@ Transition line example: `"[pause for 1 second] [slow] Laten we beginnen!"`
 Generate a detailed text prompt for an accompanying background/topic image under the root key `"image_prompt"`.
 
 **Image Guidelines:**
-- **Style:** 3D cartoon style — vibrant colors, soft rounded forms, Pixar/Disney-quality 3D rendering.
-- **Subject:** A friendly, professional female Dutch teacher (woman in her early 30s) rendered as a 3D cartoon character in a colorful 3D classroom with a board for topic `"topic_title"`.
-- **Composition & Framing:** 
-  - **Speaker Position:** The female class room instructor MUST be positioned on the **LEFT SIDE** of the frame, looking toward the viewer with a warm, friendly expression. Keep the image straight.
-  - **RIGHT Side:** Keep the **RIGHT SIDE** clean, uncluttered, or softly blurred with neutral background space to accommodate on-screen subtitle graphics and overlays.
+- 3D stylized animation render of a friendly **female** Dutch instructor, standing close next to a bright classroom whiteboard, pointing enthusiastically at Dutch text on the upper portion of the board, vibrant colors, warm lighting, Pixar aesthetic, highly detailed, 16:9
+- **Whiteboard position must be consistent across all images:** always centered-right, large enough to fill at least two-thirds of the frame height, fully visible, flat-on (not angled).
+- The **lower half of the whiteboard** must be left completely blank/empty — no text, no drawings — to leave ample space for subtitle overlays.
+- The **instructor** stands to the left of the whiteboard, never blocking it.
+- The instructor's **hands, arms, and pointing gesture** must stay fully outside the whiteboard rectangle at all times; no overlap with board text and no intrusion into the blank lower half reserved for subtitles.
 
 ## Output JSON Structure
+
+Dialogue must be turn-based and printable in this style:
+
+Speaker1: So... what's on the agenda today?
+Speaker2: You're never going to guess!
+
+In JSON, keep each turn as a single speaker-key object.
 
 Output **ONLY** valid JSON — no text before or after, no markdown, no code blocks.
 
@@ -72,10 +81,11 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
 {
   "topic_id": "string",
   "topic_title": "string",
-  "image_prompt": "3D cartoon render in Pixar/Disney style of a friendly female Dutch teacher in her early 30s with a warm smile, rendered as a vibrant 3D cartoon character with soft rounded features, positioned on the LEFT SIDE of the frame in a bright, colorful 3D cartoon classroom. She is looking toward the viewer with an engaging expression. Behind her on the RIGHT SIDE of the frame is a visible blackboard or whiteboard displaying the topic '{topic_title}' in clear, legible text. The right side features open space for subtitle overlays. Soft warm lighting, high detail, cinematic 3D cartoon quality.",
+  "image_prompt": "3D stylized animation render of a friendly female Dutch instructor standing to the left, pointing enthusiastically toward a large bright classroom whiteboard that is always positioned on the CENTER-RIGHT of the frame, filling at least two-thirds of the frame height, flat-on and fully visible, never angled. Keep the instructor's hands and arms completely outside the whiteboard area so they never cover any board content. The whiteboard displays '{topic_title}' on the upper portion only. The lower half of the whiteboard is intentionally left completely blank and empty with no overlap from the instructor to provide ample space for subtitle overlays. Vibrant colors, warm lighting, Pixar aesthetic, highly detailed, 16:9.",
   "language": "nl",
   "dialogue": [
-    {"speaker": "Speaker1", "line": "[pause for 1 second] [slow] Goedemorgen!"}
+    {"Speaker1" : "So... what's on the agenda today?"},
+    {"Speaker1" : "You're never going to guess!"}
   ],
   "key_phrases": ["phrase1", "phrase2", "phrase3"],
   "vocabulary": [{"nl": "dutch word", "en": "english translation"}],

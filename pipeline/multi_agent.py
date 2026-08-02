@@ -7,6 +7,7 @@ from typing import Any
 from pipeline import settings
 from pipeline.generate_metadata import generate_metadata
 from pipeline.ollama_client import call_ollama, extract_json_object
+from pipeline.utils import iter_dialogue_turns, to_compact_dialogue
 
 
 @dataclass
@@ -66,12 +67,12 @@ class QuizAgent:
 class VoiceAgent:
     def run(self, dialogue: list[dict[str, Any]]) -> dict[str, Any]:
         segments = []
-        for idx, item in enumerate(dialogue, start=1):
+        for idx, (speaker, line) in enumerate(iter_dialogue_turns(dialogue), start=1):
             segments.append(
                 {
                     "segment": idx,
-                    "speaker": item.get("speaker", "Speaker1"),
-                    "text": item.get("line", ""),
+                    "speaker": speaker,
+                    "text": line,
                     "tts_status": "planned",
                 }
             )
@@ -81,11 +82,11 @@ class VoiceAgent:
 class SubtitleAgent:
     def run(self, dialogue: list[dict[str, Any]]) -> dict[str, Any]:
         lines = []
-        for idx, item in enumerate(dialogue, start=1):
+        for idx, (_, line_text) in enumerate(iter_dialogue_turns(dialogue), start=1):
             lines.append(
                 {
                     "index": idx,
-                    "text": item.get("line", ""),
+                    "text": line_text,
                     "subtitle_status": "planned",
                 }
             )
@@ -113,7 +114,9 @@ def run_multi_agent_content(topic: WorkflowTopic) -> dict[str, Any]:
     conversation = ConversationAgent().run(topic)
     grammar = GrammarReviewAgent().run(conversation)
 
-    dialogue = grammar.get("dialogue", conversation.get("dialogue", []))
+    dialogue = to_compact_dialogue(
+        iter_dialogue_turns(grammar.get("dialogue", conversation.get("dialogue", [])))
+    )
     grammar_notes = grammar.get("grammar_notes", [])
 
     vocab = VocabularyAgent().run({"dialogue": dialogue})

@@ -31,6 +31,7 @@ from pipeline.store_content import (
     update_publish_job_status,
 )
 from pipeline.upload_youtube import build_upload_payload
+from pipeline.utils import iter_dialogue_turns, to_compact_dialogue
 
 
 LOGGER = logging.getLogger(__name__)
@@ -67,8 +68,8 @@ def _estimate_dialogue_seconds(dialogue: list[dict]) -> float:
     pacing_safety_multiplier = float(speech_cfg.get("pacing_safety_multiplier", 1.08))
 
     total = 0.0
-    for turn in dialogue:
-        words = max(1, len(str(turn.get("line", "")).split()))
+    for _, line in iter_dialogue_turns(dialogue):
+        words = max(1, len(line.split()))
         total += (words / words_per_second) + per_turn_pause_seconds
     return total * pacing_safety_multiplier
 
@@ -83,18 +84,18 @@ def _normalize_line(text: str) -> str:
 
 
 def _build_unique_dialogue(dialogue: list[dict]) -> list[dict]:
-    unique_dialogue: list[dict] = []
+    unique_turns: list[tuple[str, str]] = []
     seen: set[str] = set()
-    for turn in dialogue:
-        line = str(turn.get("line", "")).strip()
+    for speaker, line in iter_dialogue_turns(dialogue):
+        line = line.strip()
         if not line:
             continue
         key = _normalize_line(line)
         if key in seen:
             continue
-        unique_dialogue.append({"speaker": turn.get("speaker", "Speaker1"), "line": line})
+        unique_turns.append((speaker, line))
         seen.add(key)
-    return unique_dialogue
+    return to_compact_dialogue(unique_turns)
 
 
 def _generate_dialogue_extension(script: dict, current_dialogue: list[dict], shortfall_seconds: float) -> list[dict]:
@@ -115,7 +116,7 @@ def _generate_dialogue_extension(script: dict, current_dialogue: list[dict], sho
         f"Generate between {min_turns} and {max_turns} new turns.\n"
         "Rules:\n"
         "- Output ONLY JSON object with key dialogue.\n"
-        "- JSON format: {\"dialogue\": [{\"speaker\": \"Speaker1|Speaker2\", \"line\": \"...\"}]}\n"
+        "- JSON format: {\"dialogue\": [{\"Speaker1\": \"...\"}, {\"Speaker2\": \"...\"}]}\n"
         "- Every line must be unique and short (max 10 words).\n"
         "- No filler instructions like 'repeat after me'.\n"
         "- Keep pace slow and beginner-friendly.\n"
@@ -128,7 +129,7 @@ def _generate_dialogue_extension(script: dict, current_dialogue: list[dict], sho
     parsed = extract_json_object(response_text)
     extension = parsed.get("dialogue", [])
     if isinstance(extension, list):
-        result = [item for item in extension if isinstance(item, dict)]
+        result = to_compact_dialogue(iter_dialogue_turns(extension))
         if not result:
             raise ValueError("Dialogue extension returned empty list despite successful parsing")
         return result
@@ -144,7 +145,7 @@ def _expand_script_to_target_duration(script: dict, target_seconds: int) -> dict
     if not dialogue:
         return script
 
-    used_lines = {_normalize_line(str(t.get("line", ""))) for t in dialogue}
+    used_lines = {_normalize_line(line) for _, line in iter_dialogue_turns(dialogue)}
     rounds = 0
     successful_extensions = 0
     min_successful_extensions = 1  # Accept after just 1 successful extension
@@ -170,15 +171,14 @@ def _expand_script_to_target_duration(script: dict, target_seconds: int) -> dict
             break
 
         added = 0
-        for item in extension:
-            speaker = item.get("speaker", "Speaker1")
-            line = str(item.get("line", "")).strip()
+        for speaker, line in iter_dialogue_turns(extension):
+            line = line.strip()
             if not line:
                 continue
             normalized = _normalize_line(line)
             if normalized in used_lines:
                 continue
-            dialogue.append({"speaker": speaker, "line": line})
+            dialogue.append({speaker: line})
             used_lines.add(normalized)
             added += 1
 
@@ -233,8 +233,10 @@ def _save_script_exports(
     lines.append("## Conversation")
     lines.append("")
     for turn in script.get("dialogue", []):
-        speaker = turn.get("speaker", "Speaker")
-        line = str(turn.get("line", "")).strip()
+        parsed_turns = iter_dialogue_turns([turn])
+        if not parsed_turns:
+            continue
+        speaker, line = parsed_turns[0]
         lines.append(f"- {speaker}: {line}")
 
     key_phrases = script.get("key_phrases", [])
@@ -350,7 +352,7 @@ def run(language: str, level: str, use_multi_agent: bool = True) -> Path:
     # Prepare hierarchical output directory structure: output/{level}/{category}/{type}/
     level = topic.level
     category = topic.category
-    title_slug = create_title_slug(metadata.get("title", topic.title_hint))
+    title_slug = create_title_slug(topic.title_hint)
     
     out_dir = ensure_output_dir(level, category)
     

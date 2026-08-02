@@ -15,7 +15,7 @@ Add one emotion/expression tag every 5–8 lines where it fits naturally:
 - `[laughs]` `[giggles]` `[sighs]` `[curious]` `[excited]` `[gasp]` `[amazed]` `[whispers]` `[serious]`
 
 Tag order: `[pause for 1 second] [medium slow]` first, then optional emotion tag.
-Example: `{"speaker": "Speaker1", "line": "[pause for 1 second] [medium slow] [excited] Heel goed!"}`
+Example: `{"Speaker1": "[pause for 1 second] [medium slow] [excited] Heel goed!"}`
 
 ## Level: B2 | Category: Dialogue
 
@@ -48,7 +48,7 @@ Example: `{"speaker": "Speaker1", "line": "[pause for 1 second] [medium slow] [e
 **8 rounds × 6 lines each:**
 1. Speaker1: asks the question
 2. Speaker1: short English pause prompt (`"Think about it..."`, `"Can you remember?"`)
-3. `{"speaker": "Speaker1", "line": "[pause for 3 seconds]"}`
+3. `{"Speaker1": "[pause for 3 seconds]"}`
 4. Speaker2: thinking filler with tag (e.g. `[sighs] Hmm, laat me even nadenken...`)
 5. Speaker2: gives the answer
 6. Speaker1: confirms with `[excited]`
@@ -63,7 +63,7 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
   "topic_title": "string",
   "language": "nl",
   "dialogue": [
-    {"speaker": "Speaker1", "line": "[pause for 1 second] [medium slow] Goedemorgen!"}
+    {"Speaker1": "[pause for 1 second] [medium slow] Goedemorgen!"}
   ],
   "key_phrases": ["phrase1", "phrase2", "phrase3"],
   "vocabulary": [{"nl": "dutch word", "en": "english translation"}],

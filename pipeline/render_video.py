@@ -110,6 +110,87 @@ def _build_video_with_karaoke(
         return False, str(exc)
 
 
+def _build_intro_clip(
+    intro_image: Path,
+    output_path: Path,
+    width: int,
+    height: int,
+    fps: int,
+    crf: int,
+    preset: str,
+) -> tuple[bool, str]:
+    """Create a 1-second clip from a static image with silent audio."""
+    cmd = [
+        "ffmpeg", "-y",
+        "-loop", "1", "-framerate", str(fps), "-i", str(intro_image),
+        "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000",
+        "-vf", f"scale={width}:{height},setsar=1",
+        "-c:v", "libx264", "-preset", preset, "-crf", str(crf), "-pix_fmt", "yuv420p",
+        "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
+        "-t", "1",
+        str(output_path),
+    ]
+    LOGGER.info("ffmpeg.intro_clip %s", " ".join(cmd))
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        if result.stderr:
+            LOGGER.debug("ffmpeg.intro_clip.stderr %s", result.stderr[-1000:])
+        return True, ""
+    except subprocess.CalledProcessError as exc:
+        return False, exc.stderr or exc.stdout or str(exc)
+    except Exception as exc:
+        return False, str(exc)
+
+
+def _concat_video_segments(
+    parts: list[Path],
+    output_path: Path,
+    width: int,
+    height: int,
+    fps: int,
+    crf: int,
+    preset: str,
+) -> tuple[bool, str]:
+    """Concatenate A/V segments together so audio stays aligned per segment."""
+    n = len(parts)
+    inputs: list[str] = []
+    for p in parts:
+        inputs.extend(["-i", str(p)])
+
+    filter_parts: list[str] = []
+    for i in range(n):
+        # Reset timestamps per segment before concatenation to avoid boundary drift.
+        filter_parts.append(f"[{i}:v]scale={width}:{height},fps={fps},setsar=1,setpts=PTS-STARTPTS[v{i}]")
+        filter_parts.append(
+            f"[{i}:a]aresample=48000,aformat=channel_layouts=stereo,asetpts=PTS-STARTPTS[a{i}]"
+        )
+
+    av_in = "".join(f"[v{i}][a{i}]" for i in range(n))
+    filter_parts.append(f"{av_in}concat=n={n}:v=1:a=1[outv][outa]")
+    filter_complex = ";".join(filter_parts)
+
+    cmd = [
+        "ffmpeg", "-y",
+        *inputs,
+        "-filter_complex", filter_complex,
+        "-map", "[outv]", "-map", "[outa]",
+        "-c:v", "libx264", "-preset", preset, "-crf", str(crf), "-pix_fmt", "yuv420p",
+        "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
+        str(output_path),
+    ]
+    LOGGER.info("ffmpeg.concat %s", " ".join(cmd))
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        if result.stderr:
+            LOGGER.debug("ffmpeg.concat.stderr %s", result.stderr[-2000:])
+        return True, ""
+    except subprocess.CalledProcessError as exc:
+        LOGGER.error("ffmpeg.concat.failed stderr=%s", (exc.stderr or exc.stdout or "")[-2000:])
+        return False, exc.stderr or exc.stdout or str(exc)
+    except Exception as exc:
+        return False, str(exc)
+
+
 def render_from_artifact(artifact_path: Path) -> Path:
     render_start = time.perf_counter()
     LOGGER.info("render.start artifact=%s", artifact_path)
@@ -177,16 +258,64 @@ def render_from_artifact(artifact_path: Path) -> Path:
     if not ffmpeg_available:
         raise RuntimeError("ffmpeg is not installed or not on PATH.")
 
+    # Render main video (with burned subtitles) to a temp path so concat
+    # does not disturb the subtitle timing offsets.
+    main_video_tmp = video_dir / f"_main_{output_mp4.name}"
     assembled, render_error = _build_video_with_karaoke(
         audio_path=audio_path,
         ass_path=ass_path,
-        output_mp4=output_mp4,
+        output_mp4=main_video_tmp,
         burn_subtitles=subtitles_filter_available,
         image_path=image_path,
     )
     subtitle_burned_in = assembled and subtitles_filter_available
     if not assembled:
         raise RuntimeError(f"Video render failed: {render_error}")
+
+    # Stitch intro image (1 s) + main video + end video
+    render_cfg = settings.load_yaml(settings.ROOT / "config/visual_style.yaml").get("render", {})
+    width = int(render_cfg.get("width", 1920))
+    height = int(render_cfg.get("height", 1080))
+    fps = int(render_cfg.get("fps", 30))
+    crf = int(render_cfg.get("crf", 19))
+    preset = str(render_cfg.get("preset", "slow"))
+
+    intro_image = settings.ROOT / "assets" / "static_images" / "intro_image.png"
+    end_video = settings.ROOT / "assets" / "static_videos" / "end_video.mp4"
+
+    concat_parts: list[Path] = []
+    intro_clip_tmp: Path | None = None
+
+    if intro_image.exists():
+        intro_clip_tmp = video_dir / "_intro_clip.mp4"
+        ok, err = _build_intro_clip(intro_image, intro_clip_tmp, width, height, fps, crf, preset)
+        if ok:
+            concat_parts.append(intro_clip_tmp)
+        else:
+            LOGGER.warning("intro_clip.failed err=%s — skipping intro", err)
+            intro_clip_tmp = None
+    else:
+        LOGGER.warning("intro_image.not_found path=%s — skipping intro", intro_image)
+
+    concat_parts.append(main_video_tmp)
+
+    if end_video.exists():
+        concat_parts.append(end_video)
+    else:
+        LOGGER.warning("end_video.not_found path=%s — skipping outro", end_video)
+
+    if len(concat_parts) > 1:
+        ok, err = _concat_video_segments(concat_parts, output_mp4, width, height, fps, crf, preset)
+        if not ok:
+            LOGGER.warning("concat.failed err=%s — using main video only", err)
+            main_video_tmp.replace(output_mp4)
+    else:
+        main_video_tmp.replace(output_mp4)
+
+    # Clean up temp files
+    for tmp in [main_video_tmp, intro_clip_tmp]:
+        if tmp and tmp.exists():
+            tmp.unlink(missing_ok=True)
 
     topic_data = data.get("topic", {})
     render_manifest = {

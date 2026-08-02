@@ -19,7 +19,7 @@ speech:
     gemini:
       # Google Gemini 3.1 Flash TTS
       # Voices: Kore, Puck, Charon, Fenrir, Orion
-      Speaker1: Kore
+      Speaker1: Erinome
       Speaker2: Puck
     kokoro:
       # Kokoro v1.0: English TTS (local ONNX)

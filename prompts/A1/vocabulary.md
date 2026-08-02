@@ -15,7 +15,7 @@ Add one emotion/expression tag every 5–8 lines where it fits naturally:
 - `[laughs]` `[giggles]` `[sighs]` `[curious]` `[excited]` `[gasp]` `[amazed]` `[whispers]` `[serious]`
 
 Tag order: `[pause for 1 second] [slow]` first, then optional emotion tag.
-Example: `{"speaker": "Speaker1", "line": "[pause for 1 second] [slow] [excited] Heel goed!"}`
+Example: `{"Speaker1": "[pause for 1 second] [slow] [excited] Heel goed!"}`
 
 ## Language of Instruction (A1)
 
@@ -64,7 +64,7 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
   "topic_title": "string",
   "language": "nl",
   "dialogue": [
-    {"speaker": "Speaker1", "line": "[pause for 1 second] [slow] Goedemorgen!"}
+    {"Speaker1": "[pause for 1 second] [slow] Goedemorgen!"}
   ],
   "key_phrases": ["phrase1", "phrase2", "phrase3"],
   "vocabulary": [{"nl": "dutch word", "en": "english translation"}],

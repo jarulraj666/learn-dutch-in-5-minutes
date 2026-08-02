@@ -8,6 +8,7 @@ from typing import Any
 
 from pipeline import settings
 from pipeline.select_topic import TopicChoice
+from pipeline.utils import iter_dialogue_turns, to_compact_dialogue
 
 LOGGER = logging.getLogger(__name__)
 
@@ -131,8 +132,14 @@ def _prompt_for_topic(
         f"Topic hint: {topic.title_hint}\n"
         f"Category: {category}\n"
         f'Set the "language" field in JSON to "{language}".\n'
+        f"Set dialogue format to compact speaker-key objects, e.g. {{\"Speaker1\": \"Hello\"}}.\n"
         f"Keep content at CEFR {level} and output strict JSON only."
     )
+
+
+def _build_script_text(turns: list[tuple[str, str]]) -> str:
+    """Create newline transcript in SpeakerX: text style."""
+    return "\n".join(f"{speaker}: {line}" for speaker, line in turns if line)
 
 
 def generate_script(
@@ -146,6 +153,10 @@ def generate_script(
     prompt = _prompt_for_topic(topic, language, level=effective_level)
 
     script = _generate_script_gemini(prompt)
+
+    turns = iter_dialogue_turns(script.get("dialogue", []))
+    script["dialogue"] = to_compact_dialogue(turns)
+    script["script_text"] = _build_script_text(turns)
 
     # Inject level and category into script so downstream stages can use them
     script.setdefault("level", effective_level)
