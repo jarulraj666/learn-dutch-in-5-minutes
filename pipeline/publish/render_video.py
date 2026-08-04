@@ -242,7 +242,7 @@ def render_from_artifact(artifact_path: Path) -> Path:
     # Require pre-generated background image in artifact
     image_file = data.get("generated_image_file")
     if not image_file:
-        raise ValueError("Artifact must contain 'generated_image_file'. Run Stage 3b first.")
+        raise ValueError("Artifact must contain 'generated_image_file'. Ensure image generation ran successfully.")
 
     ip = Path(image_file)
     if not ip.is_absolute():

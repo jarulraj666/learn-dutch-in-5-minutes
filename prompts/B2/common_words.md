@@ -21,7 +21,7 @@ Example: `{"Speaker1": "[pause for 1 second] [medium slow] [excited] Heel goed!"
 **Constraints:** Max 25 words/line · All tenses · Wide vocabulary · Formal register · Nominalisations · Fixed expressions
 
 ### Content Focus
-- Each word: formal definition, 3–4 sentences across tenses and registers, collocation, formal/informal note
+- Each word: formal definition, **1 example sentence**, collocation, formal/informal note
 - Include false cognates or tricky usage where applicable
 - End with a register and usage summary
 
@@ -30,7 +30,7 @@ Example: `{"Speaker1": "[pause for 1 second] [medium slow] [excited] Heel goed!"
 | Phase | Lines | Content |
 |-------|-------|---------|
 | Introduction | ~8 | Name the word group, explain B2 context |
-| Core Narration | ~110 | Each word: definition, examples, collocations, register |
+| Core Narration | ~110 | Each word: definition, 1 example sentence, collocations, register |
 | Recap | ~42 | Usage tips and register summary |
 
 ## Output JSON Structure

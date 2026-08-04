@@ -21,7 +21,7 @@ Example: `{"Speaker1": "[pause for 1 second] [medium slow] [excited] Heel goed!"
 **Constraints:** Max 18 words/line · All tenses incl. perfect · 2000-word vocabulary · Collocations and fixed expressions
 
 ### Content Focus
-- Each word: definition, 3 example sentences across different tenses, 1 common collocation
+- Each word: definition, **1 example sentence**, 1 common collocation
 - Note register (formal/informal) where relevant
 - End with a usage tip and spoken summary
 
@@ -30,7 +30,7 @@ Example: `{"Speaker1": "[pause for 1 second] [medium slow] [excited] Heel goed!"
 | Phase | Lines | Content |
 |-------|-------|---------|
 | Introduction | ~8 | Name the word group, explain why it matters at B1 |
-| Core Narration | ~100 | Each word: meaning, tense examples, collocation, register note |
+| Core Narration | ~100 | Each word: meaning, 1 example sentence, collocation, register note |
 | Recap | ~42 | Collocations and usage tips summary |
 
 ## Output JSON Structure

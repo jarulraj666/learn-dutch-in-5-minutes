@@ -21,7 +21,7 @@ Example: `{"Speaker1": "[pause for 1 second] [medium slow] [excited] Heel goed!"
 **Constraints:** Max 14 words/line · Present + simple past · 1000-word vocabulary · Numbers 1–100
 
 ### Content Focus
-- Each word: say it, give English translation, use in 2–3 sentences (present and past)
+- Each word: say it, give English translation, use in **1 example sentence**
 - Show related word forms where useful (e.g. "werken → werk, werker, werkdag")
 - End with a spoken recap of all words covered
 
@@ -30,7 +30,7 @@ Example: `{"Speaker1": "[pause for 1 second] [medium slow] [excited] Heel goed!"
 | Phase | Lines | Content |
 |-------|-------|---------|
 | Introduction | ~10 | Welcome, name the word group |
-| Core Narration | ~80 | Each word: definition, present + past examples, word family |
+| Core Narration | ~80 | Each word: definition, 1 example sentence, word family |
 | Recap | ~30 | Quick spoken run-through of all words |
 
 ## Output JSON Structure

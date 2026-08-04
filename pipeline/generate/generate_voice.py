@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from pipeline import settings
-from pipeline.gemini_tts_client import create_gemini_client
+from pipeline.clients.gemini_tts_client import create_gemini_client
 
 LOGGER = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ def generate_voice_assets(
     language = script.get("language") or speech_cfg.get("language", "nl")
     script_level = level or script.get("level", "A1")
 
-    voice_dir = Path(output_root) / level / category / "audio"
+    voice_dir = Path(output_root) / "audio"
     voice_dir.mkdir(parents=True, exist_ok=True)
 
     audio_filename = f"episode_{topic_id}_{title_slug}.wav"

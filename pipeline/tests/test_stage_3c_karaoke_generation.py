@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 
 from pipeline import settings
-from pipeline.generate_subtitles import generate_karaoke_from_segments
+from pipeline.generate.generate_subtitles import generate_karaoke_from_segments
 
 logging.basicConfig(
     level=logging.INFO,

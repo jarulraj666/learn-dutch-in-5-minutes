@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 
 from pipeline import settings
-from pipeline.generate_voice import generate_voice_assets
+from pipeline.generate.generate_voice import generate_voice_assets
 
 logging.basicConfig(
     level=logging.INFO,

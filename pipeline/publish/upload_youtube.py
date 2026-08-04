@@ -5,6 +5,8 @@ import json
 import os
 from pathlib import Path
 
+from pipeline import settings  # ensures .env is loaded
+
 
 SCOPES = [
     "https://www.googleapis.com/auth/youtube.upload",
@@ -12,25 +14,39 @@ SCOPES = [
 ]
 
 
+def _sanitize_description(text: str) -> str:
+    """Sanitize description for YouTube: remove angle brackets, null bytes, truncate to 5000 chars."""
+    text = text.replace("\x00", "")
+    text = text.replace("<", "").replace(">", "")
+    text = text.strip()
+    return text[:5000]
+
+
 def build_upload_payload(artifact_path: Path) -> dict:
     data = json.loads(artifact_path.read_text(encoding="utf-8"))
     metadata = data.get("metadata", {})
     subtitle_files = data.get("subtitles", {}).get("srt_files", {})
 
+    status = {
+        "privacyStatus": "private",
+        "selfDeclaredMadeForKids": False,
+    }
+    scheduled_at = data.get("scheduled_at")
+    if scheduled_at:
+        status["publishAt"] = scheduled_at
+
     return {
         "snippet": {
-            "title": metadata.get("title", ""),
-            "description": metadata.get("description", ""),
+            "title": metadata.get("title", "")[:100],
+            "description": _sanitize_description(metadata.get("description", "")),
             "tags": metadata.get("tags", []),
             "categoryId": "27"
         },
-        "status": {
-            "privacyStatus": "private",
-            "publishAt": data.get("scheduled_at"),
-            "selfDeclaredMadeForKids": False,
-        },
+        "status": status,
         "playlist": data.get("playlist", ""),
+        "playlist_description": data.get("playlist_description", ""),
         "topic": data.get("topic", {}),
+        "thumbnail": data.get("generated_image_file", ""),
         "captions": {
             "nl": subtitle_files.get("nl", ""),
             "en": subtitle_files.get("en", ""),
@@ -98,20 +114,38 @@ def upload_video(artifact_path: Path, video_file: Path) -> dict:
     playlist_name = payload.get("playlist", "")
     playlist_id = None
     if playlist_name:
-        playlist_id = ensure_playlist(youtube, playlist_name)
+        playlist_id = ensure_playlist(youtube, playlist_name, payload.get("playlist_description", ""))
         if playlist_id and response.get("id"):
             add_video_to_playlist(youtube, playlist_id, response["id"])
 
     captions_uploaded = []
+    thumbnail_uploaded = False
     video_id = response.get("id")
     if video_id:
         captions_uploaded.extend(upload_caption_tracks(youtube, video_id, payload.get("captions", {})))
+
+        thumbnail = payload.get("thumbnail", "")
+        if thumbnail:
+            thumb_path = Path(thumbnail)
+            if not thumb_path.is_absolute():
+                thumb_path = (artifact_path.parent.parent.parent / thumbnail).resolve()
+            if thumb_path.exists():
+                try:
+                    youtube.thumbnails().set(
+                        videoId=video_id,
+                        media_body=MediaFileUpload(str(thumb_path), mimetype="image/png"),
+                    ).execute()
+                    thumbnail_uploaded = True
+                except Exception as exc:
+                    import logging
+                    logging.getLogger(__name__).warning("Thumbnail upload failed: %s", exc)
 
     return {
         "video_id": video_id,
         "playlist_name": playlist_name,
         "playlist_id": playlist_id,
         "captions_uploaded": captions_uploaded,
+        "thumbnail_uploaded": thumbnail_uploaded,
     }
 
 
@@ -149,7 +183,7 @@ def upload_caption_tracks(youtube, video_id: str, captions: dict) -> list[dict]:
     return uploaded
 
 
-def ensure_playlist(youtube, title: str) -> str:
+def ensure_playlist(youtube, title: str, description: str = "") -> str:
     request = youtube.playlists().list(
         part="snippet",
         mine=True,
@@ -165,7 +199,7 @@ def ensure_playlist(youtube, title: str) -> str:
     create = youtube.playlists().insert(
         part="snippet,status",
         body={
-            "snippet": {"title": title, "description": "Auto-created by Dutch video pipeline"},
+            "snippet": {"title": title, "description": description or "Auto-created by Dutch video pipeline"},
             "status": {"privacyStatus": "public"},
         },
     )

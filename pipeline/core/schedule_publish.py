@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from pipeline import settings
-from pipeline.db import get_connection
+from pipeline.core.db import get_connection
 
 
 def _get_last_scheduled_time() -> datetime | None:

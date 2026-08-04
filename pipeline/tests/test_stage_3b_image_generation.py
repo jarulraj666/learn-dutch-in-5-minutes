@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 
 from pipeline import settings
-from pipeline.generate_visual_image import generate_topic_image
+from pipeline.generate.generate_visual_image import generate_topic_image
 
 logging.basicConfig(
     level=logging.INFO,

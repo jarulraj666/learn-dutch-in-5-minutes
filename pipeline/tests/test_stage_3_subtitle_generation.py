@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 
 from pipeline import settings
-from pipeline.generate_subtitles import plan_subtitles
+from pipeline.generate.generate_subtitles import plan_subtitles
 
 logging.basicConfig(
     level=logging.INFO,

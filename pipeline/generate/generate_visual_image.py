@@ -68,9 +68,9 @@ def generate_topic_image(
 
         client = genai.Client(api_key=settings.GEMINI_IMAGE_CREATION_API_KEY)
 
-        # Using Gemini 2.5 Flash Image
+        # Using Gemini 3.1 Flash Image
         response = client.models.generate_content(
-            model="gemini-2.5-flash-image",
+            model="gemini-3.1-flash-lite-image",
             contents=f"Generate a 16:9 image: {image_prompt}",
         )
 
@@ -82,7 +82,7 @@ def generate_topic_image(
                     break
 
         if not image_bytes:
-            raise RuntimeError("No image data returned from Gemini 2.5 Flash Image.")
+            raise RuntimeError("No image data returned from Gemini 3.1 Flash Lite Image.")
 
         image = Image.open(BytesIO(image_bytes))
         image.save(output_png, format="PNG")
@@ -122,7 +122,7 @@ def load_artifact_from_file(artifact_path: Path) -> dict[str, Any]:
 def load_artifact_from_database(topic_id: str) -> dict[str, Any]:
     """Load artifact JSON from database canonical_scripts table."""
     try:
-        from pipeline.db import get_db
+        from pipeline.core.db import get_db
         
         db = get_db()
         cursor = db.cursor()
@@ -186,9 +186,13 @@ def generate_image_from_artifact(
     # Update artifact with generated image path
     if "files" not in artifact:
         artifact["files"] = {}
-    artifact["files"]["image"] = str(image_file.relative_to(settings.ROOT))
+    resolved = image_file.resolve()
+    try:
+        artifact["files"]["image"] = str(resolved.relative_to(settings.ROOT.resolve()))
+    except ValueError:
+        artifact["files"]["image"] = str(image_file)
     
-    return image_file
+    return resolved
 
 
 def main():

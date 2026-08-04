@@ -36,7 +36,15 @@ def _strip_tts_tags(text: str) -> str:
 
 
 def _smooth_segment_boundaries(segments: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Enforce monotonic, non-overlapping segment boundaries."""
+    """Enforce monotonic, non-overlapping segment boundaries.
+
+    Also caps each segment's duration so WhisperX silence absorption
+    (e.g. at TTS chunk boundaries) cannot stretch a line to unrealistic lengths.
+    Max duration is generous: 1.8 seconds per word, minimum 1.5 s per segment.
+    """
+    MAX_SECONDS_PER_WORD = 1.8
+    MIN_DURATION = 1.5
+
     smoothed: list[dict[str, Any]] = []
     prev_end = 0.0
 
@@ -49,6 +57,13 @@ def _smooth_segment_boundaries(segments: list[dict[str, Any]]) -> list[dict[str,
             end = prev_end
 
         start = max(prev_end, start)
+        end = max(start, end)
+
+        # Cap duration: never longer than word_count × MAX_SECONDS_PER_WORD
+        text = seg.get("text", "")
+        word_count = max(1, len(text.split()))
+        max_duration = max(MIN_DURATION, word_count * MAX_SECONDS_PER_WORD)
+        end = min(end, start + max_duration)
         end = max(start, end)
 
         updated = dict(seg)
@@ -207,6 +222,8 @@ def _build_ass_karaoke_text(
 
     tokens: list[str] = []
     num_words = len(clean_words)
+    accumulated_cs = 0  # track total karaoke time used so far
+    line_duration_cs = max(1, int(round((seg_end - seg_start) * 100.0)))
 
     # Fill in any missing timestamps linearly between valid surrounding bounds
     for i, w in enumerate(clean_words):
@@ -228,6 +245,16 @@ def _build_ass_karaoke_text(
         # end timestamp, which would make the highlight sweep far too slowly.
         raw_cs = int(round((float(w_end) - float(w_start)) * 100.0))
         dur_cs = max(1, min(raw_cs, 150))
+
+        # Never let accumulated karaoke time exceed the line duration
+        remaining_cs = line_duration_cs - accumulated_cs
+        if i == num_words - 1:
+            # Last word gets whatever time remains in the line
+            dur_cs = max(1, remaining_cs)
+        else:
+            dur_cs = min(dur_cs, max(1, remaining_cs - (num_words - i - 1)))
+
+        accumulated_cs += dur_cs
         tokens.append(f"{{\\kf{dur_cs}}}{w['word']}")
 
     return " ".join(tokens) if tokens else fallback_text
@@ -244,7 +271,7 @@ PlayResY: 1080
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Arial,44,&H00FFFFFF,&H0000FFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,3,0,8,550,240,486,1
+Style: Default,Arial,54,&H00FFFFFF,&H0000FFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,3,0,8,550,240,486,1
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
@@ -261,26 +288,19 @@ def _stitch_subtitle_rows(
     rows: list[tuple[float, float, str]],
     min_duration: float = 0.45,
     lead_out_padding: float = 0.0,
+    inter_line_gap: float = 0.08,
+    max_bridge_gap: float = 3.0,
 ) -> list[tuple[float, float, str]]:
-    """Keep subtitles visible between turns by bridging to the next turn start."""
+    """Return subtitle rows with no bridging — subtitle disappears when speech ends."""
     if not rows:
         return []
 
     stitched: list[tuple[float, float, str]] = []
-    for i, (start, end, text) in enumerate(rows):
+    for start, end, text in rows:
         new_start = max(0.0, float(start))
         new_end = max(new_start, float(end))
-
-        # Ensure each line is visible long enough, especially short interjections.
         new_end = max(new_end, new_start + min_duration)
-
-        if i < len(rows) - 1:
-            next_start = max(new_start, float(rows[i + 1][0]))
-            bridged_end = max(new_end, next_start - lead_out_padding)
-            # Never cross the next line boundary.
-            new_end = min(bridged_end, next_start)
-
-        stitched.append((new_start, max(new_start, new_end), text))
+        stitched.append((new_start, new_end, text))
 
     return stitched
 
@@ -297,7 +317,7 @@ def generate_karaoke_from_segments(
     """Stage 3c: Write ASS karaoke subtitle file from aligned segments."""
     del script_dialogue  # Kept for API compatibility
 
-    out_dir = Path(output_root) / level / category / "subtitles"
+    out_dir = Path(output_root) / "subtitles"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # Collect raw segment data

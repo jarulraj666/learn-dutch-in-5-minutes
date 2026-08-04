@@ -57,6 +57,20 @@ topics:
     track: daily_life
     title_hint: "Top 10 Dutch verbs: zijn, hebben, gaan, komen, doen, zeggen, zien, weten, willen, kunnen"
 
+  - id: cw_conjunctions_basic
+    level: A1
+    category: common_words
+    order_index: 9
+    track: daily_life
+    title_hint: "Basic conjunctions: en, maar, of, want, dus"
+
+  - id: cw_frequency_words
+    level: A1
+    category: common_words
+    order_index: 10
+    track: daily_life
+    title_hint: "Frequency words: altijd, vaak, soms, nooit, meestal"
+
   # ── VOCABULARY (A1) ──────────────────────────────────────────────────────
   - id: vocab_greetings
     level: A1
@@ -121,6 +135,13 @@ topics:
     track: daily_life
     title_hint: "Time expressions: nu, later, vandaag, morgen, gisteren, vroeg, laat"
 
+  - id: vocab_school_items
+    level: A1
+    category: vocabulary
+    order_index: 10
+    track: education
+    title_hint: "School items: boek, pen, potlood, schrift, tas, gum"
+
   # ── GRAMMAR (A1) ─────────────────────────────────────────────────────────
   - id: grammar_de_het
     level: A1
@@ -170,6 +191,27 @@ topics:
     order_index: 7
     track: daily_life
     title_hint: "Plural nouns in Dutch: -en and -s endings"
+
+  - id: grammar_possessive_pronouns
+    level: A1
+    category: grammar
+    order_index: 8
+    track: daily_life
+    title_hint: "Possessive pronouns: mijn, jouw, zijn, haar, ons, jullie, hun"
+
+  - id: grammar_modal_verbs
+    level: A1
+    category: grammar
+    order_index: 9
+    track: daily_life
+    title_hint: "Modal verbs in present tense: kunnen, mogen, moeten, willen"
+
+  - id: grammar_adjective_basics
+    level: A1
+    category: grammar
+    order_index: 10
+    track: daily_life
+    title_hint: "Adjective basics: adjective before noun and simple agreement"
 
   # ── DIALOGUE (A1) ────────────────────────────────────────────────────────
   - id: intro_name_origin

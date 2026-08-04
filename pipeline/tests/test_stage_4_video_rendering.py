@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 
 from pipeline import settings
-from pipeline.render_video import render_from_artifact
+from pipeline.publish.render_video import render_from_artifact
 
 logging.basicConfig(
     level=logging.INFO,

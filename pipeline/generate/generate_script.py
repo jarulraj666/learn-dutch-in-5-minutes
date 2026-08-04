@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from pipeline import settings
-from pipeline.select_topic import TopicChoice
+from pipeline.core.select_topic import TopicChoice
 from pipeline.utils import iter_dialogue_turns, to_compact_dialogue
 
 LOGGER = logging.getLogger(__name__)
@@ -209,7 +209,7 @@ def _generate_script_gemini(prompt: str) -> dict[str, Any]:
     from google.genai import types
 
     client = genai.Client(api_key=settings.GEMINI_API_KEY)
-    models_to_try = ["gemini-3.6-flash", "gemini-2.0-flash"]
+    models_to_try = ["gemini-3.6-flash", "gemini-3.5-flash-lite"]
 
     for model_name in models_to_try:
         try:

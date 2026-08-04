@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from pipeline import settings
-from pipeline.db import get_connection
+from pipeline.core.db import get_connection
 from pipeline.utils import content_fingerprint, now_utc_iso
 
 

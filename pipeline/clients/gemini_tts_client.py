@@ -19,7 +19,61 @@ from pipeline.utils import iter_dialogue_turns
 
 LOGGER = logging.getLogger(__name__)
 
-_PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
+_PROMPTS_DIR = Path(__file__).parent.parent.parent / "prompts"
+
+
+def _trim_long_silences(
+    pcm: bytes,
+    sample_rate: int = 24000,
+    sample_width: int = 2,
+    max_silence_sec: float = 2.0,
+    silence_threshold: int = 200,
+) -> bytes:
+    """Compress runs of silence longer than max_silence_sec down to max_silence_sec.
+
+    Uses a simple amplitude threshold on 16-bit PCM samples.
+    Keeps natural pauses intact while removing excessive TTS-generated silence.
+    """
+    import struct
+
+    samples_per_frame = sample_rate // 100  # 10ms frames
+    max_silent_frames = int(max_silence_sec * 100)  # in 10ms units
+    bytes_per_sample = sample_width
+    frame_bytes = samples_per_frame * bytes_per_sample
+
+    output_frames: list[bytes] = []
+    silent_run = 0
+    i = 0
+
+    while i + frame_bytes <= len(pcm):
+        frame = pcm[i : i + frame_bytes]
+        # Check if frame is silent (all samples below threshold)
+        samples = struct.unpack(f"<{samples_per_frame}h", frame)
+        is_silent = max(abs(s) for s in samples) < silence_threshold
+
+        if is_silent:
+            silent_run += 1
+            if silent_run <= max_silent_frames:
+                output_frames.append(frame)
+            # else: drop frame (trim excess silence)
+        else:
+            silent_run = 0
+            output_frames.append(frame)
+
+        i += frame_bytes
+
+    # Append any leftover bytes
+    if i < len(pcm):
+        output_frames.append(pcm[i:])
+
+    result = b"".join(output_frames)
+    trimmed_sec = (len(pcm) - len(result)) / (sample_rate * bytes_per_sample)
+    if trimmed_sec > 0.1:
+        import logging
+        logging.getLogger(__name__).info(
+            "silence_trim: removed %.1f s of excess silence from audio", trimmed_sec
+        )
+    return result
 
 
 def write_wave_file(
@@ -112,8 +166,8 @@ class GeminiTTSClient:
     ) -> list[list[dict[str, str]]]:
         """Groups dialogue lines dynamically based on recommended word bounds.
 
-        Splits chunks cleanly at dialogue line boundaries to prevent truncated audio
-        and maintain clear inflection across speaker turns.
+        Prefers to split at natural section boundaries (new word/topic introductions)
+        so the TTS receives complete teaching blocks without mid-block context loss.
 
         Args:
             dialogue: Full dialogue line entries.
@@ -123,12 +177,24 @@ class GeminiTTSClient:
         Returns:
             List of chunked dialogue lists.
         """
+        import re
         if not dialogue:
             return []
+
+        # Detect lines that start a new teaching block — these are preferred break points.
+        _SECTION_START = re.compile(
+            r"^(our (first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|\d+\w*)"
+            r"|next[, ]|now (let|we)|let'?s (move|look|begin|start)|moving on)",
+            re.IGNORECASE,
+        )
+
+        def _is_section_start(line: str) -> bool:
+            return bool(_SECTION_START.match(line.strip()))
 
         chunks: list[list[dict[str, str]]] = []
         current_chunk: list[dict[str, str]] = []
         current_word_count = 0
+        pending_break = False  # defer break until next section boundary
 
         for item in dialogue:
             parsed = iter_dialogue_turns([item])
@@ -136,15 +202,22 @@ class GeminiTTSClient:
                 continue
             _, line = parsed[0]
             line_word_count = len(line.split())
+            at_boundary = _is_section_start(line)
 
-            # Finalize chunk if adding this line exceeds bounds
-            if (
-                current_word_count + line_word_count > max_words
-                or current_word_count >= target_words
-            ) and current_chunk:
+            # Hard limit: must break regardless of boundary
+            hard_limit = current_word_count + line_word_count > max_words
+
+            # Soft limit reached — defer break until next section boundary
+            if current_word_count >= target_words and not pending_break:
+                pending_break = True
+
+            should_break = (pending_break and at_boundary) or hard_limit
+
+            if should_break and current_chunk:
                 chunks.append(current_chunk)
                 current_chunk = []
                 current_word_count = 0
+                pending_break = False
 
             current_chunk.append(item)
             current_word_count += line_word_count
@@ -248,8 +321,9 @@ class GeminiTTSClient:
 
             pcm_buffers.append(raw_pcm)
 
-        # Write concatenated audio
+        # Write concatenated audio with silence trimming
         full_pcm = b"".join(pcm_buffers)
+        full_pcm = _trim_long_silences(full_pcm, sample_rate=24000, max_silence_sec=2.0)
         target_file = Path(output_path).with_suffix(".wav")
         write_wave_file(target_file, full_pcm, channels=1, rate=24000, sample_width=2)
 

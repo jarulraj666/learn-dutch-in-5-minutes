@@ -11,12 +11,7 @@ db/*.db
 db/*.sqlite
 
 # Output files (generated content)
-output/audio/
-output/videos/
-output/visuals/
-output/archive/
-output/scripts/
-output/*.json
+output/**
 
 # Python packaging
 *.egg-info/

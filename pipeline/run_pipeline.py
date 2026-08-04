@@ -9,28 +9,21 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from pipeline import settings
-from pipeline.db import init_db, mark_topic_done, seed_topics_from_config
-from pipeline.generate_metadata import generate_metadata
-from pipeline.generate_subtitles import plan_subtitles
-from pipeline.generate_voice import generate_voice_assets
-from pipeline.generate_script import generate_script
-from pipeline.multi_agent import UploadPrepAgent, WorkflowTopic, run_multi_agent_content
-from pipeline.ollama_client import call_ollama, extract_json_object
-from pipeline.qa_checks import validate_description, validate_script_structure
-from pipeline.render_video import render_from_artifact
-from pipeline.schedule_publish import next_publish_slot
-from pipeline.select_topic import choose_next_topic
-from pipeline.store_content import (
+from pipeline.core.db import init_db, mark_topic_done, seed_topics_from_config
+from pipeline.generate.generate_metadata import generate_metadata
+from pipeline.generate.generate_subtitles import plan_subtitles
+from pipeline.generate.generate_voice import generate_voice_assets
+from pipeline.generate.generate_visual_image import generate_image_from_artifact
+from pipeline.generate.generate_script import generate_script
+from pipeline.publish.render_video import render_from_artifact
+from pipeline.core.select_topic import choose_next_topic
+from pipeline.core.store_content import (
     create_title_slug,
     ensure_output_dir,
     get_artifact_path,
-    save_episode_artifact,
     store_canonical_script,
-    store_publish_job,
-    update_publish_job_artifacts,
-    update_publish_job_status,
 )
-from pipeline.upload_youtube import build_upload_payload
+from pipeline.publish.upload_youtube import build_upload_payload, upload_video
 from pipeline.utils import iter_dialogue_turns, to_compact_dialogue
 
 
@@ -53,7 +46,15 @@ def _playlist_name(level: str, track: str) -> str:
     playlist = by_level.get(track)
     if not playlist:
         raise ValueError(f"No playlist configured for level={level} track={track}")
-    return playlist
+    return playlist["name"] if isinstance(playlist, dict) else playlist
+
+
+def _playlist_description(level: str, track: str) -> str:
+    by_level = settings.PLAYLISTS_CONFIG.get("playlists", {}).get(level, {})
+    playlist = by_level.get(track)
+    if isinstance(playlist, dict):
+        return playlist.get("description", "")
+    return ""
 
 
 def _estimate_dialogue_seconds(dialogue: list[dict]) -> float:
@@ -72,127 +73,6 @@ def _estimate_dialogue_seconds(dialogue: list[dict]) -> float:
         words = max(1, len(line.split()))
         total += (words / words_per_second) + per_turn_pause_seconds
     return total * pacing_safety_multiplier
-
-
-def _conversation_target_seconds() -> int:
-    configured_target = int(settings.PEDAGOGY_CONFIG.get("conversation_target_seconds", 180))
-    return max(180, configured_target)
-
-
-def _normalize_line(text: str) -> str:
-    return " ".join(text.lower().split())
-
-
-def _build_unique_dialogue(dialogue: list[dict]) -> list[dict]:
-    unique_turns: list[tuple[str, str]] = []
-    seen: set[str] = set()
-    for speaker, line in iter_dialogue_turns(dialogue):
-        line = line.strip()
-        if not line:
-            continue
-        key = _normalize_line(line)
-        if key in seen:
-            continue
-        unique_turns.append((speaker, line))
-        seen.add(key)
-    return to_compact_dialogue(unique_turns)
-
-
-def _generate_dialogue_extension(script: dict, current_dialogue: list[dict], shortfall_seconds: float) -> list[dict]:
-    language = script.get("language", "nl")
-    topic_title = script.get("topic_title", "Dutch beginner conversation")
-    key_phrases = script.get("key_phrases", [])[:6]
-    recent_dialogue = current_dialogue[-8:]
-
-    min_turns = max(10, int(shortfall_seconds // 9))
-    max_turns = min(24, min_turns + 6)
-
-    prompt = (
-        "You are creating CEFR A1 beginner dialogue in Dutch. "
-        "Continue the SAME conversation naturally with NEW ideas and no repeated lines.\n"
-        f"Language: {language}\n"
-        f"Topic: {topic_title}\n"
-        f"Needed speaking time shortfall (seconds): {round(shortfall_seconds, 1)}\n"
-        f"Generate between {min_turns} and {max_turns} new turns.\n"
-        "Rules:\n"
-        "- Output ONLY JSON object with key dialogue.\n"
-        "- JSON format: {\"dialogue\": [{\"Speaker1\": \"...\"}, {\"Speaker2\": \"...\"}]}\n"
-        "- Every line must be unique and short (max 10 words).\n"
-        "- No filler instructions like 'repeat after me'.\n"
-        "- Keep pace slow and beginner-friendly.\n"
-        "- Alternate speakers naturally.\n"
-        f"Use these phrases naturally when useful: {json.dumps(key_phrases, ensure_ascii=False)}\n"
-        f"Recent dialogue context: {json.dumps(recent_dialogue, ensure_ascii=False)}\n"
-    )
-
-    response_text = call_ollama(prompt)
-    parsed = extract_json_object(response_text)
-    extension = parsed.get("dialogue", [])
-    if isinstance(extension, list):
-        result = to_compact_dialogue(iter_dialogue_turns(extension))
-        if not result:
-            raise ValueError("Dialogue extension returned empty list despite successful parsing")
-        return result
-    else:
-        raise ValueError("Expected 'dialogue' key with list value in response")
-
-
-
-
-
-def _expand_script_to_target_duration(script: dict, target_seconds: int) -> dict:
-    dialogue = _build_unique_dialogue(list(script.get("dialogue", [])))
-    if not dialogue:
-        return script
-
-    used_lines = {_normalize_line(line) for _, line in iter_dialogue_turns(dialogue)}
-    rounds = 0
-    successful_extensions = 0
-    min_successful_extensions = 1  # Accept after just 1 successful extension
-    max_rounds = 3  # Try at most 3 times (was 10, too aggressive)
-    
-    while successful_extensions < min_successful_extensions and rounds < max_rounds:
-        rounds += 1
-        shortfall = target_seconds - _estimate_dialogue_seconds(dialogue)
-        
-        # If we're close enough to target, accept what we have
-        if shortfall < 30:
-            LOGGER.info("expansion.close_enough rounds=%d shortfall=%f seconds", rounds, shortfall)
-            break
-        
-        try:
-            extension = _generate_dialogue_extension(script, dialogue, shortfall_seconds=shortfall)
-        except Exception as e:
-            LOGGER.warning("expansion.parse_failed round=%d error=%s, accepting current dialogue", rounds, str(e))
-            break
-        
-        if not extension:
-            LOGGER.warning("expansion.empty_response round=%d, accepting current dialogue", rounds)
-            break
-
-        added = 0
-        for speaker, line in iter_dialogue_turns(extension):
-            line = line.strip()
-            if not line:
-                continue
-            normalized = _normalize_line(line)
-            if normalized in used_lines:
-                continue
-            dialogue.append({speaker: line})
-            used_lines.add(normalized)
-            added += 1
-
-        if added > 0:
-            successful_extensions += 1
-            LOGGER.info("expansion.success round=%d added=%d total_lines=%d", rounds, added, len(dialogue))
-        else:
-            LOGGER.warning("expansion.no_new_lines round=%d, accepting current dialogue", rounds)
-            break
-
-    script["dialogue"] = dialogue
-    final_seconds = _estimate_dialogue_seconds(dialogue)
-    LOGGER.info("expansion.complete successful_extensions=%d final_seconds=%f target_seconds=%d", successful_extensions, final_seconds, target_seconds)
-    return script
 
 
 def _archive_video(video_path: Path, canonical_script_id: int) -> Path:
@@ -286,72 +166,38 @@ def _save_script_exports(
     }
 
 
-def run(language: str, level: str, use_multi_agent: bool = True) -> Path:
+def run(language: str, level: str, category: str | None = None, upload: bool = True) -> Path:
     run_start = time.perf_counter()
     LOGGER.info(
-        "pipeline.start language=%s level=%s mode=%s",
-        language,
-        level,
-        "multi_agent" if use_multi_agent else "single_agent",
+        "=== PIPELINE START language=%s level=%s category=%s ===",
+        language, level, category or "auto",
     )
 
     with _stage("db_init"):
         init_db()
         seed_topics_from_config()
+        LOGGER.info("✓ Database initialized")
 
     with _stage("topic_selection"):
-        topic = choose_next_topic(level=level)
+        topic = choose_next_topic(level=level, category=category)
+        level = topic.level
+        category = topic.category
         LOGGER.info(
-            "topic.selected id=%s level=%s category=%s track=%s title=%s",
-            topic.topic_id, topic.level, topic.category, topic.track, topic.title_hint,
+            "✓ Topic selected: %s | level=%s category=%s track=%s",
+            topic.title_hint, topic.level, topic.category, topic.track,
         )
 
     with _stage("script_generation"):
-        if use_multi_agent:
-            script = run_multi_agent_content(
-                WorkflowTopic(
-                    topic_id=topic.topic_id,
-                    topic_title=topic.title_hint,
-                    track=topic.track,
-                    language=language,
-                )
-            )
-        else:
-            script = generate_script(topic, language=language, level=topic.level)
-
-    with _stage("script_expansion"):
-        conversation_target_seconds = _conversation_target_seconds()
-        script = _expand_script_to_target_duration(script, target_seconds=conversation_target_seconds)
-        LOGGER.info(
-            "script.expanded turns=%d est_seconds=%.2f target_seconds=%d",
-            len(script.get("dialogue", [])),
-            _estimate_dialogue_seconds(script.get("dialogue", [])),
-            conversation_target_seconds,
-        )
-
-    with _stage("script_validation"):
-        script_errors = validate_script_structure(script)
-    if script_errors:
-        raise ValueError(f"Script validation failed: {script_errors}")
+        script = generate_script(topic, language=language, level=topic.level)
+        LOGGER.info("✓ Script generated: %d dialogue lines", len(script.get("dialogue", [])))
 
     with _stage("metadata_generation"):
-        playlist_name = _playlist_name(level, topic.track)
-        if use_multi_agent:
-            metadata = UploadPrepAgent().run(script, playlist_track=topic.track).get("upload_metadata", {})
-            if not metadata:
-                metadata = generate_metadata(script, playlist_track=topic.track)
-        else:
-            metadata = generate_metadata(script, playlist_track=topic.track)
-        LOGGER.info("metadata.ready title=%s playlist=%s", metadata.get("title", ""), playlist_name)
-
-    with _stage("description_validation"):
-        description_errors = validate_description(metadata["description"])
-    if description_errors:
-        raise ValueError(f"Description validation failed: {description_errors}")
+        playlist_name = _playlist_name(level, topic.category)
+        playlist_description = _playlist_description(level, topic.category)
+        metadata = generate_metadata(script, playlist_track=topic.category, level=level, category=category)
+        LOGGER.info("✓ Metadata: title=%s | playlist=%s", metadata.get("title", ""), playlist_name)
 
     # Prepare hierarchical output directory structure: output/{level}/{category}/{type}/
-    level = topic.level
-    category = topic.category
     title_slug = create_title_slug(topic.title_hint)
     
     out_dir = ensure_output_dir(level, category)
@@ -376,7 +222,7 @@ def run(language: str, level: str, use_multi_agent: bool = True) -> Path:
             topic_id=topic.topic_id,
             title_slug=title_slug,
         )
-        LOGGER.info("voice.ready segments=%d", len(voice_plan.get("voice_segments", [])))
+        LOGGER.info("✓ Voice generated: %s", voice_plan.get("dialogue_audio", ""))
 
     with _stage("subtitle_generation"):
         dialogue_audio_path = voice_plan.get("dialogue_audio")
@@ -391,7 +237,24 @@ def run(language: str, level: str, use_multi_agent: bool = True) -> Path:
             title_slug=title_slug,
             script_dialogue=script.get("dialogue"),
         )
-        LOGGER.info("subtitles.ready file=%s", subtitle_plan.get("srt_file", ""))
+        LOGGER.info("✓ Subtitles generated: %s", subtitle_plan.get("srt_file", ""))
+
+    with _stage("image_generation"):
+        image_prompt = script.get("image_prompt", "")
+        result = generate_image_from_artifact(
+            {
+                "topic_id": topic.topic_id,
+                "topic_title": script.get("topic_title", topic.title_hint),
+                "image_prompt": image_prompt,
+                "level": level,
+                "category": category,
+            },
+            output_root=out_dir,
+        )
+        generated_image_file = str(result) if result else ""
+        if not generated_image_file:
+            raise RuntimeError("Image generation returned no file path.")
+        LOGGER.info("✓ Image generated: %s", generated_image_file)
 
     with _stage("db_store_script"):
         canonical_script_id = store_canonical_script(
@@ -400,16 +263,6 @@ def run(language: str, level: str, use_multi_agent: bool = True) -> Path:
             title=metadata["title"],
             script=script,
         )
-
-    with _stage("db_store_publish_job"):
-        scheduled_dt = next_publish_slot()
-        publish_job_id = store_publish_job(
-            canonical_script_id=canonical_script_id,
-            playlist_track=topic.track,
-            scheduled_at_iso=scheduled_dt.isoformat(),
-            playlist_name=playlist_name,
-        )
-        LOGGER.info("publish.job.created id=%s schedule=%s", publish_job_id, scheduled_dt.isoformat())
 
     with _stage("script_export"):
         script_exports = _save_script_exports(
@@ -421,22 +274,32 @@ def run(language: str, level: str, use_multi_agent: bool = True) -> Path:
         )
 
     artifact = {
+        # Flat fields expected by render_video and upload_youtube
+        "level": level,
+        "category": category,
+        "topic_id": topic.topic_id,
+        "title_slug": title_slug,
+        "audio_file": voice_plan.get("dialogue_audio", ""),
+        "karaoke_file": subtitle_plan.get("karaoke_file", ""),
+        "generated_image_file": generated_image_file or "",
+        # Nested context
         "topic": {
             "id": topic.topic_id,
+            "level": level,
+            "category": category,
             "track": topic.track,
+            "title_slug": title_slug,
             "title_hint": topic.title_hint,
         },
-        "workflow_mode": "multi_agent" if use_multi_agent else "single_agent",
+        "workflow_mode": "single_agent",
         "playlist": playlist_name,
+        "playlist_description": playlist_description,
         "canonical_script_id": canonical_script_id,
-        "publish_job_id": publish_job_id,
-        "scheduled_at": scheduled_dt.isoformat(),
         "script": script,
         "metadata": metadata,
         "voice": voice_plan,
         "subtitles": subtitle_plan,
         "timing": {
-            "conversation_target_seconds": conversation_target_seconds,
             "estimated_conversation_seconds": round(_estimate_dialogue_seconds(script.get("dialogue", [])), 2),
             "target_video_seconds": int(settings.PEDAGOGY_CONFIG.get("target_duration_seconds", 300)),
         },
@@ -478,35 +341,20 @@ def run(language: str, level: str, use_multi_agent: bool = True) -> Path:
     with _stage("artifact_write_final"):
         out_path.write_text(json.dumps(artifact, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    with _stage("db_save_artifact"):
-        # Persist artifact JSON and path to database for later publishing
-        save_episode_artifact(
-            publish_job_id=publish_job_id,
-            artifact_json=artifact,
-            artifact_file_path=str(out_path),
-        )
-        LOGGER.info("artifact.persisted job_id=%s path=%s", publish_job_id, out_path)
-
-    with _stage("db_update_artifacts"):
-        update_publish_job_artifacts(
-            publish_job_id=publish_job_id,
-            artifact_path=str(out_path),
-            video_file_path=stable_video_path,
-        )
-
-    with _stage("db_update_status"):
-        if render_manifest.get("assembled"):
-            update_publish_job_status(
-                publish_job_id=publish_job_id,
-                status="ready_for_upload",
-                status_detail="Render complete. Ready for publish queue.",
-            )
+    if upload:
+        video_path_for_upload = Path(stable_video_path) if stable_video_path else None
+        if video_path_for_upload and video_path_for_upload.exists():
+            with _stage("upload_youtube"):
+                try:
+                    result = upload_video(out_path, video_path_for_upload)
+                    artifact["youtube"] = result
+                    out_path.write_text(json.dumps(artifact, ensure_ascii=False, indent=2), encoding="utf-8")
+                    LOGGER.info("✓ Uploaded to YouTube: video_id=%s playlist=%s",
+                                result.get("video_id"), result.get("playlist_name"))
+                except Exception as exc:
+                    LOGGER.warning("⚠ YouTube upload failed (video saved locally): %s", exc)
         else:
-            update_publish_job_status(
-                publish_job_id=publish_job_id,
-                status="render_incomplete",
-                status_detail=render_manifest.get("render_error", "Render incomplete"),
-            )
+            LOGGER.warning("⚠ Upload skipped — no rendered video found at: %s", stable_video_path)
 
     LOGGER.info(
         "pipeline.done episode=%s elapsed_sec=%.2f artifact=%s",
@@ -522,11 +370,17 @@ def run(language: str, level: str, use_multi_agent: bool = True) -> Path:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run Dutch video content MVP pipeline")
-    parser.add_argument("--language", default="nl")
-    parser.add_argument("--level", default="A1", choices=["A1", "A2", "B1", "B2"])
-    parser.add_argument("--single-agent", action="store_true", help="Use original one-shot generation")
+    parser = argparse.ArgumentParser(description="Run Dutch video content pipeline")
+    parser.add_argument("--language", default="nl", help="Target language code (default: nl)")
+    parser.add_argument("--level", default="A1", choices=["A1", "A2", "B1", "B2"], help="CEFR level")
+    parser.add_argument(
+        "--category",
+        choices=["common_words", "grammar", "vocabulary", "dialogue"],
+        default=None,
+        help="Generate all videos for a specific category, or one video if omitted",
+    )
     parser.add_argument("--log-level", default="INFO", help="DEBUG, INFO, WARNING, ERROR")
+    parser.add_argument("--no-upload", action="store_true", help="Skip YouTube upload after rendering")
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -534,8 +388,38 @@ def main() -> None:
         format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
     )
 
-    out_path = run(language=args.language, level=args.level, use_multi_agent=not args.single_agent)
-    print(f"Pipeline completed. Artifact: {out_path}")
+    if args.category:
+        # Batch mode: generate all pending topics in the category
+        completed = []
+        failed = []
+        video_num = 1
+        while True:
+            LOGGER.info(
+                "\n=== VIDEO %d | category=%s ===", video_num, args.category
+            )
+            try:
+                out_path = run(language=args.language, level=args.level, category=args.category, upload=not args.no_upload)
+                completed.append(str(out_path))
+                LOGGER.info("✓ Video %d done: %s", video_num, out_path)
+                video_num += 1
+            except (RuntimeError, Exception) as exc:
+                if "No pending or selected topics" in str(exc):
+                    LOGGER.info("✓ All topics in category '%s' are done.", args.category)
+                    break
+                failed.append(str(exc))
+                LOGGER.error("✗ Video %d failed: %s", video_num, exc)
+                video_num += 1
+
+        print(f"\n=== BATCH COMPLETE ===")
+        print(f"✓ Generated: {len(completed)} video(s)")
+        if failed:
+            print(f"✗ Failed:    {len(failed)} video(s)")
+        for path in completed:
+            print(f"  - {path}")
+    else:
+        # Single mode: generate next pending topic across all categories
+        out_path = run(language=args.language, level=args.level, category=None, upload=not args.no_upload)
+        print(f"\n✓ Pipeline completed. Artifact: {out_path}")
 
 
 if __name__ == "__main__":

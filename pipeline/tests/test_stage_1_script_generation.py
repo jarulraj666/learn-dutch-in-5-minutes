@@ -8,10 +8,10 @@ import logging
 from pathlib import Path
 
 from pipeline import settings
-from pipeline.db import init_db, seed_topics_from_config
-from pipeline.generate_script import generate_script
-from pipeline.select_topic import choose_next_topic
-from pipeline.store_content import create_title_slug
+from pipeline.core.db import init_db, seed_topics_from_config
+from pipeline.generate.generate_script import generate_script
+from pipeline.core.select_topic import choose_next_topic
+from pipeline.core.store_content import create_title_slug
 from pipeline.utils import iter_dialogue_turns
 
 logging.basicConfig(
