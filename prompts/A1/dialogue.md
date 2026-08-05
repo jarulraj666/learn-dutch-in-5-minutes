@@ -1,98 +1,60 @@
-You are generating an A1-level Dutch lesson for Gemini TTS multi-speaker audio generation.
+You are generating an A1-level Dutch conversation for Gemini TTS multi-speaker audio generation.
 
 ## Role
-Act out a complete beginner Dutch conversation in a real-world situation. Two speakers roleplay a scenario the viewer can practise in real life.
+Generate a natural, realistic Dutch conversation between two speakers in a real-world scenario. The conversation should flow naturally as it would in real life — let the scenario dictate the content, pacing, and length.
 
 ## Speakers
-**Speaker1** — Calm, knowledgeable Dutch teacher (female voice). Plays the Dutch native or shopkeeper.
-**Speaker2** — Warm, enthusiastic language partner (female voice). Plays the learner or visitor.
+**Speaker1** — {speaker1_role}, {speaker1_gender} voice. Use a name appropriate for a {speaker1_gender} person.
+**Speaker2** — {speaker2_role}, {speaker2_gender} voice. Use a name appropriate for a {speaker2_gender} person.
 
-## TTS Audio Tags
+## Scenario
+The conversation takes place in: **{scenario}**
 
-Prepend **`[slow]`** to EVERY Dutch dialogue line. Don't add it for English dialogue.
+## TTS Notes
 
-Example: `{ "Speaker1" : "[slow] Heel goed!"}`
+Write clean dialogue lines without inline speech tags. Do not add bracketed markers such as `[slow]`, `[pause for 1 second]`, or expression tags.
 
-## Language of Instruction (A1)
+## Language
 
-**Explanations, transitions, and instructions → English**
-**Target Dutch words and example sentences → Dutch**
-**After every Dutch sentence → provide the English translation**
+All dialogue must be in Dutch. No English in any dialogue line.
 
+Use simple, everyday words that people actually say in real life. No complex vocabulary, no formal or literary language. Short sentences. Present tense. Words a beginner would hear on the street, in a shop, or at home.
 
-Example pattern:
-```
-"Our first word is IK."
-"Ik means I in English."
-"Let's listen to three simple example sentences with IK."
-"[slow] Ik lees een boek." → "I read a book."
-"[slow] Ik drink water." → "I drink water."
-"[slow] Ik heet Anna." → "My name is Anna."
-"Remember: IK = I."
-```
+Aim for approximately **120–140 dialogue turns** total.
 
-This bilingual approach ensures complete beginners can follow without prior Dutch knowledge.
+## Image Prompt
 
-## Level: A1 | Category: Dialogue
+Generate a detailed image prompt under `"image_prompt"` reflecting the scenario: **{scenario}**
 
-**Constraints:** Max 8 words/line · Present tense only · 500-word vocabulary · Repeat key phrases 3× · Numbers 1–20 · No idioms · **Never generate a line that contains only a single Dutch word**
+3D stylized animation render of {scenario}. 16:9 aspect ratio, Pixar aesthetic, warm lighting, highly detailed. **Light, airy background colours** — soft pastels, creamy whites, warm beiges, pale blues or light warm tones. Bright and cheerful feel. No dark or saturated backgrounds.
 
-### Content Focus
-- Stay in the scenario throughout (café, station, street, shop, etc.)
-- Use 5–7 key phrases the viewer can reuse in real life
-- Repeat each key phrase naturally in slightly different contexts
-- Keep it realistic: greet → transact → close
-- Check in with "Begrijp je?" or "Oké?" every 8–10 lines
-- End with a spoken recap: "Vandaag leerden we: [phrase1], [phrase2], ..."
-
-### Episode Structure (2 phases, ~115 lines)
-
-| Phase | Lines | Content |
-|-------|-------|---------|
-| Introduction | ~15 | Set the scene; explain the situation and what phrases they will practise — **no English translations, just proceed** |
-| Core Dialogue | ~100 | The scenario plays out between Speaker1 and Speaker2; key phrases repeated in context |
-
-Transition line example: `"[slow] Laten we beginnen!"`
-
-## Realistic Image Prompt Generation
-
-Generate a detailed text prompt for an accompanying background/topic image under the root key `"image_prompt"`.
-
-**Image Guidelines:**
-3D stylized animation render of a friendly female Dutch instructor standing in a bright classroom. 16:9 aspect ratio, Pixar aesthetic, warm lighting, vibrant colors, highly detailed.
-
-LAYOUT & COMPOSITION:
-- Left 25% to 30% of the frame: Features the upper body of a lean female Dutch instructor in a welcoming pose. Her hands and arms remain completely outside the blackboard area at all times.
-- Right 70% to 75% of the frame: Dominated by a large, clean, rectangular classroom blackboard with a soft matte off-black surface (reduced brightness, no glare). The blackboard must be landscape-oriented — its width must be strictly greater than its height. The blackboard must be perfectly flat-on (no severe angles or perspective distortion) and fully visible in its entirety — all four edges must be clearly within the frame, never cropped or cut off.
-
-BLACKBOARD CONTENT:
-- Upper half of the blackboard: Features clear, readable Dutch text. The blackboard displays the exact title '{topic_title}' on the upper portion only — spell it exactly as written, no alterations, no paraphrasing.
-- Lower half of the blackboard: Must be left completely blank and empty (no text, drawings, or accessories) to allow space for subtitle overlays.
+LAYOUT (strict):
+- Full background: The {scenario} environment fills 100% of the frame — rich, detailed, and in focus.
+- Left 35–40% : {speaker1_gender} character ({speaker1_role}) positioned naturally, facing inward toward the center.
+- Right 35–40% : {speaker2_gender} character ({speaker2_role}) positioned naturally, facing inward toward the center.
+- Center 20%: Open space — no characters, no obstructions.
 
 ## Output JSON Structure
-
-Dialogue must be turn-based and printable in this style:
-
-Speaker1: So... what's on the agenda today?
-Speaker2: You're never going to guess!
-
-In JSON, keep each turn as a single speaker-key object.
 
 Output **ONLY** valid JSON — no text before or after, no markdown, no code blocks.
 
 ```json
 {
   "topic_id": "string",
-  "topic_title": "Dutch title shown on blackboard",
+  "topic_title": "Dutch title",
   "topic_title_en": "English title used for YouTube metadata",
-  "image_prompt": "3D stylized animation render of a friendly female Dutch instructor standing in a bright classroom. 16:9 aspect ratio, Pixar aesthetic, warm lighting, vibrant colors, highly detailed. LAYOUT: The upper body of a lean female Dutch instructor occupies the left 25% to 30% of the frame in a welcoming pose — her hands and arms remain completely outside the blackboard area at all times. The right 70% to 75% of the frame is dominated by a large, clean, rectangular classroom blackboard with a soft matte off-black surface (reduced brightness, no glare). The blackboard must be landscape-oriented — its width must be strictly greater than its height. It must be perfectly flat-on (no severe angles or perspective distortion) and fully visible in its entirety — all four edges must be clearly within the frame, never cropped or cut off. BLACKBOARD CONTENT: Upper half displays the exact title '{topic_title}' in clear, readable Dutch text — spell it exactly as written, no alterations, no paraphrasing. Lower half is intentionally left completely blank and empty — no text, drawings, or accessories — to allow space for subtitle overlays.",
+  "image_prompt": "...",
   "language": "nl",
   "dialogue": [
-    {"Speaker1" : "So... what's on the agenda today?"},
-    {"Speaker2" : "You're never going to guess!"}
+    {"Speaker1": "Goedemiddag!"},
+    {"Speaker2": "Goedemiddag, kan ik u helpen?"}
   ],
   "key_phrases": ["phrase1", "phrase2", "phrase3"],
+  "dialogue_en": [
+    {"Speaker1": "English translation of Speaker1 line"},
+    {"Speaker2": "English translation of Speaker2 line"}
+  ],
   "vocabulary": [{"nl": "dutch word", "en": "english translation"}],
-  "quiz": [],
   "grammar_notes": [{"title": "rule", "explanation": "...", "examples": ["ex1", "ex2"]}]
 }
+```

@@ -141,11 +141,85 @@ def load_artifact_from_database(topic_id: str) -> dict[str, Any]:
         raise RuntimeError("Database not available; cannot load artifact from DB")
 
 
+def _enrich_dialogue_image_prompt(
+    artifact: dict[str, Any],
+    level: str,
+) -> str:
+    """Enrich image prompt for dialogue category using speaker/scenario metadata.
+    
+    Loads dialogue.md template and substitutes placeholders from artifact.
+    
+    Args:
+        artifact: Artifact dict containing scenario, speakers (list), and topic_title.
+        level: CEFR level (A1, A2, B1, B2).
+    
+    Returns:
+        Enriched image prompt string ready for Gemini image generation.
+    """
+    # Load dialogue prompt template
+    prompt_path = settings.ROOT / "prompts" / level / "dialogue.md"
+    if not prompt_path.exists():
+        LOGGER.warning(
+            "Dialogue prompt template not found at %s; using artifact image_prompt",
+            prompt_path,
+        )
+        return artifact.get("image_prompt", "")
+    
+    prompt_text = prompt_path.read_text(encoding="utf-8")
+    
+    # Extract speaker metadata from artifact
+    speakers = artifact.get("speakers", [])
+    scenario = artifact.get("scenario", "cafe")
+    
+    # Build speaker role/gender map
+    speaker1_role = "Dutch teacher"
+    speaker1_gender = "female"
+    speaker2_role = "learner"
+    speaker2_gender = "female"
+    
+    if speakers and len(speakers) >= 2:
+        speaker1 = speakers[0]
+        speaker2 = speakers[1] if len(speakers) > 1 else {}
+        
+        speaker1_role = speaker1.get("role", speaker1_role)
+        speaker1_gender = speaker1.get("gender", speaker1_gender)
+        speaker2_role = speaker2.get("role", speaker2_role)
+        speaker2_gender = speaker2.get("gender", speaker2_gender)
+    
+    # Substitute placeholders (case-insensitive for gender capitalization)
+    enriched = prompt_text.replace("{scenario}", scenario)
+    enriched = enriched.replace("{speaker1_role}", speaker1_role)
+    enriched = enriched.replace("{speaker2_role}", speaker2_role)
+    enriched = enriched.replace("{speaker1_gender}", speaker1_gender)
+    enriched = enriched.replace("{speaker2_gender}", speaker2_gender)
+    enriched = enriched.replace("{topic_title}", artifact.get("topic_title", ""))
+    
+    # Extract only the image prompt section (from "Realistic Image Prompt Generation" onwards)
+    # This ensures we use the structured image guidelines from the template
+    image_prompt_section = ""
+    lines = enriched.split("\n")
+    in_image_section = False
+    
+    for line in lines:
+        if "Realistic Image Prompt Generation" in line:
+            in_image_section = True
+        elif line.strip().startswith("## ") and in_image_section and "Realistic" not in line:
+            # Stop at next section
+            break
+        elif in_image_section and line.strip():
+            image_prompt_section += line + "\n"
+    
+    return image_prompt_section.strip() if image_prompt_section.strip() else artifact.get("image_prompt", "")
+
+
 def generate_image_from_artifact(
     artifact: dict[str, Any],
     output_root: Optional[Path] = None,
 ) -> Path:
     """Generate image from an artifact dict (loaded from file or DB).
+    
+    For dialogue category: Enriches image_prompt using dialogue.md template and speaker metadata.
+    For other categories: Uses image_prompt directly from artifact.
     
     Args:
         artifact: Artifact dict containing topic_id, topic_title, level, category, image_prompt
@@ -159,6 +233,16 @@ def generate_image_from_artifact(
     level = artifact.get("level", "A1")
     category = artifact.get("category", "dialogue")
     image_prompt = artifact.get("image_prompt", "")
+    
+    # For dialogue category, enrich image_prompt from dialogue.md template
+    if category == "dialogue":
+        enriched_prompt = _enrich_dialogue_image_prompt(artifact, level)
+        if enriched_prompt:
+            image_prompt = enriched_prompt
+            LOGGER.info(
+                "Enriched dialogue image prompt for topic_id=%s from dialogue.md template",
+                topic_id,
+            )
     
     # Default output root based on level/category
     if output_root is None:

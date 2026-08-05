@@ -7,6 +7,7 @@ Handles: subtitles, image, video render, YouTube upload.
 import json
 import sys
 import os
+import logging
 from pathlib import Path
 from typing import Optional
 import argparse
@@ -103,6 +104,16 @@ def run_audio(artifact_path: str) -> str:
         title_slug=artifact["title_slug"],
     )
     audio_path = result.get("dialogue_audio")
+
+    # Persist latest audio paths so subsequent stages can auto-detect correctly.
+    if audio_path:
+        artifact["audio_file"] = audio_path
+    raw_audio_path = result.get("dialogue_audio_raw")
+    if raw_audio_path:
+        artifact["audio_file_raw"] = raw_audio_path
+    artifact_file = Path(artifact_path)
+    artifact_file.write_text(json.dumps(artifact, indent=2), encoding="utf-8")
+
     print("✅ Audio regenerated")
     return audio_path
 
@@ -233,6 +244,7 @@ Examples:
     )
     
     parser.add_argument("artifact", help="Path to artifact JSON file")
+    parser.add_argument("--log-level", default="INFO", help="DEBUG, INFO, WARNING, ERROR")
     parser.add_argument("--script", action="store_true", help="Re-generate script")
     parser.add_argument("--audio-gen", action="store_true", help="Re-generate audio")
     parser.add_argument("--subtitles", metavar="AUDIO_FILE", nargs="?", const="auto", help="Re-generate subtitles (optional audio file, auto-detects from artifact if omitted)")
@@ -242,6 +254,11 @@ Examples:
     parser.add_argument("--all", action="store_true", help="Run all stages (script → audio → subtitles → image → render → upload)")
     
     args = parser.parse_args()
+
+    logging.basicConfig(
+        level=getattr(logging, args.log_level.upper(), logging.INFO),
+        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    )
     
     try:
         # If no specific operation, show interactive menu
@@ -253,12 +270,17 @@ Examples:
         if args.script:
             run_script(args.artifact)
         
+        audio_file_from_stage = None
+
         if args.audio_gen:
-            run_audio(args.artifact)
+            audio_file_from_stage = run_audio(args.artifact)
         
         if args.subtitles:
             # Handle optional audio file (None or "auto" triggers auto-detection)
-            audio_file = None if args.subtitles == "auto" else args.subtitles
+            if args.subtitles == "auto":
+                audio_file = audio_file_from_stage
+            else:
+                audio_file = args.subtitles
             run_subtitles(args.artifact, audio_file)
         
         if args.image:
@@ -283,6 +305,7 @@ Examples:
             print("\n🎉 All stages completed!")
     
     except Exception as e:
+        logging.getLogger(__name__).exception("rerun_stage.failed")
         print(f"❌ Error: {e}", file=sys.stderr)
         sys.exit(1)
 

@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Test Stage 1: Script Generation (Dialogue Creation)
 
-Run: python -m pipeline.test_stage_1_script_generation
+Run: python -m pipeline.tests.test_stage_1_script_generation
+     python -m pipeline.tests.test_stage_1_script_generation --category dialogue
+     python -m pipeline.tests.test_stage_1_script_generation --level A2 --category vocabulary
 """
+import argparse
 import json
 import logging
 from pathlib import Path
@@ -22,16 +25,21 @@ LOGGER = logging.getLogger(__name__)
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Test Stage 1: Script Generation")
+    parser.add_argument("--level", default=None, choices=["A1", "A2", "B1", "B2"])
+    parser.add_argument("--category", default=None, choices=["common_words", "grammar", "vocabulary", "dialogue"])
+    args = parser.parse_args()
+
     LOGGER.info("=== TEST STAGE 1: Script Generation ===")
     LOGGER.info("This stage generates the initial dialogue in the target language")
-    
+
     # Initialize database
     init_db()
     seed_topics_from_config()
     LOGGER.info("✓ Database initialized")
 
     # Select a topic
-    topic = choose_next_topic()
+    topic = choose_next_topic(level=args.level, category=args.category)
     LOGGER.info("✓ Selected topic: %s (%s)", topic.title_hint, topic.topic_id)
 
     # Generate script in Dutch
@@ -67,7 +75,7 @@ def main():
     script_file = out_dir / "test_stage_1_script.json"
     script_file.write_text(json.dumps(script, ensure_ascii=False, indent=2), encoding="utf-8")
     LOGGER.info("\n✓ Script saved to: %s", script_file)
-    LOGGER.info("\n📝 For next stage, run: python -m pipeline.test_stage_2_voice_generation")
+    LOGGER.info("\n📝 For next stage, run: python -m pipeline.tests.test_stage_2_voice_generation")
 
 
 if __name__ == "__main__":

@@ -62,7 +62,7 @@ def main() -> None:
 
     subtitle_plan = {
         "karaoke_file": subtitle_files.get("ass_karaoke", ""),
-        "srt_en": subtitle_files.get("srt_en", ""),
+        "srt_en": subtitle_files.get("en", ""),
         "srt_files": subtitle_files,
         "_pipeline_context": {
             "topic_id": topic_id,
@@ -76,7 +76,7 @@ def main() -> None:
     subtitle_file.write_text(json.dumps(subtitle_plan, ensure_ascii=False, indent=2), encoding="utf-8")
 
     LOGGER.info("✓ Karaoke ASS file: %s", subtitle_files.get("ass_karaoke", ""))
-    LOGGER.info("✓ English SRT file: %s", subtitle_files.get("srt_en", ""))
+    LOGGER.info("✓ English SRT file: %s", subtitle_files.get("en", ""))
     LOGGER.info("✓ Subtitle plan saved to: %s", subtitle_file)
 
 

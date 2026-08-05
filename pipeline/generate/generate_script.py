@@ -125,6 +125,23 @@ def _prompt_for_topic(
         )
     prompt = prompt_path.read_text(encoding="utf-8")
 
+    # Substitute speaker metadata placeholders for dialogue category
+    if category == "dialogue":
+        speaker_meta = _build_speaker_metadata(topic)
+        if speaker_meta:
+            speakers = speaker_meta.get("speakers", [])
+            s1 = next((s for s in speakers if s["id"] == "Speaker1"), {})
+            s2 = next((s for s in speakers if s["id"] == "Speaker2"), {})
+            scenario = speaker_meta.get("scenario") or "a real-world Dutch conversation"
+            prompt = (
+                prompt
+                .replace("{speaker1_role}", s1.get("role", "speaker"))
+                .replace("{speaker1_gender}", s1.get("gender", "female"))
+                .replace("{speaker2_role}", s2.get("role", "speaker"))
+                .replace("{speaker2_gender}", s2.get("gender", "male"))
+                .replace("{scenario}", scenario)
+            )
+
     return (
         f"{prompt}\n\n"
         f"---\n"
@@ -168,7 +185,14 @@ def generate_script(
         category=category,
         topic_title=script.get("topic_title", topic.title_hint)
     )
-    script.setdefault("image_prompt", image_prompt)
+    script["image_prompt"] = image_prompt
+
+    # Enrich dialogue scripts with speaker metadata and scenario
+    if category == "dialogue":
+        speaker_metadata = _build_speaker_metadata(topic)
+        if speaker_metadata:
+            script["speakers"] = speaker_metadata["speakers"]
+            script.setdefault("scenario", speaker_metadata.get("scenario"))
 
     return script
 
@@ -192,8 +216,8 @@ def _generate_image_prompt(level: str, category: str, topic_title: str) -> str:
         image_prompt_template = match.group(1)
         # Unescape JSON string
         image_prompt_template = image_prompt_template.replace('\\"', '"')
-        # Substitute {topic_title} placeholder
-        image_prompt = image_prompt_template.format(topic_title=topic_title)
+        # Use .replace() instead of .format() to avoid KeyError on other {placeholders}
+        image_prompt = image_prompt_template.replace("{topic_title}", topic_title)
         LOGGER.info("Generated image_prompt from template for level=%s category=%s", level, category)
         return image_prompt
     
@@ -237,3 +261,53 @@ def _generate_script_gemini(prompt: str) -> dict[str, Any]:
             continue
 
     raise RuntimeError("All Gemini models failed for script generation")
+
+
+def _build_speaker_metadata(topic: TopicChoice) -> dict[str, Any] | None:
+    """Build speaker metadata list for dialogue topics.
+    
+    Returns a dict with 'speakers' list and 'scenario' for dialogue topics.
+    Returns None for non-dialogue topics.
+    """
+    if getattr(topic, "category", None) != "dialogue":
+        return None
+
+    # Read voice mapping from config so voice_id reflects the actual configured voices
+    gemini_voices = settings.PEDAGOGY_CONFIG.get("speech", {}).get("voice_map", {}).get("gemini", {})
+    female_voice = gemini_voices.get("female", "Kore")
+    male_voice = gemini_voices.get("male", "Puck")
+
+    gender_to_voice = {
+        "female": female_voice,
+        "male": male_voice,
+    }
+
+    speakers = []
+    
+    # Speaker 1
+    if hasattr(topic, "speaker1_role") and topic.speaker1_role:
+        speaker1_gender = getattr(topic, "speaker1_gender", "female") or "female"
+        speakers.append({
+            "id": "Speaker1",
+            "role": topic.speaker1_role,
+            "gender": speaker1_gender,
+            "voice_id": gender_to_voice.get(speaker1_gender, female_voice),
+        })
+    
+    # Speaker 2
+    if hasattr(topic, "speaker2_role") and topic.speaker2_role:
+        speaker2_gender = getattr(topic, "speaker2_gender", "male") or "male"
+        speakers.append({
+            "id": "Speaker2",
+            "role": topic.speaker2_role,
+            "gender": speaker2_gender,
+            "voice_id": gender_to_voice.get(speaker2_gender, male_voice),
+        })
+    
+    if not speakers:
+        return None
+
+    return {
+        "speakers": speakers,
+        "scenario": getattr(topic, "scenario", None),
+    }

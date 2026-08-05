@@ -1,12 +1,31 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+# Multi-Speaker Data Types
+@dataclass
+class SpeakerMetadata:
+    """Metadata for a speaker in dialogue."""
+    id: str  # e.g., "Speaker1", "Speaker2"
+    role: str  # e.g., "teacher", "learner", "native", "student"
+    gender: str  # e.g., "female", "male"
+    voice_id: str  # TTS voice identifier (e.g., "Kore", "Puck")
+
+
+@dataclass
+class SpeakerTimestamp:
+    """Speaker timing information for multi-speaker audio synchronization."""
+    speaker_id: str  # e.g., "Speaker1", "Speaker2"
+    start_time: float  # seconds
+    end_time: float  # seconds
 
 
 def load_yaml(path: Path) -> dict[str, Any]:
@@ -25,6 +44,16 @@ def load_env_file(path: Path) -> None:
         os.environ.setdefault(key.strip(), value.strip())
 
 
+def get_env_float(name: str, default: float) -> float:
+    value = os.getenv(name)
+    if value is None or value == "":
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
 load_env_file(ROOT / ".env")
 
 DB_PATH = Path(os.getenv("DB_PATH", "db/content.db"))
@@ -38,11 +67,13 @@ VIDEO_OUTPUT_DIR = Path(os.getenv("VIDEO_OUTPUT_DIR", "output/videos"))
 VIDEO_ARCHIVE_DIR = Path(os.getenv("VIDEO_ARCHIVE_DIR", "output/archive"))
 
 # TTS Provider Configuration
-TTS_PROVIDER = os.getenv("TTS_PROVIDER", "gemini")  # Options: macos_say, gemini, kokoro
+TTS_PROVIDER = os.getenv("TTS_PROVIDER", "gemini")  # Options: gemini, elevenlabs
+TTS_FALLBACK_PROVIDER = os.getenv("TTS_FALLBACK_PROVIDER", "gemini")  # Options: gemini, elevenlabs
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_IMAGE_CREATION_API_KEY = os.getenv("GEMINI_IMAGE_CREATION_API_KEY", "")
 GEMINI_TTS_API_KEY = os.getenv("GEMINI_TTS_API_KEY", "")
-# Note: Kokoro TTS runs locally, no API key needed
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
+ELEVENLABS_SPEED = get_env_float("ELEVENLABS_SPEED", 0.75)
 
 # STT: WhisperX (medium model). Device is auto-detected (CUDA if available, else CPU).
 # Override compute type via WHISPERX_COMPUTE_TYPE (default: float16 on GPU, int8 on CPU).

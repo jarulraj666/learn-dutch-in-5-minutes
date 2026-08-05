@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from google import genai
+from google.genai import types
 
 from pipeline import settings
 from pipeline.utils import iter_dialogue_turns
@@ -105,12 +106,13 @@ def write_wave_file(
 class GeminiTTSClient:
     """Client for multi-speaker TTS dialogue generation via Google Gemini API."""
 
-    PRIMARY_MODEL = "gemini-3.1-flash-tts-preview"
-    FALLBACK_MODEL = "gemini-2.5-flash-preview-tts"
+    PRIMARY_MODEL = "gemini-2.5-flash-preview-tts"
+    FALLBACK_MODEL = "gemini-3.1-flash-tts-preview"
 
     # Recommended word bounds per chunk for optimal prosody & audio fidelity
     TARGET_WORDS_PER_CHUNK = 100
     MAX_WORDS_PER_CHUNK = 130
+    FORCE_SINGLE_CHUNK_DIALOGUE = True
 
     def __init__(self, api_key: str) -> None:
         """Initializes the Gemini TTS Client with an API key.
@@ -120,18 +122,31 @@ class GeminiTTSClient:
         """
         self.client = genai.Client(api_key=api_key)
 
-    def _load_prompt(self, dialogue: list[dict[str, str]], level: str = "A1") -> str:
-        """Loads prompt template from file and injects formatted dialogue.
+    def _load_prompt(
+        self,
+        dialogue: list[dict[str, str]],
+        level: str = "A1",
+        category: str = "dialogue",
+        speaker_genders: dict[str, str] | None = None,
+        speaker_roles: dict[str, str] | None = None,
+    ) -> str:
+        """Loads prompt template from file and injects formatted dialogue and speaker metadata."""
+        level_path = _PROMPTS_DIR / level
+        category_pacing = level_path / f"tts_pacing_{category}.md"
+        default_pacing = level_path / "tts_pacing.md"
+        prompt_file = category_pacing if category_pacing.exists() else default_pacing
+        prompt_template = prompt_file.read_text(encoding="utf-8")
 
-        Args:
-            dialogue: List of dialogue dictionaries with 'speaker' and 'line' keys.
-            level: Pedagogy language level matching the directory structure.
-
-        Returns:
-            The populated prompt string.
-        """
-        level_path = _PROMPTS_DIR / level / "tts_pacing.md"
-        prompt_template = level_path.read_text(encoding="utf-8")
+        # Substitute speaker metadata placeholders if present in template
+        genders = speaker_genders or {}
+        roles = speaker_roles or {}
+        prompt_template = (
+            prompt_template
+            .replace("{speaker1_role}", roles.get("Speaker1", "speaker"))
+            .replace("{speaker2_role}", roles.get("Speaker2", "speaker"))
+            .replace("{speaker1_gender}", genders.get("Speaker1", "female"))
+            .replace("{speaker2_gender}", genders.get("Speaker2", "male"))
+        )
 
         formatted_dialogue = "\n\n".join(
             f"{speaker}: {line}"
@@ -141,22 +156,80 @@ class GeminiTTSClient:
 
         return prompt_template.replace("{dialogue}", formatted_dialogue)
 
-    def _get_speech_config(self) -> list[dict[str, str]]:
-        """Constructs speaker configurations directly from pipeline settings.
+    def _get_speech_config(self, speaker_genders: dict[str, str] | None = None) -> types.SpeechConfig:
+        """Constructs multi-speaker SpeechConfig using gender-based voice selection.
+
+        Args:
+            speaker_genders: Mapping of speaker_id to gender, e.g. {"Speaker1": "female", "Speaker2": "male"}.
+                             Falls back to positional assignment if not provided.
 
         Returns:
-            List of speaker voice configuration dictionaries.
+            Typed SpeechConfig with speaker voice mappings.
         """
         speech_cfg = settings.PEDAGOGY_CONFIG.get("speech", {})
         gemini_voices = speech_cfg.get("voice_map", {}).get("gemini", {})
 
-        s1_voice = gemini_voices.get("Speaker1", "Kore")
-        s2_voice = gemini_voices.get("Speaker2", "Puck")
+        # Guardrail: current config schema expects gender keys.
+        if not isinstance(gemini_voices, dict):
+            LOGGER.warning(
+                "Invalid speech.voice_map.gemini config type: %s. Using defaults.",
+                type(gemini_voices).__name__,
+            )
+            gemini_voices = {}
+        else:
+            missing_gender_keys = [k for k in ("female", "male") if k not in gemini_voices]
+            if missing_gender_keys:
+                LOGGER.warning(
+                    "speech.voice_map.gemini missing keys %s. Expected keys: ['female', 'male']; falling back to defaults where needed.",
+                    missing_gender_keys,
+                )
 
-        return [
-            {"speaker": "Speaker1", "voice": s1_voice},
-            {"speaker": "Speaker2", "voice": s2_voice},
-        ]
+        # Gender-based voice selection
+        female_voice = gemini_voices.get("female", "Kore")
+        male_voice = gemini_voices.get("male", "Puck")
+
+        def _voice_for(speaker_id: str) -> str:
+            gender = (speaker_genders or {}).get(speaker_id, "").lower()
+            if gender == "female":
+                return female_voice
+            if gender == "male":
+                return male_voice
+            # Fallback: Speaker1 → female, Speaker2 → male
+            return female_voice if speaker_id == "Speaker1" else male_voice
+
+        s1_voice = _voice_for("Speaker1")
+        s2_voice = _voice_for("Speaker2")
+
+        if s1_voice == s2_voice:
+            LOGGER.warning(
+                "Both speakers resolved to the same voice '%s'. Dialogue may sound single-speaker.",
+                s1_voice,
+            )
+
+        LOGGER.info("tts.voices Speaker1=%s Speaker2=%s", s1_voice, s2_voice)
+
+        return types.SpeechConfig(
+            multi_speaker_voice_config=types.MultiSpeakerVoiceConfig(
+                speaker_voice_configs=[
+                    types.SpeakerVoiceConfig(
+                        speaker="Speaker1",
+                        voice_config=types.VoiceConfig(
+                            prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                                voice_name=s1_voice,
+                            )
+                        ),
+                    ),
+                    types.SpeakerVoiceConfig(
+                        speaker="Speaker2",
+                        voice_config=types.VoiceConfig(
+                            prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                                voice_name=s2_voice,
+                            )
+                        ),
+                    ),
+                ]
+            )
+        )
 
     def _chunk_dialogue(
         self,
@@ -225,6 +298,31 @@ class GeminiTTSClient:
         if current_chunk:
             chunks.append(current_chunk)
 
+        # Ensure every chunk starts with Speaker1 to prevent voice swap.
+        # If a chunk starts with Speaker2, prepend the last Speaker1 line
+        # from the preceding chunk as a priming context line.
+        last_s1_item: dict[str, str] | None = None
+        for i, chunk in enumerate(chunks):
+            # Find the first speaker in this chunk
+            first_speaker = None
+            for item in chunk:
+                parsed = iter_dialogue_turns([item])
+                if parsed:
+                    first_speaker, _ = parsed[0]
+                    break
+
+            if first_speaker == "Speaker2" and last_s1_item is not None:
+                chunks[i] = [last_s1_item] + chunk
+                LOGGER.debug("chunk %d: prepended Speaker1 primer to fix voice order", i + 1)
+
+            # Track last Speaker1 item seen in this chunk
+            for item in chunk:
+                parsed = iter_dialogue_turns([item])
+                if parsed:
+                    spk, _ = parsed[0]
+                    if spk == "Speaker1":
+                        last_s1_item = item
+
         return chunks
 
     def generate_dialogue_audio(
@@ -232,6 +330,9 @@ class GeminiTTSClient:
         dialogue: list[dict[str, str]],
         output_path: str | Path,
         level: str = "A1",
+        category: str = "dialogue",
+        speaker_genders: dict[str, str] | None = None,
+        speaker_roles: dict[str, str] | None = None,
     ) -> bool:
         """Generates multi-speaker audio with dynamic quality-focused chunking.
 
@@ -239,6 +340,8 @@ class GeminiTTSClient:
             dialogue: List of dialogue dictionaries with speaker and line items.
             output_path: Destination audio file path (.wav).
             level: Pedagogy language proficiency level (e.g., 'A1').
+            category: Episode category used to select TTS pacing prompt.
+            speaker_genders: Mapping of speaker_id to gender for voice selection.
 
         Returns:
             True if audio generation and saving succeeded, False otherwise.
@@ -247,12 +350,17 @@ class GeminiTTSClient:
             LOGGER.error("Empty dialogue provided.")
             return False
 
-        dialogue_chunks = self._chunk_dialogue(
-            dialogue,
-            target_words=self.TARGET_WORDS_PER_CHUNK,
-            max_words=self.MAX_WORDS_PER_CHUNK,
-        )
-        speech_config = self._get_speech_config()
+        if category == "dialogue" and self.FORCE_SINGLE_CHUNK_DIALOGUE:
+            # Keep one API call for dialogue to avoid cross-chunk speaker timbre drift.
+            dialogue_chunks = [dialogue]
+            LOGGER.info("dialogue.single_chunk enabled: processing full dialogue in one request")
+        else:
+            dialogue_chunks = self._chunk_dialogue(
+                dialogue,
+                target_words=self.TARGET_WORDS_PER_CHUNK,
+                max_words=self.MAX_WORDS_PER_CHUNK,
+            )
+        speech_config = self._get_speech_config(speaker_genders=speaker_genders)
 
         LOGGER.info(
             "Generating TTS audio in %d chunk(s) using primary model: %s (fallback: %s)",
@@ -264,7 +372,7 @@ class GeminiTTSClient:
         pcm_buffers: list[bytes] = []
 
         for idx, chunk in enumerate(dialogue_chunks, start=1):
-            prompt = self._load_prompt(chunk, level=level)
+            prompt = self._load_prompt(chunk, level=level, category=category, speaker_genders=speaker_genders, speaker_roles=speaker_roles)
             chunk_word_count = sum(len(line.split()) for _, line in iter_dialogue_turns(chunk))
 
             LOGGER.info(
@@ -275,22 +383,30 @@ class GeminiTTSClient:
                 chunk_word_count,
             )
 
+            LOGGER.info("tts.prompt.start chunk=%d", idx)
+            LOGGER.info("%s", prompt)
+            LOGGER.info("tts.prompt.end chunk=%d", idx)
+
             raw_pcm: bytes | None = None
             for model_name in (self.PRIMARY_MODEL, self.FALLBACK_MODEL):
                 try:
-                    interaction = self.client.interactions.create(
+                    response = self.client.models.generate_content(
                         model=model_name,
-                        input=prompt,
-                        response_format={"type": "audio"},
-                        generation_config={
-                            "speech_config": speech_config,
-                        },
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            response_modalities=["AUDIO"],
+                            speech_config=speech_config,
+                        ),
                     )
 
-                    if hasattr(interaction, "output_audio") and interaction.output_audio:
-                        data = interaction.output_audio.data
-                        raw_pcm = base64.b64decode(data) if isinstance(data, str) else data
+                    # Extract PCM audio from response parts
+                    for part in (response.candidates or [{}])[0].content.parts if response.candidates else []:
+                        if hasattr(part, "inline_data") and part.inline_data:
+                            data = part.inline_data.data
+                            raw_pcm = base64.b64decode(data) if isinstance(data, str) else data
+                            break
 
+                    if raw_pcm is not None:
                         if model_name == self.FALLBACK_MODEL:
                             LOGGER.warning(
                                 "Successfully generated chunk %d using fallback model: %s",
@@ -329,6 +445,93 @@ class GeminiTTSClient:
 
         LOGGER.info("✓ Full dialogue audio generated & saved: %s", target_file)
         return True
+
+    def generate_dialogue_audio_with_timestamps(
+        self,
+        dialogue: list[dict[str, str]],
+        output_path: str | Path,
+        level: str = "A1",
+        category: str = "dialogue",
+        speaker_genders: dict[str, str] | None = None,
+        speaker_roles: dict[str, str] | None = None,
+    ) -> tuple[bool, list[settings.SpeakerTimestamp]]:
+        """Generate multi-speaker audio and return speaker timestamps."""
+        success = self.generate_dialogue_audio(dialogue, output_path, level, category, speaker_genders, speaker_roles)
+        
+        if not success:
+            return False, []
+        
+        # For non-dialogue categories, return empty timestamps
+        if category != "dialogue":
+            return True, []
+        
+        # Extract speaker timestamps from actual generated audio
+        wav_path = Path(output_path).with_suffix(".wav")
+        speaker_timestamps = self._infer_speaker_timestamps(dialogue, wav_path)
+        return success, speaker_timestamps
+
+    def _infer_speaker_timestamps(
+        self, dialogue: list[dict[str, str]], wav_path: Path | str
+    ) -> list[settings.SpeakerTimestamp]:
+        """Extract speaker switching points from actual audio duration.
+        
+        Analyzes the generated WAV file to get real audio duration, then distributes
+        speaker time proportionally based on word count in the dialogue.
+        
+        Args:
+            dialogue: List of dialogue dictionaries with speaker and line items.
+            wav_path: Path to the generated WAV audio file.
+        
+        Returns:
+            List of SpeakerTimestamp objects with timings based on actual audio.
+        """
+        wav_path = Path(wav_path)
+        
+        # Get actual audio duration from WAV file
+        try:
+            with wave.open(str(wav_path), "rb") as wf:
+                frames = wf.getnframes()
+                rate = wf.getframerate()
+                total_audio_duration = frames / rate
+        except Exception as err:
+            LOGGER.error(
+                "Failed to read audio file %s for timestamp extraction: %s",
+                wav_path,
+                err,
+            )
+            return []
+        
+        # Calculate total words to distribute time proportionally
+        speaker_turns = list(iter_dialogue_turns(dialogue))
+        total_words = sum(len(line.split()) for _, line in speaker_turns)
+        
+        if total_words == 0:
+            LOGGER.warning("No words found in dialogue for timestamp extraction")
+            return []
+        
+        # Allocate time to each speaker based on word count proportion
+        timestamps: list[settings.SpeakerTimestamp] = []
+        current_time = 0.0
+        
+        for speaker, line in speaker_turns:
+            word_count = len(line.split())
+            # Allocate proportional time based on word count vs total words
+            duration = (word_count / total_words) * total_audio_duration
+            
+            timestamp = settings.SpeakerTimestamp(
+                speaker_id=speaker,
+                start_time=current_time,
+                end_time=current_time + duration,
+            )
+            timestamps.append(timestamp)
+            current_time += duration
+        
+        LOGGER.info(
+            "Extracted %d speaker timestamps from audio (duration %.1f seconds)",
+            len(timestamps),
+            total_audio_duration,
+        )
+        return timestamps
 
 
 def create_gemini_client(api_key: str) -> GeminiTTSClient | None:

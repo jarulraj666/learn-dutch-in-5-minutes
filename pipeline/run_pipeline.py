@@ -57,24 +57,6 @@ def _playlist_description(level: str, track: str) -> str:
     return ""
 
 
-def _estimate_dialogue_seconds(dialogue: list[dict]) -> float:
-    # Estimate timing with TTS pace when available to better match rendered speech.
-    speech_cfg = settings.PEDAGOGY_CONFIG.get("speech", {})
-    words_per_second = float(speech_cfg.get("estimated_words_per_second", 1.6))
-    tts_rate_wpm = speech_cfg.get("tts_rate_wpm")
-    if tts_rate_wpm:
-        words_per_second = max(0.6, float(tts_rate_wpm) / 60.0)
-
-    per_turn_pause_seconds = float(speech_cfg.get("per_turn_pause_seconds", 0.6))
-    pacing_safety_multiplier = float(speech_cfg.get("pacing_safety_multiplier", 1.08))
-
-    total = 0.0
-    for _, line in iter_dialogue_turns(dialogue):
-        words = max(1, len(line.split()))
-        total += (words / words_per_second) + per_turn_pause_seconds
-    return total * pacing_safety_multiplier
-
-
 def _archive_video(video_path: Path, canonical_script_id: int) -> Path:
     archive_dir = settings.VIDEO_ARCHIVE_DIR
     if not archive_dir.is_absolute():
@@ -108,7 +90,6 @@ def _save_script_exports(
     lines.append(f"- Episode: {canonical_script_id}")
     lines.append(f"- Topic: {topic_id}")
     lines.append(f"- Language: {script.get('language', 'nl')}")
-    lines.append(f"- Estimated Conversation Seconds: {round(_estimate_dialogue_seconds(script.get('dialogue', [])), 2)}")
     lines.append("")
     lines.append("## Conversation")
     lines.append("")
@@ -166,95 +147,164 @@ def _save_script_exports(
     }
 
 
-def run(language: str, level: str, category: str | None = None, upload: bool = True) -> Path:
+def _checkpoint_path(level: str, category: str, topic_id: str) -> Path:
+    from pipeline.core.store_content import ensure_output_dir
+    out_dir = ensure_output_dir(level, category)
+    return out_dir / f".checkpoint_{topic_id}.json"
+
+
+def _save_checkpoint(path: Path, data: dict) -> None:
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    LOGGER.debug("checkpoint.saved %s", path)
+
+
+def _load_checkpoint(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def run(language: str, level: str, category: str | None = None, upload: bool = True, resume_checkpoint: Path | None = None) -> Path:
     run_start = time.perf_counter()
     LOGGER.info(
-        "=== PIPELINE START language=%s level=%s category=%s ===",
-        language, level, category or "auto",
+        "=== PIPELINE START language=%s level=%s category=%s resume=%s ===",
+        language, level, category or "auto", resume_checkpoint or "none",
     )
+
+    # --- Load checkpoint if resuming ---
+    cp: dict = {}
+    if resume_checkpoint and resume_checkpoint.exists():
+        cp = _load_checkpoint(resume_checkpoint)
+        level = cp.get("level", level)
+        category = cp.get("category", category)
+        LOGGER.info("checkpoint.loaded topic=%s completed_stages=%s", cp.get("topic_id"), cp.get("completed_stages", []))
 
     with _stage("db_init"):
         init_db()
         seed_topics_from_config()
         LOGGER.info("✓ Database initialized")
 
-    with _stage("topic_selection"):
-        topic = choose_next_topic(level=level, category=category)
+    completed_stages: list[str] = cp.get("completed_stages", [])
+
+    # --- Topic selection ---
+    if "topic_selection" in completed_stages:
+        from pipeline.core.select_topic import TopicChoice
+        td = cp["topic"]
+        topic = TopicChoice(**td)
         level = topic.level
         category = topic.category
-        LOGGER.info(
-            "✓ Topic selected: %s | level=%s category=%s track=%s",
-            topic.title_hint, topic.level, topic.category, topic.track,
-        )
+        LOGGER.info("checkpoint.skip topic_selection — using saved topic: %s", topic.topic_id)
+    else:
+        with _stage("topic_selection"):
+            topic = choose_next_topic(level=level, category=category)
+            level = topic.level
+            category = topic.category
+            LOGGER.info(
+                "✓ Topic selected: %s | level=%s category=%s track=%s",
+                topic.title_hint, topic.level, topic.category, topic.track,
+            )
+        cp.update({"level": level, "category": category, "topic_id": topic.topic_id,
+                   "topic": topic.__dict__, "language": language})
+        completed_stages.append("topic_selection")
+        cp["completed_stages"] = completed_stages
+        chk = _checkpoint_path(level, category, topic.topic_id)
+        _save_checkpoint(chk, cp)
 
-    with _stage("script_generation"):
-        script = generate_script(topic, language=language, level=topic.level)
-        LOGGER.info("✓ Script generated: %d dialogue lines", len(script.get("dialogue", [])))
+    # --- Script generation ---
+    if "script_generation" in completed_stages:
+        script = cp["script"]
+        LOGGER.info("checkpoint.skip script_generation")
+    else:
+        with _stage("script_generation"):
+            script = generate_script(topic, language=language, level=topic.level)
+            LOGGER.info("✓ Script generated: %d dialogue lines", len(script.get("dialogue", [])))
+        cp["script"] = script
+        completed_stages.append("script_generation")
+        cp["completed_stages"] = completed_stages
+        _save_checkpoint(_checkpoint_path(level, category, topic.topic_id), cp)
 
-    with _stage("metadata_generation"):
-        playlist_name = _playlist_name(level, topic.category)
-        playlist_description = _playlist_description(level, topic.category)
-        metadata = generate_metadata(script, playlist_track=topic.category, level=level, category=category)
-        LOGGER.info("✓ Metadata: title=%s | playlist=%s", metadata.get("title", ""), playlist_name)
+    # --- Metadata generation ---
+    if "metadata_generation" in completed_stages:
+        playlist_name = cp["playlist_name"]
+        playlist_description = cp["playlist_description"]
+        metadata = cp["metadata"]
+        LOGGER.info("checkpoint.skip metadata_generation")
+    else:
+        with _stage("metadata_generation"):
+            playlist_name = _playlist_name(level, topic.category)
+            playlist_description = _playlist_description(level, topic.category)
+            metadata = generate_metadata(script, playlist_track=topic.category, level=level, category=category)
+            LOGGER.info("✓ Metadata: title=%s | playlist=%s", metadata.get("title", ""), playlist_name)
+        cp.update({"playlist_name": playlist_name, "playlist_description": playlist_description, "metadata": metadata})
+        completed_stages.append("metadata_generation")
+        cp["completed_stages"] = completed_stages
+        _save_checkpoint(_checkpoint_path(level, category, topic.topic_id), cp)
 
     # Prepare hierarchical output directory structure: output/{level}/{category}/{type}/
     title_slug = create_title_slug(topic.title_hint)
-    
     out_dir = ensure_output_dir(level, category)
-    
-    # Also ensure subdirectories for different file types
     audio_dir = ensure_output_dir(level, category, "audio")
     visuals_dir = ensure_output_dir(level, category, "visuals")
     videos_dir = ensure_output_dir(level, category, "videos")
     subtitles_dir = ensure_output_dir(level, category, "subtitles")
-    
-    LOGGER.info(
-        "output.dirs.ready level=%s category=%s slug=%s base=%s",
-        level, category, title_slug, out_dir
-    )
+    LOGGER.info("output.dirs.ready level=%s category=%s slug=%s base=%s", level, category, title_slug, out_dir)
 
-    with _stage("voice_generation"):
-        voice_plan = generate_voice_assets(
-            script,
-            output_root=str(out_dir),
-            level=level,
-            category=category,
-            topic_id=topic.topic_id,
-            title_slug=title_slug,
-        )
-        LOGGER.info("✓ Voice generated: %s", voice_plan.get("dialogue_audio", ""))
+    chk_path = _checkpoint_path(level, category, topic.topic_id)
 
-    with _stage("subtitle_generation"):
-        dialogue_audio_path = voice_plan.get("dialogue_audio")
-        if not dialogue_audio_path:
-            raise RuntimeError("No dialogue audio path from voice generation")
-        subtitle_plan = plan_subtitles(
-            dialogue_audio_path,
-            output_root=str(out_dir),
-            level=level,
-            category=category,
-            topic_id=topic.topic_id,
-            title_slug=title_slug,
-            script_dialogue=script.get("dialogue"),
-        )
-        LOGGER.info("✓ Subtitles generated: %s", subtitle_plan.get("srt_file", ""))
+    # --- Voice generation ---
+    if "voice_generation" in completed_stages:
+        voice_plan = cp["voice_plan"]
+        LOGGER.info("checkpoint.skip voice_generation — audio: %s", voice_plan.get("dialogue_audio"))
+    else:
+        with _stage("voice_generation"):
+            voice_plan = generate_voice_assets(
+                script, output_root=str(out_dir), level=level, category=category,
+                topic_id=topic.topic_id, title_slug=title_slug,
+            )
+            LOGGER.info("✓ Voice generated: %s", voice_plan.get("dialogue_audio", ""))
+        cp["voice_plan"] = voice_plan
+        completed_stages.append("voice_generation")
+        cp["completed_stages"] = completed_stages
+        _save_checkpoint(chk_path, cp)
 
-    with _stage("image_generation"):
-        image_prompt = script.get("image_prompt", "")
-        result = generate_image_from_artifact(
-            {
-                "topic_id": topic.topic_id,
-                "topic_title": script.get("topic_title", topic.title_hint),
-                "image_prompt": image_prompt,
-                "level": level,
-                "category": category,
-            },
-            output_root=out_dir,
-        )
-        generated_image_file = str(result) if result else ""
-        if not generated_image_file:
-            raise RuntimeError("Image generation returned no file path.")
-        LOGGER.info("✓ Image generated: %s", generated_image_file)
+    # --- Subtitle generation ---
+    if "subtitle_generation" in completed_stages:
+        subtitle_plan = cp["subtitle_plan"]
+        LOGGER.info("checkpoint.skip subtitle_generation")
+    else:
+        with _stage("subtitle_generation"):
+            dialogue_audio_path = voice_plan.get("dialogue_audio")
+            if not dialogue_audio_path:
+                raise RuntimeError("No dialogue audio path from voice generation")
+            subtitle_plan = plan_subtitles(
+                dialogue_audio_path, output_root=str(out_dir), level=level, category=category,
+                topic_id=topic.topic_id, title_slug=title_slug,
+                script_dialogue=script.get("dialogue"), dialogue_en=script.get("dialogue_en"),
+            )
+            LOGGER.info("✓ Subtitles generated: %s", subtitle_plan.get("srt_file", ""))
+        cp["subtitle_plan"] = subtitle_plan
+        completed_stages.append("subtitle_generation")
+        cp["completed_stages"] = completed_stages
+        _save_checkpoint(chk_path, cp)
+
+    # --- Image generation ---
+    if "image_generation" in completed_stages:
+        generated_image_file = cp["generated_image_file"]
+        LOGGER.info("checkpoint.skip image_generation — %s", generated_image_file)
+    else:
+        with _stage("image_generation"):
+            image_prompt = script.get("image_prompt", "")
+            result = generate_image_from_artifact(
+                {"topic_id": topic.topic_id, "topic_title": script.get("topic_title", topic.title_hint),
+                 "image_prompt": image_prompt, "level": level, "category": category},
+                output_root=out_dir,
+            )
+            generated_image_file = str(result) if result else ""
+            if not generated_image_file:
+                raise RuntimeError("Image generation returned no file path.")
+            LOGGER.info("✓ Image generated: %s", generated_image_file)
+        cp["generated_image_file"] = generated_image_file
+        completed_stages.append("image_generation")
+        cp["completed_stages"] = completed_stages
+        _save_checkpoint(chk_path, cp)
 
     with _stage("db_store_script"):
         canonical_script_id = store_canonical_script(
@@ -299,10 +349,6 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
         "metadata": metadata,
         "voice": voice_plan,
         "subtitles": subtitle_plan,
-        "timing": {
-            "estimated_conversation_seconds": round(_estimate_dialogue_seconds(script.get("dialogue", [])), 2),
-            "target_video_seconds": int(settings.PEDAGOGY_CONFIG.get("target_duration_seconds", 300)),
-        },
         "storage": {
             "script_exports": script_exports,
         },
@@ -366,6 +412,12 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
     mark_topic_done(topic.topic_id)
     LOGGER.info("topic.done id=%s", topic.topic_id)
 
+    # Clean up checkpoint on successful completion
+    chk_path = _checkpoint_path(level, category, topic.topic_id)
+    if chk_path.exists():
+        chk_path.unlink()
+        LOGGER.info("checkpoint.cleared %s", chk_path)
+
     return out_path
 
 
@@ -377,10 +429,12 @@ def main() -> None:
         "--category",
         choices=["common_words", "grammar", "vocabulary", "dialogue"],
         default=None,
-        help="Generate all videos for a specific category, or one video if omitted",
+        help="Filter by category. Runs all pending videos unless --single is also set.",
     )
+    parser.add_argument("--single", action="store_true", help="Generate only one video (next pending) even when --category is set")
     parser.add_argument("--log-level", default="INFO", help="DEBUG, INFO, WARNING, ERROR")
     parser.add_argument("--no-upload", action="store_true", help="Skip YouTube upload after rendering")
+    parser.add_argument("--resume", metavar="CHECKPOINT", help="Resume from a checkpoint file (output/{level}/{category}/.checkpoint_{topic_id}.json)")
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -388,7 +442,24 @@ def main() -> None:
         format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
     )
 
-    if args.category:
+    if args.resume:
+        # Resume mode: load checkpoint and run from where it left off
+        resume_path = Path(args.resume)
+        if not resume_path.exists():
+            print(f"✗ Checkpoint not found: {args.resume}")
+            return
+        cp = json.loads(resume_path.read_text(encoding="utf-8"))
+        out_path = run(
+            language=cp.get("language", args.language),
+            level=cp.get("level", args.level),
+            category=cp.get("category", args.category),
+            upload=not args.no_upload,
+            resume_checkpoint=resume_path,
+        )
+        print(f"\n✓ Pipeline resumed and completed. Artifact: {out_path}")
+        return
+
+    if args.category and not args.single:
         # Batch mode: generate all pending topics in the category
         completed = []
         failed = []
@@ -417,8 +488,8 @@ def main() -> None:
         for path in completed:
             print(f"  - {path}")
     else:
-        # Single mode: generate next pending topic across all categories
-        out_path = run(language=args.language, level=args.level, category=None, upload=not args.no_upload)
+        # Single mode: one video, optionally filtered by category
+        out_path = run(language=args.language, level=args.level, category=args.category, upload=not args.no_upload)
         print(f"\n✓ Pipeline completed. Artifact: {out_path}")
 
 

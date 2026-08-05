@@ -1,20 +1,107 @@
-"""
-Generate Voice Assets Module
+"""Generate Voice Assets Module.
 
-Handles dialogue audio generation using GeminiTTSClient with automatic 
-chunking and settings-driven voice configuration.
+Handles dialogue audio generation using configurable TTS providers with
+automatic fallback support.
 """
 
 from __future__ import annotations
 
 import logging
+import subprocess
 from pathlib import Path
 from typing import Any
 
 from pipeline import settings
-from pipeline.clients.gemini_tts_client import create_gemini_client
+from pipeline.clients.tts_provider_factory import create_tts_client, normalize_provider_name
+from pipeline.utils import command_exists
 
 LOGGER = logging.getLogger(__name__)
+
+
+def _resolve_provider_order(category: str) -> list[str]:
+    """Return ordered providers to try for the given category."""
+    primary = normalize_provider_name(settings.TTS_PROVIDER)
+    fallback = normalize_provider_name(settings.TTS_FALLBACK_PROVIDER)
+
+    # Keep non-dialogue categories on Gemini for now.
+    if category != "dialogue":
+        return ["gemini"]
+
+    providers: list[str] = [primary]
+    if fallback and fallback != primary:
+        providers.append(fallback)
+    return providers
+
+
+def _clamp_speed(speed: float) -> float:
+    if speed < 0.5:
+        return 0.5
+    if speed > 2.0:
+        return 2.0
+    return speed
+
+
+def _preslow_output_path(audio_path: Path, speed: float) -> Path:
+    speed_token = f"{speed:.2f}".replace(".", "p")
+    return audio_path.with_name(f"{audio_path.stem}_preslow_{speed_token}{audio_path.suffix}")
+
+
+def _maybe_apply_pre_slow_audio(audio_path: Path) -> tuple[Path, float, bool]:
+    """Apply playback speed directly to audio before subtitle generation.
+
+    Returns: (audio_path, configured_speed, applied)
+    """
+    render_cfg = settings.load_yaml(settings.ROOT / "config/visual_style.yaml").get("render", {})
+    mode = str(render_cfg.get("speed_application", "final_output")).strip().lower()
+    speed_raw = float(render_cfg.get("playback_speed", 1.0))
+    speed = _clamp_speed(speed_raw)
+
+    if mode != "pre_slow_audio" or abs(speed - 1.0) < 1e-6:
+        return audio_path, speed, False
+
+    if not command_exists("ffmpeg"):
+        LOGGER.warning("ffmpeg not found; cannot pre-slow audio (mode=%s).", mode)
+        return audio_path, speed, False
+
+    slowed_path = _preslow_output_path(audio_path, speed)
+
+    if slowed_path.exists() and slowed_path.stat().st_mtime >= audio_path.stat().st_mtime:
+        LOGGER.info("audio.preslow.reuse speed=%.3f file=%s", speed, slowed_path)
+        return slowed_path, speed, True
+
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(audio_path),
+        "-filter:a",
+        f"atempo={speed:.6f}",
+        "-ar",
+        "24000",
+        "-ac",
+        "1",
+        "-c:a",
+        "pcm_s16le",
+        str(slowed_path),
+    ]
+
+    LOGGER.info("audio.preslow.cmd %s", " ".join(cmd))
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+        LOGGER.info("audio.preslow.applied speed=%.3f file=%s", speed, slowed_path)
+        return slowed_path, speed, True
+    except subprocess.CalledProcessError as err:
+        LOGGER.warning(
+            "audio.preslow.failed speed=%.3f stderr=%s",
+            speed,
+            (err.stderr or err.stdout or "")[-1000:],
+        )
+    except Exception as err:
+        LOGGER.warning("audio.preslow.failed speed=%.3f err=%s", speed, err)
+
+    if slowed_path.exists():
+        slowed_path.unlink(missing_ok=True)
+    return audio_path, speed, False
 
 
 def generate_voice_assets(
@@ -46,20 +133,22 @@ def generate_voice_assets(
     language = script.get("language") or speech_cfg.get("language", "nl")
     script_level = level or script.get("level", "A1")
 
+    # Build speaker gender and role maps from script metadata
+    speaker_genders: dict[str, str] = {}
+    speaker_roles: dict[str, str] = {}
+    for s in script.get("speakers", []):
+        sid = s.get("id", "")
+        if sid:
+            speaker_genders[sid] = s.get("gender", "")
+            speaker_roles[sid] = s.get("role", "")
+
     voice_dir = Path(output_root) / "audio"
     voice_dir.mkdir(parents=True, exist_ok=True)
 
     audio_filename = f"episode_{topic_id}_{title_slug}.wav"
     
-    dialogue_audio_path = str(voice_dir / audio_filename)
-
-    api_key = getattr(settings, "GEMINI_TTS_API_KEY", None)
-    if not api_key:
-        raise RuntimeError("GEMINI_TTS_API_KEY is missing from pipeline settings.")
-
-    client = create_gemini_client(api_key)
-    if not client:
-        raise RuntimeError("Failed to initialize GeminiTTSClient.")
+    raw_audio_path = Path(voice_dir / audio_filename)
+    dialogue_audio_path = str(raw_audio_path)
 
     LOGGER.info(
         "Generating voice assets for %d line(s) (Language: %s, Level: %s, File: %s)",
@@ -69,22 +158,62 @@ def generate_voice_assets(
         audio_filename,
     )
 
-    success = client.generate_dialogue_audio(
-        dialogue=dialogue,
-        output_path=dialogue_audio_path,
-        level=script_level,
-    )
+    success = False
+    used_provider = ""
+    if raw_audio_path.exists():
+        LOGGER.info("tts.provider.reuse_existing_raw file=%s", raw_audio_path)
+        success = True
+        used_provider = "reused_existing"
+    else:
+        providers_to_try = _resolve_provider_order(category)
+        LOGGER.info("tts.providers.try_order=%s", providers_to_try)
 
-    if not success:
-        raise RuntimeError("Gemini TTS failed to generate complete dialogue audio.")
+        errors: list[str] = []
+        for provider_name in providers_to_try:
+            try:
+                client = create_tts_client(provider_name)
+            except Exception as err:
+                msg = f"init {provider_name} failed: {err}"
+                LOGGER.warning(msg)
+                errors.append(msg)
+                continue
+
+            LOGGER.info("tts.provider.attempt=%s", provider_name)
+            success = client.generate_dialogue_audio(
+                dialogue=dialogue,
+                output_path=dialogue_audio_path,
+                level=script_level,
+                category=category,
+                speaker_genders=speaker_genders,
+                speaker_roles=speaker_roles,
+            )
+            if success:
+                used_provider = getattr(client, "provider_name", provider_name)
+                break
+
+            msg = f"generation failed for provider={provider_name}"
+            LOGGER.warning(msg)
+            errors.append(msg)
+
+        if not success:
+            raise RuntimeError(
+                "TTS failed for all providers. "
+                f"tried={providers_to_try} errors={'; '.join(errors) if errors else 'none'}"
+            )
+
+    final_audio_path, configured_speed, pre_slow_applied = _maybe_apply_pre_slow_audio(raw_audio_path)
+    dialogue_audio_path = str(final_audio_path)
 
     LOGGER.info("✓ Full dialogue audio generated and saved: %s", dialogue_audio_path)
 
     return {
-        "provider": "gemini",
+        "provider": used_provider,
         "audio_dir": str(voice_dir),
         "dialogue_audio": dialogue_audio_path,
+        "dialogue_audio_raw": str(raw_audio_path),
         "dialogue_type": "full_conversation",
+        "playback_speed": configured_speed,
+        "pre_slow_applied": pre_slow_applied,
         "line_count": len(dialogue),
     }
 

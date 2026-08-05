@@ -1,56 +1,57 @@
-You are generating an A2-level Dutch lesson for Gemini TTS multi-speaker audio generation.
+You are generating an A2-level Dutch conversation for Gemini TTS multi-speaker audio generation.
 
 ## Role
-Act out a fuller A2 conversation where the learner navigates a real-world situation with some independence.
+Generate a natural, realistic Dutch conversation between two speakers in a real-world scenario. Let the scenario guide what is said — greet, transact, and close as it would happen in real life.
 
 ## Speakers
-**Speaker1** — Calm, knowledgeable Dutch teacher (female voice). Often plays the Dutch native.
-**Speaker2** — Warm, enthusiastic language partner (female voice). Plays the learner.
+**Speaker1** — {speaker1_role}, {speaker1_gender} voice. Use a name appropriate for a {speaker1_gender} person.
+**Speaker2** — {speaker2_role}, {speaker2_gender} voice. Use a name appropriate for a {speaker2_gender} person.
+
+## Scenario
+The conversation takes place in: **{scenario}**
 
 ## TTS Audio Tags
 
 Prepend **`[pause for 1 second] [medium slow]`** to EVERY dialogue line — no exceptions.
-Add one emotion/expression tag every 5–8 lines where it fits naturally:
 
-- `[laughs]` `[giggles]` `[sighs]` `[curious]` `[excited]` `[gasp]` `[amazed]` `[whispers]` `[serious]`
+Add **expression tags** naturally where they fit the scenario and moment. Choose based on what the character would actually feel:
 
-Tag order: `[pause for 1 second] [medium slow]` first, then optional emotion tag.
-Example: `{"Speaker1": "[pause for 1 second] [medium slow] [excited] Heel goed!"}`
+| Tag | Use when... |
+|-----|-------------|
+| `[laughs]` | Something is genuinely funny or light |
+| `[giggles]` | Playful, slightly awkward, or cute moment |
+| `[sighs]` | Mild frustration, relief, or tiredness |
+| `[curious]` | Asking a question or discovering something |
+| `[excited]` | Good news, enthusiasm, surprise |
+| `[gasp]` | Sudden surprise or shock |
+| `[amazed]` | Impressed or in awe |
+| `[whispers]` | Saying something quietly or secretly |
+| `[serious]` | Important instruction or correction |
 
-## Level: A2 | Category: Dialogue
+Tag order: pacing tag first, then expression tag.
+Example: `{"Speaker1": "[pause for 1 second] [medium slow] [excited] Dat is geweldig!"}` · `{"Speaker2": "[pause for 1 second] [medium slow] [curious] Wat betekent dat?"}`
 
-**Constraints:** Max 14 words/line · Present + simple past · 1000-word vocabulary · Simple connectors · Polite expressions
+Don't force tags on every line — use them where the scenario makes them natural.
 
-### Content Focus
-- Include past-tense references ("Ik heb gereserveerd", "Ik was hier gisteren")
-- Use polite forms (alstublieft, mag ik, kunt u)
-- 5–7 key phrases reusable in similar situations
+## Language
 
-### Episode Structure (4 phases, ~181 lines)
+All dialogue must be in Dutch. No English in any dialogue line.
 
-| Phase | Lines | Content |
-|-------|-------|---------|
-| Introduction | ~12 | Set scene in detail; note cultural context if relevant |
-| Core Dialogue | ~70 | Full scenario; polite exchanges; past tense naturally woven in |
-| Phrase Recap | ~46 | Repeat the most useful phrases |
-| Quiz | ~53 | 5-line announcement + 8 × 6-line rounds |
+Use simple, everyday words that people actually say in real life. Polite and friendly tone. No complex or formal vocabulary. Words and phrases someone would use at a shop, on the street, or with a colleague.
 
-## Quiz Format (strict)
+Aim for approximately **100–120 dialogue turns** total.
 
-**Announcement block — 5 lines before the 8 rounds:**
-1. Speaker1: one English line to the viewer (e.g. `"Now let's test what you've learned!"`)
-2. Speaker1: announce quiz in Dutch with `[excited]`
-3. Speaker1: `"Ben jij er klaar voor?"`
-4. Speaker2: readiness with `[excited]`
-5. Speaker1: countdown (e.g. `"Oké... drie, twee, één, begin!"`)
+## Image Prompt
 
-**8 rounds × 6 lines each:**
-1. Speaker1: asks the question
-2. Speaker1: short English pause prompt (`"Think about it..."`, `"Can you remember?"`)
-3. `{"Speaker1": "[pause for 3 seconds]"}`
-4. Speaker2: thinking filler with tag (e.g. `[sighs] Hmm, laat me even nadenken...`)
-5. Speaker2: gives the answer
-6. Speaker1: confirms with `[excited]`
+Generate a detailed image prompt under `"image_prompt"` reflecting the scenario: **{scenario}**
+
+3D stylized animation render of {scenario}. 16:9 aspect ratio, Pixar aesthetic, warm lighting, highly detailed. **Light, airy background colours** — soft pastels, creamy whites, warm beiges, pale blues or light warm tones. Bright and cheerful feel. No dark or saturated backgrounds.
+
+LAYOUT (strict):
+- Full background: The {scenario} environment fills 100% of the frame — rich, detailed, and in focus.
+- Left 25–30% (with 40px left margin): {speaker1_gender} character ({speaker1_role}) standing or positioned naturally, facing inward toward the center.
+- Right 25–30% (with 40px right margin): {speaker2_gender} character ({speaker2_role}) standing or positioned naturally, facing inward toward the center.
+- Center 40–50%: Open space — no characters, no obstructions. Clear area for subtitle overlays at the bottom 15% of the frame.
 
 ## Output JSON Structure
 
@@ -59,34 +60,20 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
 ```json
 {
   "topic_id": "string",
-  "topic_title": "string",
+  "topic_title": "Dutch title",
+  "image_prompt": "...",
   "language": "nl",
   "dialogue": [
-    {"Speaker1": "[pause for 1 second] [medium slow] Goedemorgen!"}
+    {"Speaker1": "[pause for 1 second] [medium slow] Goedemiddag\!"},
+    {"Speaker2": "[pause for 1 second] [medium slow] Goedemiddag, kan ik u helpen?"}
   ],
   "key_phrases": ["phrase1", "phrase2", "phrase3"],
-  "vocabulary": [{"nl": "dutch word", "en": "english translation"}],
-  "quiz": [
-    {
-      "question": "question text",
-      "type": "multiple_choice",
-      "choices": ["option1", "option2", "option3"],
-      "answer": "correct option",
-      "explanation": "brief explanation"
-    }
+  "dialogue_en": [
+    {"Speaker1": "English translation of Speaker1 line"},
+    {"Speaker2": "English translation of Speaker2 line"}
   ],
+  "vocabulary": [{"nl": "dutch word", "en": "english translation"}],
+  "quiz": [],
   "grammar_notes": [{"title": "rule", "explanation": "...", "examples": ["ex1", "ex2"]}]
 }
 ```
-
-- `vocabulary`: include ALL new Dutch words introduced
-- `grammar_notes`: 1–3 grammar points covered
-- `quiz`: include all 8 questions as metadata (types: `multiple_choice`, `fill_gap`, `listen_and_pick`)
-
-## Critical Rules
-
-- Two speakers: Speaker1 and Speaker2
-- Every dialogue line begins with `[pause for 1 second] [medium slow]`
-- All Dutch text must be correct standard Dutch (geen Vlaams dialect)
-- No English in dialogue lines **except**: (a) the one pre-quiz English line, (b) per-round English pause prompts
-- Output strict JSON only — no markdown, no code blocks

@@ -12,10 +12,122 @@ from pipeline.utils import command_exists
 
 LOGGER = logging.getLogger(__name__)
 
+def _clamp_playback_speed(speed: float) -> float:
+    if speed < 0.5:
+        return 0.5
+    if speed > 2.0:
+        return 2.0
+    return speed
+
+def _atempo_chain(speed: float) -> str:
+    """Build an ffmpeg atempo filter chain for arbitrary speed in [0.5, 2.0]."""
+    return f"atempo={speed:.6f}"
+
+
+def _apply_final_playback_speed(
+    input_mp4: Path,
+    output_mp4: Path,
+    playback_speed: float,
+    crf: int,
+    preset: str,
+) -> tuple[bool, str]:
+    speed = _clamp_playback_speed(playback_speed)
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(input_mp4),
+        "-map",
+        "0:v",
+        "-map",
+        "0:a",
+        "-vf",
+        f"setpts=PTS/{speed:.6f}",
+        "-af",
+        _atempo_chain(speed),
+        "-c:v",
+        "libx264",
+        "-preset",
+        preset,
+        "-crf",
+        str(crf),
+        "-pix_fmt",
+        "yuv420p",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-shortest",
+        str(output_mp4),
+    ]
+    LOGGER.info("ffmpeg.final_speed.cmd %s", " ".join(cmd))
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        if result.stderr:
+            LOGGER.debug("ffmpeg.final_speed.stderr %s", result.stderr[-2000:])
+        return True, ""
+    except subprocess.CalledProcessError as exc:
+        LOGGER.error("ffmpeg.final_speed.failed stderr=%s", (exc.stderr or exc.stdout or "")[-2000:])
+        return False, exc.stderr or exc.stdout or str(exc)
+    except Exception as exc:
+        return False, str(exc)
+
 
 def _format_subtitle_filter_path(path: Path) -> str:
     """FFmpeg subtitle/ass filters require escaped path characters."""
     return path.resolve().as_posix().replace("\\", "\\\\").replace(":", "\\:").replace("'", "\\'")
+
+
+def _ass_time_to_seconds(value: str) -> float:
+    # ASS format: H:MM:SS.cc (centiseconds)
+    hms, cs = value.rsplit(".", 1)
+    h, m, s = hms.split(":")
+    return int(h) * 3600 + int(m) * 60 + int(s) + int(cs) / 100.0
+
+
+def _seconds_to_ass_time(seconds: float) -> str:
+    if seconds < 0:
+        seconds = 0
+    total_cs = int(round(seconds * 100))
+    h = total_cs // 360000
+    rem = total_cs % 360000
+    m = rem // 6000
+    rem = rem % 6000
+    s = rem // 100
+    cs = rem % 100
+    return f"{h}:{m:02d}:{s:02d}.{cs:02d}"
+
+
+def _scale_ass_dialogue_timestamps(ass_in: Path, ass_out: Path, factor: float) -> None:
+    """Scale Dialogue line start/end timestamps by *factor* and write to ass_out."""
+    lines = ass_in.read_text(encoding="utf-8").splitlines()
+    out_lines: list[str] = []
+
+    for line in lines:
+        if not line.startswith("Dialogue:"):
+            out_lines.append(line)
+            continue
+
+        # Expected ASS format: Dialogue: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
+        parts = line.split(",", 9)
+        if len(parts) < 10:
+            out_lines.append(line)
+            continue
+
+        try:
+            start_s = _ass_time_to_seconds(parts[1]) * factor
+            end_s = _ass_time_to_seconds(parts[2]) * factor
+            parts[1] = _seconds_to_ass_time(start_s)
+            parts[2] = _seconds_to_ass_time(end_s)
+            out_lines.append(",".join(parts))
+        except Exception:
+            out_lines.append(line)
+
+    ass_out.write_text("\n".join(out_lines) + "\n", encoding="utf-8")
 
 
 def _supports_ass_filter() -> bool:
@@ -38,6 +150,7 @@ def _build_video_with_karaoke(
     output_mp4: Path,
     burn_subtitles: bool,
     image_path: Path,
+    playback_speed: float,
 ) -> tuple[bool, str]:
     if not audio_path.exists():
         return False, f"Missing audio file: {audio_path}"
@@ -52,12 +165,17 @@ def _build_video_with_karaoke(
     fps = int(render_cfg.get("fps", 30))
     crf = int(render_cfg.get("crf", 19))
     preset = str(render_cfg.get("preset", "slow"))
+    playback_speed = _clamp_playback_speed(float(playback_speed))
 
     vf_chain = (
         f"scale={width}:{height},"
         "eq=saturation=1.12:contrast=1.06:brightness=0.01,"
         "unsharp=5:5:0.45:3:3:0.0"
     )
+    if abs(playback_speed - 1.0) > 1e-6:
+        vf_chain += f",setpts=PTS/{playback_speed:.6f}"
+
+    af_chain = _atempo_chain(playback_speed)
     input_args = ["-loop", "1", "-framerate", str(fps), "-i", str(image_path)]
 
     # Add single full WAV audio input
@@ -77,6 +195,8 @@ def _build_video_with_karaoke(
         "-map", "1:a",
         "-vf",
         vf_chain,
+        "-af",
+        af_chain,
         "-c:v",
         "libx264",
         "-preset",
@@ -217,12 +337,21 @@ def render_from_artifact(artifact_path: Path) -> Path:
     output_mp4 = video_dir / f"episode_{topic_id}_{title_slug}.mp4"
     video_dir.mkdir(parents=True, exist_ok=True)
 
-    # Use audio_file from artifact as primary source
+    # Use audio_file from artifact as primary source, with fallback to raw audio path.
     audio_path = Path(data["audio_file"]) if data.get("audio_file") else None
     if not audio_path or not audio_path.exists():
-        raise FileNotFoundError(
-            f"Audio file not found: {audio_path}. Ensure voice generation has run."
-        )
+        raw_audio_file = data.get("audio_file_raw")
+        if raw_audio_file and Path(raw_audio_file).exists():
+            audio_path = Path(raw_audio_file)
+            LOGGER.warning(
+                "render.audio.fallback_to_raw missing=%s raw=%s",
+                data.get("audio_file"),
+                raw_audio_file,
+            )
+        else:
+            raise FileNotFoundError(
+                f"Audio file not found: {audio_path}. Ensure voice generation has run."
+            )
 
     # Retrieve karaoke ASS subtitle file
     ass_file = data.get("karaoke_file") or data.get("srt_files", {}).get("ass_karaoke")
@@ -235,6 +364,8 @@ def render_from_artifact(artifact_path: Path) -> Path:
         if not candidate.exists():
             raise FileNotFoundError(f"Subtitle file not found: {ass_file}")
         ass_path = candidate
+
+    ass_path_for_render = ass_path
 
     ffmpeg_available = command_exists("ffmpeg")
     subtitles_filter_available = _supports_ass_filter() if ffmpeg_available else False
@@ -255,6 +386,47 @@ def render_from_artifact(artifact_path: Path) -> Path:
     render_error = ""
     subtitle_burned_in = False
 
+    render_cfg = settings.load_yaml(settings.ROOT / "config/visual_style.yaml").get("render", {})
+    width = int(render_cfg.get("width", 1920))
+    height = int(render_cfg.get("height", 1080))
+    fps = int(render_cfg.get("fps", 30))
+    crf = int(render_cfg.get("crf", 19))
+    preset = str(render_cfg.get("preset", "slow"))
+    configured_speed = _clamp_playback_speed(float(render_cfg.get("playback_speed", 1.0)))
+    playback_speed = configured_speed
+    speed_application = str(render_cfg.get("speed_application", "final_output")).strip().lower()
+
+    if speed_application == "pre_slow_audio":
+        # Audio was already slowed before subtitle generation.
+        # Keep render at realtime speed to avoid double-slowing.
+        playback_speed = 1.0
+
+    if speed_application == "final_output":
+        # Apply speed once after final stitched video is produced.
+        playback_speed = 1.0
+
+    scaled_ass_tmp: Path | None = None
+    ass_timestamps_scaled = False
+    if speed_application == "render_filters" and abs(playback_speed - 1.0) > 1e-6:
+        # Stretch subtitle event times to match slowed/sped media timeline.
+        scale_factor = 1.0 / playback_speed
+        scaled_ass_tmp = video_dir / f"_scaled_{ass_path.name}"
+        _scale_ass_dialogue_timestamps(ass_path, scaled_ass_tmp, scale_factor)
+        ass_path_for_render = scaled_ass_tmp
+        ass_timestamps_scaled = True
+        LOGGER.info(
+            "ass.timestamps.scaled factor=%.6f speed=%.6f src=%s dst=%s",
+            scale_factor,
+            playback_speed,
+            ass_path,
+            scaled_ass_tmp,
+        )
+    elif speed_application != "render_filters":
+        LOGGER.info(
+            "ass.timestamps.unchanged mode=%s (no ASS timestamp scaling)",
+            speed_application,
+        )
+
     if not ffmpeg_available:
         raise RuntimeError("ffmpeg is not installed or not on PATH.")
 
@@ -263,23 +435,17 @@ def render_from_artifact(artifact_path: Path) -> Path:
     main_video_tmp = video_dir / f"_main_{output_mp4.name}"
     assembled, render_error = _build_video_with_karaoke(
         audio_path=audio_path,
-        ass_path=ass_path,
+        ass_path=ass_path_for_render,
         output_mp4=main_video_tmp,
         burn_subtitles=subtitles_filter_available,
         image_path=image_path,
+        playback_speed=playback_speed,
     )
     subtitle_burned_in = assembled and subtitles_filter_available
     if not assembled:
         raise RuntimeError(f"Video render failed: {render_error}")
 
     # Stitch intro image (1 s) + main video + end video
-    render_cfg = settings.load_yaml(settings.ROOT / "config/visual_style.yaml").get("render", {})
-    width = int(render_cfg.get("width", 1920))
-    height = int(render_cfg.get("height", 1080))
-    fps = int(render_cfg.get("fps", 30))
-    crf = int(render_cfg.get("crf", 19))
-    preset = str(render_cfg.get("preset", "slow"))
-
     intro_image = settings.ROOT / "assets" / "static_images" / "intro_image.png"
     end_video = settings.ROOT / "assets" / "static_videos" / "end_video.mp4"
 
@@ -312,14 +478,22 @@ def render_from_artifact(artifact_path: Path) -> Path:
     else:
         main_video_tmp.replace(output_mp4)
 
+    if speed_application == "final_output" and abs(configured_speed - 1.0) > 1e-6:
+        final_speed_tmp = video_dir / f"_final_speed_{output_mp4.name}"
+        ok, err = _apply_final_playback_speed(output_mp4, final_speed_tmp, configured_speed, crf, preset)
+        if not ok:
+            raise RuntimeError(f"Final playback speed pass failed: {err}")
+        final_speed_tmp.replace(output_mp4)
+
     # Clean up temp files
-    for tmp in [main_video_tmp, intro_clip_tmp]:
+    for tmp in [main_video_tmp, intro_clip_tmp, scaled_ass_tmp]:
         if tmp and tmp.exists():
             tmp.unlink(missing_ok=True)
 
     topic_data = data.get("topic", {})
     render_manifest = {
         "note": "FFmpeg Karaoke render completed",
+        "note_subtitle_styling": "Dialogue episodes use multi-speaker ASS styles (SpeakerL, SpeakerR); other categories use Default center-aligned style",
         "topic": topic_data,
         "planned_video_file": str(output_mp4),
         "input_audio_file": str(audio_path),
@@ -327,6 +501,9 @@ def render_from_artifact(artifact_path: Path) -> Path:
         "ffmpeg_available": ffmpeg_available,
         "assembled": assembled,
         "subtitle_burned_in": subtitle_burned_in,
+        "playback_speed": configured_speed,
+        "speed_application": speed_application,
+        "ass_timestamps_scaled": ass_timestamps_scaled,
         "generated_image_file": str(image_path) if image_path else "",
         "render_error": render_error,
     }

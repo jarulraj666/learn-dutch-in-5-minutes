@@ -21,6 +21,12 @@ class TopicChoice:
     title_hint: str
     level: str = "A1"
     category: str = "dialogue"
+    # Multi-speaker dialogue fields (optional, only for dialogue category)
+    scenario: str | None = None
+    speaker1_role: str | None = None
+    speaker2_role: str | None = None
+    speaker1_gender: str | None = None
+    speaker2_gender: str | None = None
 
 
 def choose_next_topic(level: str = "A1", category: str | None = None) -> TopicChoice:
@@ -86,10 +92,36 @@ def choose_next_topic(level: str = "A1", category: str | None = None) -> TopicCh
             "All topics are done or skipped."
         )
 
+    # Load dialogue-specific metadata from config
+    dialogue_metadata = _load_dialogue_metadata(row["id"])
+
     return TopicChoice(
         topic_id=row["id"],
         track=row["track"],
         title_hint=row["title_hint"],
         level=row["level"],
         category=row["category"],
+        scenario=dialogue_metadata.get("scenario"),
+        speaker1_role=dialogue_metadata.get("speaker1_role"),
+        speaker2_role=dialogue_metadata.get("speaker2_role"),
+        speaker1_gender=dialogue_metadata.get("speaker1_gender"),
+        speaker2_gender=dialogue_metadata.get("speaker2_gender"),
     )
+
+
+def _load_dialogue_metadata(topic_id: str) -> dict:
+    """Load dialogue-specific metadata (scenario, speaker roles) from topic_backlog.yaml.
+    
+    Returns empty dict for non-dialogue topics or if metadata not found.
+    """
+    topics = settings.TOPIC_BACKLOG_CONFIG.get("topics", [])
+    for topic in topics:
+        if topic.get("id") == topic_id:
+            return {
+                "scenario": topic.get("scenario"),
+                "speaker1_role": topic.get("speaker1_role"),
+                "speaker2_role": topic.get("speaker2_role"),
+                "speaker1_gender": topic.get("speaker1_gender"),
+                "speaker2_gender": topic.get("speaker2_gender"),
+            }
+    return {}

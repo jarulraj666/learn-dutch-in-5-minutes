@@ -25,7 +25,6 @@ def _sanitize_description(text: str) -> str:
 def build_upload_payload(artifact_path: Path) -> dict:
     data = json.loads(artifact_path.read_text(encoding="utf-8"))
     metadata = data.get("metadata", {})
-    subtitle_files = data.get("subtitles", {}).get("srt_files", {})
 
     status = {
         "privacyStatus": "private",
@@ -39,7 +38,7 @@ def build_upload_payload(artifact_path: Path) -> dict:
         "snippet": {
             "title": metadata.get("title", "")[:100],
             "description": _sanitize_description(metadata.get("description", "")),
-            "tags": metadata.get("tags", []),
+            "tags": list(metadata.get("tags") or []),
             "categoryId": "27"
         },
         "status": status,
@@ -47,11 +46,6 @@ def build_upload_payload(artifact_path: Path) -> dict:
         "playlist_description": data.get("playlist_description", ""),
         "topic": data.get("topic", {}),
         "thumbnail": data.get("generated_image_file", ""),
-        "captions": {
-            "nl": subtitle_files.get("nl", ""),
-            "en": subtitle_files.get("en", ""),
-            "bilingual": subtitle_files.get("bilingual", ""),
-        },
     }
 
 
@@ -107,7 +101,7 @@ def upload_video(artifact_path: Path, video_file: Path) -> dict:
             "snippet": payload["snippet"],
             "status": payload["status"],
         },
-        media_body=MediaFileUpload(str(video_file), chunksize=-1, resumable=True),
+        media_body=MediaFileUpload(str(video_file), mimetype="video/mp4", chunksize=-1, resumable=True),
     )
     response = request.execute()
 
@@ -122,8 +116,6 @@ def upload_video(artifact_path: Path, video_file: Path) -> dict:
     thumbnail_uploaded = False
     video_id = response.get("id")
     if video_id:
-        captions_uploaded.extend(upload_caption_tracks(youtube, video_id, payload.get("captions", {})))
-
         thumbnail = payload.get("thumbnail", "")
         if thumbnail:
             thumb_path = Path(thumbnail)
@@ -147,40 +139,6 @@ def upload_video(artifact_path: Path, video_file: Path) -> dict:
         "captions_uploaded": captions_uploaded,
         "thumbnail_uploaded": thumbnail_uploaded,
     }
-
-
-def upload_caption_tracks(youtube, video_id: str, captions: dict) -> list[dict]:
-    _, _, _, MediaFileUpload, _ = _load_google_clients()
-    uploaded = []
-
-    mapping = [
-        ("nl", "Dutch"),
-        ("en", "English"),
-    ]
-    for lang, label in mapping:
-        p = captions.get(lang, "")
-        if not p:
-            continue
-        file_path = Path(p)
-        if not file_path.exists():
-            continue
-
-        request = youtube.captions().insert(
-            part="snippet",
-            body={
-                "snippet": {
-                    "videoId": video_id,
-                    "language": lang,
-                    "name": f"{label} subtitles",
-                    "isDraft": False,
-                }
-            },
-            media_body=MediaFileUpload(str(file_path), mimetype="application/x-subrip", resumable=False),
-        )
-        response = request.execute()
-        uploaded.append({"language": lang, "caption_id": response.get("id")})
-
-    return uploaded
 
 
 def ensure_playlist(youtube, title: str, description: str = "") -> str:

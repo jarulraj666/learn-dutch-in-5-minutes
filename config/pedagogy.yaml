@@ -1,93 +1,11 @@
-level: A1
-video_length_minutes: 3-5
-target_duration_seconds: 300
-conversation_target_seconds: 180
-conversation_first: true
 speech:
-  tts_provider: gemini    # Gemini 3.1 Flash TTS
   language: nl            # Primary language: Dutch
-  tts_rate_wpm: 65
-  estimated_words_per_second: 1.08
-  per_turn_pause_seconds: 1.0
-  pacing_safety_multiplier: 1.15
-  # Provider selection by language
-  language_provider_map:
-    nl: gemini           # Dutch: Gemini TTS
-    en: gemini           # English: Gemini TTS (multilingual)
-  # Voice mappings for different TTS providers
   voice_map:
     gemini:
-      # Google Gemini 3.1 Flash TTS
-      # Voices: Kore, Puck, Charon, Fenrir, Orion
-      Speaker1: Erinome
-      Speaker2: Puck
-    kokoro:
-      # Kokoro v1.0: English TTS (local ONNX)
-      Speaker1: af_bella
-      Speaker2: am_michael
-    macos_say:
-      # macOS built-in voices
-      Speaker1: Samantha
-      Speaker2: Samantha
-subtitles:
-  bilingual_enabled: true
-quiz:
-  enabled: true
-  question_count: 4
-  types:
-    - multiple_choice
-    - fill_gap
-    - listen_and_pick
-grammar_description:
-  required_sections:
-    - Grammar Notes
-    - Pattern Breakdown
-    - Mini Examples
-limits:
-  max_sentence_words: 10
-  new_words_target: 8
-  phrase_repetition_min: 3
-
-# Per-level overrides — used by get_pedagogy_for_level(level) in settings.py
-# The top-level keys above remain the A1 defaults for backward compatibility.
-levels:
-  A1:
-    speech:
-      tts_rate_wpm: 65
-      estimated_words_per_second: 1.08
-      per_turn_pause_seconds: 1.0
-      pacing_safety_multiplier: 1.15
-    limits:
-      max_sentence_words: 10
-      new_words_target: 8
-      phrase_repetition_min: 3
-  A2:
-    speech:
-      tts_rate_wpm: 80
-      estimated_words_per_second: 1.33
-      per_turn_pause_seconds: 0.8
-      pacing_safety_multiplier: 1.1
-    limits:
-      max_sentence_words: 14
-      new_words_target: 12
-      phrase_repetition_min: 2
-  B1:
-    speech:
-      tts_rate_wpm: 100
-      estimated_words_per_second: 1.67
-      per_turn_pause_seconds: 0.6
-      pacing_safety_multiplier: 1.0
-    limits:
-      max_sentence_words: 18
-      new_words_target: 16
-      phrase_repetition_min: 2
-  B2:
-    speech:
-      tts_rate_wpm: 120
-      estimated_words_per_second: 2.0
-      per_turn_pause_seconds: 0.5
-      pacing_safety_multiplier: 1.0
-    limits:
-      max_sentence_words: 25
-      new_words_target: 20
-      phrase_repetition_min: 1
+      # Google Gemini TTS voices — assign by gender
+      female: Sulafat
+      male: Puck
+    elevenlabs:
+      # Fill these with ElevenLabs voice IDs before enabling TTS_PROVIDER=elevenlabs
+      female: "yO6w2xlECAQRFP6pX7Hw"
+      male: "fLc0xzaCWvgABhwDGnZI"

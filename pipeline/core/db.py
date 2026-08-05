@@ -63,11 +63,16 @@ def seed_topics_from_config() -> None:
     topics = settings.TOPIC_BACKLOG_CONFIG.get("topics", [])
     with get_connection() as conn:
         for topic in topics:
+            # Insert new topics; update title_hint and track if YAML changed
             conn.execute(
                 """
-                INSERT OR IGNORE INTO topics
+                INSERT INTO topics
                   (id, track, title_hint, level, category, status, order_index)
                 VALUES (?, ?, ?, ?, ?, 'pending', ?)
+                ON CONFLICT(id) DO UPDATE SET
+                  title_hint  = excluded.title_hint,
+                  track       = excluded.track,
+                  order_index = excluded.order_index
                 """,
                 (
                     topic["id"],

@@ -94,6 +94,10 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
     {"Speaker1" : "You're never going to guess!"}
   ],
   "key_phrases": ["phrase1", "phrase2", "phrase3"],
+  "dialogue_en": [
+    {"Speaker1": "English translation of Speaker1 line"},
+    {"Speaker2": "English translation of Speaker2 line"}
+  ],
   "vocabulary": [{"nl": "dutch word", "en": "english translation"}],
   "quiz": [],
   "grammar_notes": [{"title": "rule", "explanation": "...", "examples": ["ex1", "ex2"]}]
