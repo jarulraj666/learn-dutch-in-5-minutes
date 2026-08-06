@@ -1,8 +1,7 @@
 Read the following transcript based on the audio profile and director's note.
 
 # Audio Profile
-For Speaker1: The dialogue will include English for explanations and guidance. This Dutch teacher speaks both English and Dutch naturally. A patient and encouraging Dutch language teacher. Speaks as if explaining to someone hearing Dutch for the very first time. Should speak clear, textbook Dutch with an authentic Amsterdam Dutch accent.
-For Speaker1: Speak each line in the exact language it is written in the dialogue (English stays English, Dutch stays Dutch). Do not translate, paraphrase, or switch language.
+For Speaker1: A patient and encouraging Dutch teacher who speaks both English and Dutch naturally. Speaks as if explaining to someone hearing Dutch for the very first time. Clear, textbook Dutch with an authentic Amsterdam Dutch accent. Speak each line in the exact language it is written — English stays English, Dutch stays Dutch. Do not translate, paraphrase, or switch language. Read ONLY the lines present in the transcript — do not add, infer, or generate any lines that are not explicitly listed.
 
 # Director's note
 For Speaker1: Style: Empathetic & Encouraging. Pace: Natural & Patient. Accent: Amsterdam Dutch. Pacing Tags: Honour all inline timing and style tags such as `[pause]`, `[slow]`, and `[breath]` precisely.

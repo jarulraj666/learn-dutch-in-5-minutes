@@ -18,15 +18,20 @@ Example: `{ "Speaker1" : "[slow] Heel goed! [pause for 1 second]"}`
 
 **Explanations, transitions, and instructions → English**
 **Target Dutch words and example sentences → Dutch**
-**After every Dutch sentence → provide the English translation**
+**After every Dutch sentence → provide the English translation, then append `[pause for 1 second]` to the English translation line too**
+
+**`dialogue_en` rule:** One entry per `dialogue` line, in the same order. Provide the English translation for every line — Dutch or English.
 
 
 Example pattern:
-```
-"Our first word is IK."
-"Ik means I in English."
-"[slow] Ik lees een boek. [pause for 1 second]" → "I read a book."
-"Remember: IK = I."
+```json
+{"Speaker1": "Our first word is IK."},
+{"Speaker1": "Ik means I in English."},
+{"Speaker1": "[slow] Ik lees een boek. [pause for 1 second]"},
+{"Speaker1": "I read a book. [pause for 1 second]"},
+{"Speaker1": "[slow] Ik woon in Amsterdam. [pause for 1 second]"},
+{"Speaker1": "I live in Amsterdam. [pause for 1 second]"},
+{"Speaker1": "Remember: IK = I."}
 ```
 
 This bilingual approach ensures complete beginners can follow without prior Dutch knowledge.
@@ -45,7 +50,7 @@ This bilingual approach ensures complete beginners can follow without prior Dutc
 
 | Phase | Lines | Content |
 |-------|-------|---------|
-| Introduction | ~15 | Welcome, name the word group to be learned today — **no English translations, just proceed** |
+| Introduction | ~15 | Welcome, introduce the word group, first Dutch words with translations |
 | Core Narration | ~100 | Each word: say it, use in 1 example sentence, English translation |
 
 Transition line example: `"[slow] Laten we beginnen!"`
@@ -70,7 +75,6 @@ BLACKBOARD CONTENT:
 Dialogue must be turn-based and printable in this style:
 
 Speaker1: So... what's on the agenda today?
-Speaker2: You're never going to guess!
 
 In JSON, keep each turn as a single speaker-key object.
 
@@ -88,8 +92,10 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
     {"Speaker1" : "[slow] Laten we beginnen! [pause for 1 second]"}
   ],
   "key_phrases": ["phrase1", "phrase2", "phrase3"],
-  "dialogue_en": [    // Plain English only — no TTS tags, no [slow], no [pause for 1 second]    {"Speaker1": "English translation of Speaker1 line"},
-    {"Speaker2": "English translation of Speaker2 line"}
+  "dialogue_en": [
+    // One entry per dialogue line — provide English text for every line
+    {"Speaker1": "English translation of Dutch line"},
+    {"Speaker1": "English line repeated as-is"}
   ],
   "vocabulary": [{"nl": "dutch word", "en": "english translation"}],
   "quiz": [],

@@ -26,6 +26,9 @@ A quiet, sunlit Dutch classroom. No background noise. Learners will replay each 
 
 ---
 
+## Strict Rules
+Read ONLY the lines present in the transcript. Do not add, translate, infer, or generate any lines not explicitly listed. Each line must be spoken in the exact language it is written — English stays English, Dutch stays Dutch.
+
 TTS the following conversation:
 
 {dialogue}

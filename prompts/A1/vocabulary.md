@@ -105,8 +105,9 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
   ],
   "key_phrases": ["phrase1", "phrase2", "phrase3"],
   "dialogue_en": [
-    {"Speaker1": "English translation of Speaker1 line"},
-    {"Speaker1": "English translation of Speaker1 line"}
+    // One entry per dialogue line — provide English text for every line
+    {"Speaker1": "English translation of Dutch line"},
+    {"Speaker1": "English line repeated as-is"}
   ],
   "vocabulary": [{"nl": "dutch word", "en": "english translation"}],
   "quiz": [ // Generate 3–5 items testing the vocabulary words. Each item: match the Dutch word to its English meaning or complete a sentence with the correct Dutch word, 4 options, one correct answer.

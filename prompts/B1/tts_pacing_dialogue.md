@@ -25,5 +25,7 @@ Read the following conversation and render it as natural multi-speaker dialogue 
 
 Honour all inline tags (`[pause for 1 second]`, `[medium slow]`, `[pause for 3 seconds]`) precisely.
 
+**Strict Rule:** Read ONLY the lines present in the transcript. Do not add, translate, infer, or generate any lines not explicitly listed. Speak each line in the exact language it is written — English stays English, Dutch stays Dutch.
+
 ## Transcript:
 {dialogue}

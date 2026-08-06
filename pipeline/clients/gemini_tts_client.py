@@ -110,7 +110,6 @@ class GeminiTTSClient:
     PRIMARY_MODEL = "gemini-3.1-flash-tts-preview"
 
     # Recommended word bounds per chunk for optimal prosody & audio fidelity
-    TARGET_WORDS_PER_CHUNK = 100
     MAX_WORDS_PER_CHUNK = 130
     FORCE_SINGLE_CHUNK_DIALOGUE = True
 
@@ -234,40 +233,23 @@ class GeminiTTSClient:
     def _chunk_dialogue(
         self,
         dialogue: list[dict[str, str]],
-        target_words: int = TARGET_WORDS_PER_CHUNK,
         max_words: int = MAX_WORDS_PER_CHUNK,
     ) -> list[list[dict[str, str]]]:
-        """Groups dialogue lines dynamically based on recommended word bounds.
-
-        Prefers to split at natural section boundaries (new word/topic introductions)
-        so the TTS receives complete teaching blocks without mid-block context loss.
+        """Groups dialogue lines into chunks based on a word limit.
 
         Args:
             dialogue: Full dialogue line entries.
-            target_words: Soft word limit target per chunk.
-            max_words: Hard ceiling for maximum words per chunk.
+            max_words: Word count at which a new chunk is started before the next line.
 
         Returns:
             List of chunked dialogue lists.
         """
-        import re
         if not dialogue:
             return []
-
-        # Detect lines that start a new teaching block — these are preferred break points.
-        _SECTION_START = re.compile(
-            r"^(our (first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|\d+\w*)"
-            r"|next[, ]|now (let|we)|let'?s (move|look|begin|start)|moving on)",
-            re.IGNORECASE,
-        )
-
-        def _is_section_start(line: str) -> bool:
-            return bool(_SECTION_START.match(line.strip()))
 
         chunks: list[list[dict[str, str]]] = []
         current_chunk: list[dict[str, str]] = []
         current_word_count = 0
-        pending_break = False  # defer break until next section boundary
 
         for item in dialogue:
             parsed = iter_dialogue_turns([item])
@@ -275,53 +257,17 @@ class GeminiTTSClient:
                 continue
             _, line = parsed[0]
             line_word_count = len(line.split())
-            at_boundary = _is_section_start(line)
 
-            # Hard limit: must break regardless of boundary
-            hard_limit = current_word_count + line_word_count > max_words
-
-            # Soft limit reached — defer break until next section boundary
-            if current_word_count >= target_words and not pending_break:
-                pending_break = True
-
-            should_break = (pending_break and at_boundary) or hard_limit
-
-            if should_break and current_chunk:
+            if current_word_count >= max_words and current_chunk:
                 chunks.append(current_chunk)
                 current_chunk = []
                 current_word_count = 0
-                pending_break = False
 
             current_chunk.append(item)
             current_word_count += line_word_count
 
         if current_chunk:
             chunks.append(current_chunk)
-
-        # Ensure every chunk starts with Speaker1 to prevent voice swap.
-        # If a chunk starts with Speaker2, prepend the last Speaker1 line
-        # from the preceding chunk as a priming context line.
-        last_s1_item: dict[str, str] | None = None
-        for i, chunk in enumerate(chunks):
-            # Find the first speaker in this chunk
-            first_speaker = None
-            for item in chunk:
-                parsed = iter_dialogue_turns([item])
-                if parsed:
-                    first_speaker, _ = parsed[0]
-                    break
-
-            if first_speaker == "Speaker2" and last_s1_item is not None:
-                chunks[i] = [last_s1_item] + chunk
-                LOGGER.debug("chunk %d: prepended Speaker1 primer to fix voice order", i + 1)
-
-            # Track last Speaker1 item seen in this chunk
-            for item in chunk:
-                parsed = iter_dialogue_turns([item])
-                if parsed:
-                    spk, _ = parsed[0]
-                    if spk == "Speaker1":
-                        last_s1_item = item
 
         return chunks
 
@@ -357,7 +303,6 @@ class GeminiTTSClient:
         else:
             dialogue_chunks = self._chunk_dialogue(
                 dialogue,
-                target_words=self.TARGET_WORDS_PER_CHUNK,
                 max_words=self.MAX_WORDS_PER_CHUNK,
             )
         speech_config = self._get_speech_config(speaker_genders=speaker_genders)
@@ -434,6 +379,12 @@ class GeminiTTSClient:
             if raw_pcm is None:
                 LOGGER.error("Failed to generate audio for chunk %d with primary & fallback models.", idx)
                 return False
+
+            # Save individual chunk for debugging
+            target_file = Path(output_path).with_suffix(".wav")
+            chunk_file = target_file.with_name(f"{target_file.stem}_chunk_{idx}.wav")
+            write_wave_file(chunk_file, raw_pcm, channels=1, rate=24000, sample_width=2)
+            LOGGER.info("chunk %d/%d saved: %s", idx, len(dialogue_chunks), chunk_file)
 
             pcm_buffers.append(raw_pcm)
 

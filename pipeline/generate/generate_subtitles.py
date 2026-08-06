@@ -345,7 +345,11 @@ def _write_srt(
 
     entries: list[str] = []
     for i, (start_t, end_t, dutch_text, _) in enumerate(rows):
-        en_text = en_lines[i] if i < len(en_lines) else dutch_text
+        en_text = en_lines[i] if i < len(en_lines) else ""
+        if not en_text:
+            # Empty means the dialogue line was already English — strip ASS karaoke
+            # tags from the Dutch text field to recover readable plain text.
+            en_text = re.sub(r"\{[^}]*\}", "", dutch_text).replace("\\N", " ").strip()
         if not en_text:
             continue
         start_ts = _format_srt_timestamp(start_t)
