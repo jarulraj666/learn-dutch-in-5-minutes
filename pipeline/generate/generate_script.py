@@ -140,6 +140,7 @@ def _prompt_for_topic(
                 .replace("{speaker2_role}", s2.get("role", "speaker"))
                 .replace("{speaker2_gender}", s2.get("gender", "male"))
                 .replace("{scenario}", scenario)
+                .replace("{title_hint}", topic.title_hint)
             )
 
     return (
@@ -169,6 +170,7 @@ def generate_script(
     category = getattr(topic, "category", "dialogue")
     prompt = _prompt_for_topic(topic, language, level=effective_level)
 
+    LOGGER.debug("prompt_for_topic:\n%s", prompt)
     script = _generate_script_gemini(prompt)
 
     turns = iter_dialogue_turns(script.get("dialogue", []))
@@ -179,13 +181,9 @@ def generate_script(
     script.setdefault("level", effective_level)
     script.setdefault("category", category)
     
-    # Generate and inject image_prompt with topic_title substitution
-    image_prompt = _generate_image_prompt(
-        level=effective_level,
-        category=category,
-        topic_title=script.get("topic_title", topic.title_hint)
-    )
-    script["image_prompt"] = image_prompt
+    # The LLM generates image_prompt as part of the JSON response — use it directly.
+    if not script.get("image_prompt"):
+        LOGGER.warning("image_prompt missing from LLM response for topic_id=%s", topic.topic_id)
 
     # Enrich dialogue scripts with speaker metadata and scenario
     if category == "dialogue":
@@ -195,37 +193,6 @@ def generate_script(
             script.setdefault("scenario", speaker_metadata.get("scenario"))
 
     return script
-
-
-def _generate_image_prompt(level: str, category: str, topic_title: str) -> str:
-    """Extract image_prompt template from level/category prompt file and substitute topic_title."""
-    prompt_path = settings.ROOT / f"prompts/{level}/{category}.md"
-    if not prompt_path.exists():
-        LOGGER.warning(
-            "Prompt file not found for level=%s category=%s, using generic image_prompt",
-            level, category
-        )
-        return f"Photorealistic image for lesson: {topic_title}"
-    
-    prompt_text = prompt_path.read_text(encoding="utf-8")
-    
-    # Extract image_prompt from markdown by looking for "image_prompt" in JSON example
-    # The template should have image_prompt in the Output JSON Structure section
-    match = re.search(r'"image_prompt":\s*"([^"]*(?:\\.[^"]*)*)"', prompt_text)
-    if match:
-        image_prompt_template = match.group(1)
-        # Unescape JSON string
-        image_prompt_template = image_prompt_template.replace('\\"', '"')
-        # Use .replace() instead of .format() to avoid KeyError on other {placeholders}
-        image_prompt = image_prompt_template.replace("{topic_title}", topic_title)
-        LOGGER.info("Generated image_prompt from template for level=%s category=%s", level, category)
-        return image_prompt
-    
-    LOGGER.warning(
-        "Could not extract image_prompt template from %s, using fallback",
-        prompt_path
-    )
-    return f"Photorealistic image for lesson: {topic_title}"
 
 
 def _generate_script_gemini(prompt: str) -> dict[str, Any]:

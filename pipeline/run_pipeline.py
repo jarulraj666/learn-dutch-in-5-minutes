@@ -265,6 +265,29 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
         cp["completed_stages"] = completed_stages
         _save_checkpoint(chk_path, cp)
 
+    # --- Audio QA (blocks upload if score < 100%) ---
+    _qa_passed: bool = True
+    if settings.QA_AUDIO_CHECK:
+        try:
+            from pipeline.generate.qa_audio import log_qa_report, run_audio_qa
+            _qa_wav = voice_plan.get("dialogue_audio")
+            if _qa_wav and Path(_qa_wav).exists():
+                _qa_report = run_audio_qa(
+                    wav_path=_qa_wav,
+                    script_dialogue=script.get("dialogue", []),
+                    language=script.get("language", "nl"),
+                )
+                log_qa_report(_qa_report, wav_name=Path(_qa_wav).name)
+                _qa_passed = not _qa_report.issues
+                if not _qa_passed:
+                    LOGGER.warning(
+                        "qa_audio.upload_blocked — score below 100%%, upload will be skipped"
+                    )
+            else:
+                LOGGER.debug("qa_audio.skip — no WAV path available")
+        except Exception:
+            LOGGER.warning("qa_audio.error — QA check failed (non-blocking)", exc_info=True)
+
     # --- Subtitle generation ---
     if "subtitle_generation" in completed_stages:
         subtitle_plan = cp["subtitle_plan"]
@@ -340,6 +363,7 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
             "track": topic.track,
             "title_slug": title_slug,
             "title_hint": topic.title_hint,
+            "scenario": topic.scenario
         },
         "workflow_mode": "single_agent",
         "playlist": playlist_name,
@@ -389,7 +413,11 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
 
     if upload:
         video_path_for_upload = Path(stable_video_path) if stable_video_path else None
-        if video_path_for_upload and video_path_for_upload.exists():
+        if not _qa_passed:
+            LOGGER.warning(
+                "⚠ Upload skipped — audio QA did not pass 100%%. Fix the audio and re-run with --upload."
+            )
+        elif video_path_for_upload and video_path_for_upload.exists():
             with _stage("upload_youtube"):
                 try:
                     result = upload_video(out_path, video_path_for_upload)

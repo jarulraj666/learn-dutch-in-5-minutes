@@ -47,13 +47,13 @@ prompts/
 3. Install dependencies:
 
 ```bash
-pip install -r requirements.txt
+caffeinate -s pip install -r requirements.txt
 ```
 
 4. Initialize database:
 
 ```bash
-python -m pipeline.core.db --init
+caffeinate -s python -m pipeline.core.db --init
 ```
 
 ## Database Management
@@ -68,19 +68,21 @@ sqlite3 db/content.db "UPDATE topics SET status = 'pending' WHERE id = 'your_top
 sqlite3 db/content.db "SELECT id, status, category, level FROM topics ORDER BY order_index;"
 ```
 
+> **Tip:** Prefix any long-running command with `caffeinate -s` to prevent macOS from sleeping while it runs.
+
 ## Running the Pipeline
 
 **Generate all videos for a specific category (batch):**
 ```bash
-python -m pipeline.run_pipeline --language nl --level A1 --category common_words --no-upload --single
-python -m pipeline.run_pipeline --language nl --level A1 --category grammar --no-upload --single
-python -m pipeline.run_pipeline --language nl --level A1 --category vocabulary --no-upload --single
-python -m pipeline.run_pipeline --language nl --level A1 --category dialogue --no-upload --single
+caffeinate -s python -m pipeline.run_pipeline --language nl --level A1 --category common_words --no-upload --single
+caffeinate -s python -m pipeline.run_pipeline --language nl --level A1 --category grammar --no-upload --single
+caffeinate -s python -m pipeline.run_pipeline --language nl --level A1 --category vocabulary --no-upload --single
+caffeinate -s python -m pipeline.run_pipeline --language nl --level A1 --category dialogue --no-upload --single
 ```
 
 **Generate next pending topic (single video):**
 ```bash
-python -m pipeline.run_pipeline --language nl --level A1
+caffeinate -s python -m pipeline.run_pipeline --language nl --level A1
 ```
 
 ## Publishing to YouTube
@@ -92,22 +94,22 @@ export YOUTUBE_CLIENT_SECRETS=/path/to/client_secrets.json
 
 **Dry-run — preview upload payload without uploading:**
 ```bash
-python -m pipeline.publish.publish_pending --include-future
+caffeinate -s python -m pipeline.publish.publish_pending --include-future
 ```
 
 **Execute real uploads:**
 ```bash
-python -m pipeline.publish.publish_pending --execute --include-future
+caffeinate -s python -m pipeline.publish.publish_pending --execute --include-future
 ```
 
 **Upload a specific job:**
 ```bash
-python -m pipeline.publish.publish_pending --execute --job-id 1
+caffeinate -s python -m pipeline.publish.publish_pending --execute --job-id 1
 ```
 
 **Test a single artifact:**
 ```bash
-python -m pipeline.publish.upload_youtube output/episode_X.json --dry-run
+caffeinate -s python -m pipeline.publish.upload_youtube output/episode_X.json --dry-run
 ```
 
 ## Re-run a Specific Stage for an Existing Episode
@@ -118,7 +120,7 @@ Use this when something goes wrong and you want to redo just one step, then re-r
 
 **Interactive mode (easiest):**
 ```bash
-python rerun_stage.py output/A1/common_words/episode_cw_days_of_week_days_of_the_week_maandag_tot_en_met_zondag.json
+caffeinate -s python rerun_stage.py output/A1/common_words/episode_cw_days_of_week_days_of_the_week_maandag_tot_en_met_zondag.json
 ```
 Then select from the menu (1-7). Option 7 runs the complete end-to-end pipeline.
 
@@ -129,25 +131,25 @@ Then select from the menu (1-7). Option 7 runs the complete end-to-end pipeline.
 **Quick commands:**
 ```bash
 # Re-generate script
-python rerun_stage.py artifact.json --script
+caffeinate -s python rerun_stage.py artifact.json --script
 
 # Re-generate audio
-python rerun_stage.py artifact.json --audio-gen
+caffeinate -s python rerun_stage.py artifact.json --audio-gen
 
 # Re-generate subtitles (auto-detects audio from artifact)
-python rerun_stage.py artifact.json --subtitles
+caffeinate -s python rerun_stage.py artifact.json --subtitles
 
 # Re-generate background image
-python rerun_stage.py artifact.json --image
+caffeinate -s python rerun_stage.py artifact.json --image
 
 # Re-render video
-python rerun_stage.py artifact.json --render
+caffeinate -s python rerun_stage.py artifact.json --render
 
 # Upload to YouTube (auto-detects video from render manifest)
-python rerun_stage.py artifact.json --upload
+caffeinate -s python rerun_stage.py artifact.json --upload
 
 # Run all stages at once (complete end-to-end pipeline)
-python rerun_stage.py artifact.json --all
+caffeinate -s python rerun_stage.py artifact.json --all
 ```
 
 **What `--all` does:**
@@ -183,17 +185,17 @@ plan_subtitles(
 
 **Re-generate background image only:**
 ```bash
-python -m pipeline.generate.generate_visual_image --artifact-file ARTIFACT
+caffeinate -s python -m pipeline.generate.generate_visual_image --artifact-file ARTIFACT
 ```
 
 **Re-render video (after subtitles or image are fixed):**
 ```bash
-python -m pipeline.publish.render_video ARTIFACT
+caffeinate -s python -m pipeline.publish.render_video ARTIFACT
 ```
 
 **Upload to YouTube (after render):**
 ```bash
-python -m pipeline.publish.upload_youtube ARTIFACT --video-file VIDEO
+caffeinate -s python -m pipeline.publish.upload_youtube ARTIFACT --video-file VIDEO
 ```
 
 ---
@@ -201,10 +203,10 @@ python -m pipeline.publish.upload_youtube ARTIFACT --video-file VIDEO
 ## Test Stages (run individually)
 
 ```bash
-python -m pipeline.tests.test_stage_1_script_generation
-python -m pipeline.tests.test_stage_2_voice_generation
-python -m pipeline.tests.test_stage_3_subtitle_generation
-python -m pipeline.tests.test_stage_4_video_rendering
+caffeinate -s python -m pipeline.tests.test_stage_1_script_generation
+caffeinate -s python -m pipeline.tests.test_stage_2_voice_generation
+caffeinate -s python -m pipeline.tests.test_stage_3_subtitle_generation
+caffeinate -s python -m pipeline.tests.test_stage_4_video_rendering
 ```
 
 ## YouTube Playlists

@@ -78,6 +78,10 @@ ELEVENLABS_SPEED = get_env_float("ELEVENLABS_SPEED", 0.75)
 # STT: WhisperX (medium model). Device is auto-detected (CUDA if available, else CPU).
 # Override compute type via WHISPERX_COMPUTE_TYPE (default: float16 on GPU, int8 on CPU).
 WHISPERX_MODEL = os.getenv("WHISPERX_MODEL", "medium")
+
+# QA: Audio vs script sentence validation (runs after voice generation in run_pipeline.py).
+# Set QA_AUDIO_CHECK=false in .env to disable.
+QA_AUDIO_CHECK = os.getenv("QA_AUDIO_CHECK", "true").lower() not in ("false", "0", "no")
 WHISPERX_COMPUTE_TYPE = os.getenv("WHISPERX_COMPUTE_TYPE", "")
 
 PEDAGOGY_CONFIG = load_yaml(ROOT / "config/pedagogy.yaml")

@@ -22,6 +22,6 @@ render:
   # Single-speaker subtitle positioning (grammar, vocabulary, etc.)
   single_speaker_margins:
     margin_l: 650                  # Left margin
-    margin_r: 200                  # Right margin
+    margin_r: 150                  # Right margin
     margin_v: 486                  # Vertical margin (bottom)
     alignment: 8                   # ASS alignment (8 = top-center, 2 = bottom-center)
