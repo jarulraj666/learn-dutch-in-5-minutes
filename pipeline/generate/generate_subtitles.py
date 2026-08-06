@@ -306,7 +306,13 @@ def _build_ass_karaoke_text(
         accumulated_cs += dur_cs
         tokens.append(f"{{\\kf{dur_cs}}}{w['word']}")
 
-    return " ".join(tokens) if tokens else fallback_text
+    if not tokens:
+        return fallback_text
+
+    # Wrap at 5 words per line using ASS hard line-break (\N)
+    max_words_per_line = 5
+    chunks = [tokens[i : i + max_words_per_line] for i in range(0, len(tokens), max_words_per_line)]
+    return "\\N".join(" ".join(chunk) for chunk in chunks)
 
 
 def _format_srt_timestamp(seconds: float) -> str:
@@ -335,7 +341,7 @@ def _write_srt(
         for turn in dialogue_en:
             if isinstance(turn, dict):
                 for text in turn.values():
-                    en_lines.append(str(text).strip())
+                    en_lines.append(_strip_tts_tags(str(text).strip()))
 
     entries: list[str] = []
     for i, (start_t, end_t, dutch_text, _) in enumerate(rows):
@@ -367,13 +373,20 @@ def _write_ass_karaoke(
     # Load margin config
     visual_config = settings.load_yaml(settings.ROOT / "config/visual_style.yaml")
     margins = visual_config.get("render", {}).get("subtitle_margins", {})
-    
+    single = visual_config.get("render", {}).get("single_speaker_margins", {})
+
     # Get margin values with fallbacks
     left_l = margins.get("left_speaker_margin_l", 20)
     left_r = margins.get("left_speaker_margin_r", 800)
     right_l = margins.get("right_speaker_margin_l", 800)
     right_r = margins.get("right_speaker_margin_r", 20)
     margin_v = margins.get("margin_v", 486)
+
+    # Single-speaker margin values with fallbacks
+    ss_margin_l = single.get("margin_l", 650)
+    ss_margin_r = single.get("margin_r", 240)
+    ss_margin_v = single.get("margin_v", 486)
+    ss_alignment = single.get("alignment", 8)
     
     # Build header based on category
     if category == "dialogue":
@@ -394,7 +407,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     else:
         # Single-speaker (non-dialogue): center-aligned (backward compatible)
-        header = """[Script Info]
+        header = f"""[Script Info]
 Title: Karaoke Subtitles
 ScriptType: v4.00+
 WrapStyle: 0
@@ -403,7 +416,7 @@ PlayResY: 1080
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Roboto,54,&H00FFFFFF,&H0000FFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,3,0,8,550,240,486,1
+Style: Default,Roboto,54,&H00FFFFFF,&H0000FFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,3,0,{ss_alignment},{ss_margin_l},{ss_margin_r},{ss_margin_v},1
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """

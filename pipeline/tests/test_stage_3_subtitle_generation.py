@@ -63,13 +63,17 @@ def main():
 
     # Load script dialogue for exact text alignment (avoids Whisper transcription errors)
     script_dialogue = None
+    dialogue_en = None
     if script_file.exists():
         script = json.loads(script_file.read_text(encoding="utf-8"))
         script_dialogue = script.get("dialogue")
+        dialogue_en = script.get("dialogue_en")
         if script_dialogue:
             LOGGER.info("✓ Script loaded: %d dialogue lines for text alignment", len(script_dialogue))
         else:
             LOGGER.info("Script has no dialogue — falling back to Whisper transcription")
+        if dialogue_en:
+            LOGGER.info("✓ English translations loaded: %d lines for English SRT", len(dialogue_en))
 
     # Generate karaoke subtitles: Whisper timing + script text (or Whisper-only if no script)
     LOGGER.info("\nGenerating karaoke subtitles (script-aligned)...")
@@ -82,6 +86,7 @@ def main():
         title_slug=title_slug,
         language=language,
         script_dialogue=script_dialogue,
+        dialogue_en=dialogue_en,
     )
 
     # Show results

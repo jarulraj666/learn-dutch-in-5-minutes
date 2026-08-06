@@ -4,8 +4,14 @@ render:
   fps: 30
   crf: 19
   preset: slow
-  speed_application: final_output  # final_output | pre_slow_audio | render_filters
-  playback_speed: 0.90  # <1.0 = slower, >1.0 = faster (recommended slow range: 0.75-1.0)
+  speed_application: final_output  # Speed is applied as a final FFmpeg pass after rendering
+  # Playback speed per category (<1.0 = slower, >1.0 = faster)
+  playback_speed:
+    dialogue: 0.90
+    grammar: 1.0
+    vocabulary: 1.0
+    common_words: 1.0
+    default: 1.0
   # Multi-speaker subtitle positioning (dialogue only)
   subtitle_margins:
     left_speaker_margin_l: 500      # Speaker1 (left) - left margin
@@ -13,3 +19,9 @@ render:
     right_speaker_margin_l: 600    # Speaker2 (right) - left margin
     right_speaker_margin_r: 320     # Speaker2 (right) - right margin
     margin_v: 350                  # Vertical margin (bottom)
+  # Single-speaker subtitle positioning (grammar, vocabulary, etc.)
+  single_speaker_margins:
+    margin_l: 650                  # Left margin
+    margin_r: 200                  # Right margin
+    margin_v: 486                  # Vertical margin (bottom)
+    alignment: 8                   # ASS alignment (8 = top-center, 2 = bottom-center)

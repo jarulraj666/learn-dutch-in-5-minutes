@@ -10,7 +10,9 @@ Narrate a clear, slow Dutch word lesson directly to the viewer. Speaker1 only �
 
 Prepend **`[slow]`** to EVERY Dutch dialogue line. Don't add it for English dialogue.
 
-Example: `{ "Speaker1" : "[slow] Heel goed!"}`
+Append **`[pause for 1 second]`** to the END of EVERY Dutch dialogue line. Don't add it for English dialogue.
+
+Example: `{ "Speaker1" : "[slow] Heel goed! [pause for 1 second]"}`
 
 ## Language of Instruction (A1)
 
@@ -23,7 +25,7 @@ Example pattern:
 ```
 "Our first word is IK."
 "Ik means I in English."
-"[slow] Ik lees een boek." → "I read a book."
+"[slow] Ik lees een boek. [pause for 1 second]" → "I read a book."
 "Remember: IK = I."
 ```
 
@@ -83,11 +85,10 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
   "language": "nl",
   "dialogue": [
     {"Speaker1" : "So... what's on the agenda today?"},
-    {"Speaker1" : "You're never going to guess!"}
+    {"Speaker1" : "[slow] Laten we beginnen! [pause for 1 second]"}
   ],
   "key_phrases": ["phrase1", "phrase2", "phrase3"],
-  "dialogue_en": [
-    {"Speaker1": "English translation of Speaker1 line"},
+  "dialogue_en": [    // Plain English only — no TTS tags, no [slow], no [pause for 1 second]    {"Speaker1": "English translation of Speaker1 line"},
     {"Speaker2": "English translation of Speaker2 line"}
   ],
   "vocabulary": [{"nl": "dutch word", "en": "english translation"}],

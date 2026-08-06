@@ -10,31 +10,42 @@ Narrate a clear, slow Dutch grammar lesson directly to the viewer. Speaker1 only
 
 Prepend **`[slow]`** to EVERY Dutch dialogue line. Don't add it for English dialogue.
 
-Example: `{ "Speaker1" : "[slow] Heel goed!"}`
+Append **`[pause for 1 second]`** to the END of EVERY Dutch dialogue line, after the sentence.
+
+Example: `{ "Speaker1" : "[slow] Heel goed! [pause for 1 second]"}`
 
 ## Language of Instruction (A1)
 
 **Explanations, transitions, and instructions → English**
 **Target Dutch words and example sentences → Dutch**
-**After every Dutch sentence → provide the English translation**
+**After every Dutch sentence → provide the English translation, then append `[pause for 1 second]` to the English translation line too**
 
 
 Example pattern:
-```
-"Our first word is IK."
-"Ik means I in English."
-"Let's listen to three simple example sentences with IK."
-"[slow] Ik lees een boek." → "I read a book."
-"[slow] Ik drink water." → "I drink water."
-"[slow] Ik heet Anna." → "My name is Anna."
-"Remember: IK = I."
+```json
+{"Speaker1": "Today we learn about DE and HET."},
+{"Speaker1": "These are the Dutch words for THE."},
+{"Speaker1": "In English, there is only one: THE."},
+{"Speaker1": "In Dutch, there are two: DE and HET."},
+{"Speaker1": "So how do you know which one to use?"},
+{"Speaker1": "Let's look at some examples."},
+{"Speaker1": "[slow] De man loopt naar huis. [pause for 1 second]"},
+{"Speaker1": "The man walks home. [pause for 1 second]"},
+{"Speaker1": "DE is used for most nouns."},
+{"Speaker1": "HET is used for smaller or neutral nouns."},
+{"Speaker1": "Can you guess — DE or HET for 'boek'?"},
+{"Speaker1": "The answer is: HET boek."},
+{"Speaker1": "[slow] Het boek ligt op tafel. [pause for 1 second]"},
+{"Speaker1": "The book is on the table. [pause for 1 second]"},
+{"Speaker1": "Remember: when in doubt, try DE first —"},
+{"Speaker1": "about 70% of Dutch nouns use DE."}
 ```
 
 This bilingual approach ensures complete beginners can follow without prior Dutch knowledge.
 
 ## Level: A1 | Category: Grammar
 
-**Constraints:** Max 8 words/line · Present tense only · 500-word vocabulary · No subordinate clauses · No idioms · **Never generate a line that contains only a single Dutch word** (e.g. `[slow] ik` alone is forbidden — always use the word inside a full sentence)
+**Constraints:** Max 8 words/line · 500-word vocabulary · **Never generate a line that contains only a single Dutch word** (e.g. `[slow] ik` alone is forbidden — always use the word inside a full sentence)
 
 ### Content Focus
 - **Hook first**: Open with a short real-life situation where this grammar rule matters (e.g. "Imagine you walk into a café and want to order — you need to know this rule!")
@@ -50,7 +61,7 @@ This bilingual approach ensures complete beginners can follow without prior Dutc
 
 | Phase | Lines | Content |
 |-------|-------|---------|
-| Hook & Rule | ~20 | Real-life hook → state the rule → English comparison — **no English translations in Dutch lines, just proceed** |
+| Hook & Rule | ~20 | Real-life hook → state the rule → English comparison → first Dutch examples with translations |
 | Guided Examples | ~60 | Progressive example sentences → pause-and-prompt moments → pattern drill with translations |
 | Error Clinic & Recap | ~20 | 2–3 wrong sentences → explain the mistake → correct version → memory anchor → spoken recap |
 
@@ -76,7 +87,6 @@ BLACKBOARD CONTENT:
 Dialogue must be turn-based and printable in this style:
 
 Speaker1: So... what's on the agenda today?
-Speaker2: You're never going to guess!
 
 In JSON, keep each turn as a single speaker-key object.
 
@@ -95,10 +105,18 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
   ],
   "key_phrases": ["phrase1", "phrase2", "phrase3"],
   "dialogue_en": [
+    // Plain English only — no TTS tags, no [slow], no [pause for 1 second]
     {"Speaker1": "English translation of Speaker1 line"},
-    {"Speaker2": "English translation of Speaker2 line"}
+    {"Speaker1": "English translation of Speaker1 line"}
   ],
   "vocabulary": [{"nl": "dutch word", "en": "english translation"}],
-  "quiz": [],
+  "quiz": [ // Generate 3–5 items testing the grammar rule. Each item: a fill-in-the-blank or choose-the-correct-form question, 4 options, one correct answer.
+    {
+      "question": "Which word completes the sentence: '___ heet Anna.'?",
+      "options": ["Jij", "Ik", "Hij", "Wij"],
+      "answer": "Ik"
+    }
+  ],
   "grammar_notes": [{"title": "rule", "explanation": "...", "examples": ["ex1", "ex2"]}]
 }
+```

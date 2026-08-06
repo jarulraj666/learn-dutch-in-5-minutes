@@ -102,6 +102,43 @@ def _seconds_to_ass_time(seconds: float) -> str:
     return f"{h}:{m:02d}:{s:02d}.{cs:02d}"
 
 
+def _transform_srt_timestamps(
+    srt_in: Path,
+    srt_out: Path,
+    offset_sec: float = 0.0,
+    speed: float = 1.0,
+) -> None:
+    """Transform SRT timestamps: new_time = (original_time + offset_sec) / speed.
+
+    Handles both intro offset and final-output playback speed in one pass so
+    the YouTube caption track stays in sync with the final rendered video.
+    """
+    import re
+
+    _TIMESTAMP_RE = re.compile(
+        r"(\d{2}):(\d{2}):(\d{2}),(\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2}),(\d{3})"
+    )
+    _safe_speed = max(speed, 0.01)
+
+    def _transform(h: str, m: str, s: str, ms: str) -> str:
+        original_ms = (int(h) * 3600 + int(m) * 60 + int(s)) * 1000 + int(ms)
+        original_sec = original_ms / 1000.0
+        new_sec = max(0.0, (original_sec + offset_sec) / _safe_speed)
+        new_total_ms = int(round(new_sec * 1000))
+        new_h, rem = divmod(new_total_ms, 3_600_000)
+        new_m, rem = divmod(rem, 60_000)
+        new_s, new_ms = divmod(rem, 1_000)
+        return f"{new_h:02d}:{new_m:02d}:{new_s:02d},{new_ms:03d}"
+
+    def _replace_match(m: re.Match) -> str:
+        start = _transform(m.group(1), m.group(2), m.group(3), m.group(4))
+        end = _transform(m.group(5), m.group(6), m.group(7), m.group(8))
+        return f"{start} --> {end}"
+
+    text = srt_in.read_text(encoding="utf-8")
+    srt_out.write_text(_TIMESTAMP_RE.sub(_replace_match, text), encoding="utf-8")
+
+
 def _scale_ass_dialogue_timestamps(ass_in: Path, ass_out: Path, factor: float) -> None:
     """Scale Dialogue line start/end timestamps by *factor* and write to ass_out."""
     lines = ass_in.read_text(encoding="utf-8").splitlines()
@@ -392,40 +429,17 @@ def render_from_artifact(artifact_path: Path) -> Path:
     fps = int(render_cfg.get("fps", 30))
     crf = int(render_cfg.get("crf", 19))
     preset = str(render_cfg.get("preset", "slow"))
-    configured_speed = _clamp_playback_speed(float(render_cfg.get("playback_speed", 1.0)))
-    playback_speed = configured_speed
-    speed_application = str(render_cfg.get("speed_application", "final_output")).strip().lower()
+    speed_cfg = render_cfg.get("playback_speed", {})
+    if isinstance(speed_cfg, dict):
+        raw_speed = speed_cfg.get(category, speed_cfg.get("default", 1.0))
+    else:
+        raw_speed = speed_cfg
+    configured_speed = _clamp_playback_speed(float(raw_speed))
+    playback_speed = 1.0  # Speed is always applied as a final pass after rendering
 
-    if speed_application == "pre_slow_audio":
-        # Audio was already slowed before subtitle generation.
-        # Keep render at realtime speed to avoid double-slowing.
-        playback_speed = 1.0
-
-    if speed_application == "final_output":
-        # Apply speed once after final stitched video is produced.
-        playback_speed = 1.0
-
+    ass_path_for_render = ass_path
     scaled_ass_tmp: Path | None = None
-    ass_timestamps_scaled = False
-    if speed_application == "render_filters" and abs(playback_speed - 1.0) > 1e-6:
-        # Stretch subtitle event times to match slowed/sped media timeline.
-        scale_factor = 1.0 / playback_speed
-        scaled_ass_tmp = video_dir / f"_scaled_{ass_path.name}"
-        _scale_ass_dialogue_timestamps(ass_path, scaled_ass_tmp, scale_factor)
-        ass_path_for_render = scaled_ass_tmp
-        ass_timestamps_scaled = True
-        LOGGER.info(
-            "ass.timestamps.scaled factor=%.6f speed=%.6f src=%s dst=%s",
-            scale_factor,
-            playback_speed,
-            ass_path,
-            scaled_ass_tmp,
-        )
-    elif speed_application != "render_filters":
-        LOGGER.info(
-            "ass.timestamps.unchanged mode=%s (no ASS timestamp scaling)",
-            speed_application,
-        )
+    LOGGER.info("ass.timestamps.unchanged (speed applied in final pass)")
 
     if not ffmpeg_available:
         raise RuntimeError("ffmpeg is not installed or not on PATH.")
@@ -451,12 +465,14 @@ def render_from_artifact(artifact_path: Path) -> Path:
 
     concat_parts: list[Path] = []
     intro_clip_tmp: Path | None = None
+    intro_duration_sec: float = 0.0
 
     if intro_image.exists():
         intro_clip_tmp = video_dir / "_intro_clip.mp4"
         ok, err = _build_intro_clip(intro_image, intro_clip_tmp, width, height, fps, crf, preset)
         if ok:
             concat_parts.append(intro_clip_tmp)
+            intro_duration_sec = 1.0
         else:
             LOGGER.warning("intro_clip.failed err=%s — skipping intro", err)
             intro_clip_tmp = None
@@ -478,12 +494,37 @@ def render_from_artifact(artifact_path: Path) -> Path:
     else:
         main_video_tmp.replace(output_mp4)
 
-    if speed_application == "final_output" and abs(configured_speed - 1.0) > 1e-6:
+    if abs(configured_speed - 1.0) > 1e-6:
         final_speed_tmp = video_dir / f"_final_speed_{output_mp4.name}"
         ok, err = _apply_final_playback_speed(output_mp4, final_speed_tmp, configured_speed, crf, preset)
         if not ok:
             raise RuntimeError(f"Final playback speed pass failed: {err}")
         final_speed_tmp.replace(output_mp4)
+
+    # Transform the English SRT timestamps to match the final video timeline:
+    #   final_time = (original_time + intro_offset) / playback_speed
+    # This accounts for both the prepended intro clip and the final-output speed pass.
+    srt_needs_transform = intro_duration_sec > 0 or abs(configured_speed - 1.0) > 1e-6
+    if srt_needs_transform:
+        srt_en_raw = data.get("subtitles", {}).get("srt_en", "")
+        if srt_en_raw:
+            srt_en_path = Path(srt_en_raw)
+            if not srt_en_path.is_absolute():
+                srt_en_path = (settings.ROOT / srt_en_raw).resolve()
+            if srt_en_path.exists():
+                speed_factor = configured_speed
+                _transform_srt_timestamps(
+                    srt_en_path,
+                    srt_en_path,
+                    offset_sec=intro_duration_sec,
+                    speed=speed_factor,
+                )
+                LOGGER.info(
+                    "srt_en.timestamps.transformed offset_sec=%.3f speed=%.3f path=%s",
+                    intro_duration_sec,
+                    speed_factor,
+                    srt_en_path,
+                )
 
     # Clean up temp files
     for tmp in [main_video_tmp, intro_clip_tmp, scaled_ass_tmp]:
@@ -502,8 +543,6 @@ def render_from_artifact(artifact_path: Path) -> Path:
         "assembled": assembled,
         "subtitle_burned_in": subtitle_burned_in,
         "playback_speed": configured_speed,
-        "speed_application": speed_application,
-        "ass_timestamps_scaled": ass_timestamps_scaled,
         "generated_image_file": str(image_path) if image_path else "",
         "render_error": render_error,
     }

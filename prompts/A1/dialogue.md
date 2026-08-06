@@ -24,12 +24,12 @@ Aim for approximately **120–140 dialogue turns** total.
 
 ## Image Prompt
 
-Generate a detailed image prompt under `"image_prompt"` reflecting the scenario: **{scenario}**
+Generate a detailed image prompt under `"image_prompt"` reflecting the scenario of the dialogue**
 
-3D stylized animation render of {scenario}. 16:9 aspect ratio, Pixar aesthetic, warm lighting, highly detailed. **Light, airy background colours** — soft pastels, creamy whites, warm beiges, pale blues or light warm tones. Bright and cheerful feel. No dark or saturated backgrounds.
+3D stylized animation render of {scenario} - {title_hint}. 16:9 aspect ratio, Pixar aesthetic, warm lighting, highly detailed. **Light, airy background colours** — soft pastels, creamy whites, warm beiges, pale blues or light warm tones. Bright and cheerful feel. No dark or saturated backgrounds. Check the dialogue and fit the environment based on the dialogue.
 
 LAYOUT (strict):
-- Full background: The {scenario} environment fills 100% of the frame — rich, detailed, and in focus.
+- Full background: The {scenario} - {title_hint} environment fills 100% of the frame — rich, detailed, and in focus.
 - Left 35–40% : {speaker1_gender} character ({speaker1_role}) positioned naturally, facing inward toward the center.
 - Right 35–40% : {speaker2_gender} character ({speaker2_role}) positioned naturally, facing inward toward the center.
 - Center 20%: Open space — no characters, no obstructions.
@@ -43,7 +43,7 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
   "topic_id": "string",
   "topic_title": "Dutch title",
   "topic_title_en": "English title used for YouTube metadata",
-  "image_prompt": "...",
+  "image_prompt": "// Generate based on {scenario}, {speaker1_gender}, {speaker2_gender}, {speaker1_role}, {speaker2_role}, {title_hint} — follow Image Prompt instructions above",
   "language": "nl",
   "dialogue": [
     {"Speaker1": "Goedemiddag!"},
@@ -51,6 +51,7 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
   ],
   "key_phrases": ["phrase1", "phrase2", "phrase3"],
   "dialogue_en": [
+    // Plain English only — no TTS tags, no [slow], no [pause for 1 second]
     {"Speaker1": "English translation of Speaker1 line"},
     {"Speaker2": "English translation of Speaker2 line"}
   ],

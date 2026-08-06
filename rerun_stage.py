@@ -52,6 +52,7 @@ def run_subtitles(artifact_path: str, audio_path: Optional[str] = None) -> None:
         topic_id=artifact["topic_id"],
         title_slug=artifact["title_slug"],
         script_dialogue=artifact.get("script", {}).get("dialogue"),
+        dialogue_en=artifact.get("script", {}).get("dialogue_en"),
     )
     print("✅ Subtitles regenerated")
 
@@ -168,8 +169,62 @@ def run_upload(artifact_path: str, video_path: Optional[str] = None) -> None:
     
     print(f"🎯 Uploading to YouTube: {artifact['title_slug']}")
     
-    upload_video(Path(artifact_path), Path(video_path))
-    print("✅ Video uploaded")
+    result = upload_video(Path(artifact_path), Path(video_path))
+
+    # Persist youtube result (video_id, captions_uploaded, etc.) back into artifact
+    artifact["youtube"] = result
+    Path(artifact_path).write_text(json.dumps(artifact, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    print(f"✅ Video uploaded: video_id={result.get('video_id')}")
+
+
+def run_captions(artifact_path: str, video_id: str | None = None) -> None:
+    """Upload English SRT caption to an already-uploaded YouTube video."""
+    from pipeline.publish.upload_youtube import upload_captions, _get_youtube_client
+
+    artifact = load_artifact(artifact_path)
+
+    if not video_id:
+        video_id = artifact.get("youtube", {}).get("video_id", "")
+    if not video_id:
+        raise ValueError(
+            "No YouTube video_id found. Pass --video-id <ID> or upload the video first."
+        )
+
+    srt_en_raw = artifact.get("subtitles", {}).get("srt_en", "")
+    if not srt_en_raw:
+        raise ValueError("No srt_en path found in artifact subtitles.")
+
+    srt_path = Path(srt_en_raw)
+    if not srt_path.is_absolute():
+        srt_path = Path(artifact_path).parent.parent.parent.parent / srt_en_raw
+
+    if not srt_path.exists():
+        raise FileNotFoundError(f"English SRT file not found: {srt_path}")
+
+    print(f"🎯 Uploading caption for video_id={video_id}: {srt_path.name}")
+
+    youtube = _get_youtube_client()
+    result = upload_captions(youtube, video_id, srt_path)
+
+    if result:
+        caption_id = result.get("id")
+        language = result.get("snippet", {}).get("language", "en")
+        print(f"✅ Caption uploaded: id={caption_id} language={language}")
+
+        # Persist caption info into artifact
+        artifact.setdefault("youtube", {}).setdefault("captions_uploaded", [])
+        existing_ids = {c.get("caption_id") for c in artifact["youtube"]["captions_uploaded"]}
+        if caption_id not in existing_ids:
+            artifact["youtube"]["captions_uploaded"].append({
+                "caption_id": caption_id,
+                "language": language,
+                "name": result.get("snippet", {}).get("name", "English"),
+                "srt_file": str(srt_path),
+            })
+            Path(artifact_path).write_text(json.dumps(artifact, indent=2, ensure_ascii=False), encoding="utf-8")
+    else:
+        print("⚠️  Caption upload returned no result (possibly already exists).")
 
 
 def interactive_menu(artifact_path: str, audio_path: Optional[str] = None, video_path: Optional[str] = None) -> None:
@@ -184,10 +239,11 @@ def interactive_menu(artifact_path: str, audio_path: Optional[str] = None, video
     print("  4) Re-generate background image")
     print("  5) Re-render video")
     print("  6) Upload to YouTube (auto-detects video from render manifest)")
-    print("  7) Run all stages (complete end-to-end pipeline)")
+    print("  7) Upload captions to YouTube (requires video already uploaded)")
+    print("  8) Run all stages (complete end-to-end pipeline)")
     print("  0) Exit")
     
-    choice = input("\nSelect operation (0-7): ").strip()
+    choice = input("\nSelect operation (0-8): ").strip()
     
     if choice == "1":
         run_script(artifact_path)
@@ -202,6 +258,8 @@ def interactive_menu(artifact_path: str, audio_path: Optional[str] = None, video
     elif choice == "6":
         run_upload(artifact_path, None)
     elif choice == "7":
+        run_captions(artifact_path)
+    elif choice == "8":
         print("\n🚀 Running all stages...\n")
         run_script(artifact_path)
         audio_file = run_audio(artifact_path)
@@ -209,6 +267,7 @@ def interactive_menu(artifact_path: str, audio_path: Optional[str] = None, video
         run_image(artifact_path)
         video_file = run_render(artifact_path)
         run_upload(artifact_path, video_file)
+        run_captions(artifact_path)
         print("\n🎉 All stages completed!")
     elif choice == "0":
         print("Exiting...")
@@ -251,7 +310,9 @@ Examples:
     parser.add_argument("--image", action="store_true", help="Re-generate background image")
     parser.add_argument("--render", action="store_true", help="Re-render video")
     parser.add_argument("--upload", metavar="VIDEO_FILE", nargs="?", const="auto", help="Upload to YouTube (optional video file, auto-detects from render manifest if omitted)")
-    parser.add_argument("--all", action="store_true", help="Run all stages (script → audio → subtitles → image → render → upload)")
+    parser.add_argument("--captions", action="store_true", help="Upload English SRT caption to YouTube (requires video already uploaded)")
+    parser.add_argument("--video-id", metavar="VIDEO_ID", help="YouTube video ID override for --captions (use when artifact has no youtube.video_id)")
+    parser.add_argument("--all", action="store_true", help="Run all stages (script → audio → subtitles → image → render → upload → captions)")
     
     args = parser.parse_args()
 
@@ -262,7 +323,7 @@ Examples:
     
     try:
         # If no specific operation, show interactive menu
-        if not (args.script or args.audio_gen or args.subtitles or args.image or args.render or args.upload or args.all):
+        if not (args.script or args.audio_gen or args.subtitles or args.image or args.render or args.upload or args.captions or args.all):
             interactive_menu(args.artifact, None, None)
             return
         
@@ -294,6 +355,9 @@ Examples:
             video_file = None if args.upload == "auto" else args.upload
             run_upload(args.artifact, video_file)
         
+        if args.captions:
+            run_captions(args.artifact, video_id=getattr(args, "video_id", None))
+        
         if args.all:
             print("\n🚀 Running all stages...\n")
             run_script(args.artifact)
@@ -302,6 +366,7 @@ Examples:
             run_image(args.artifact)
             video_file = run_render(args.artifact)
             run_upload(args.artifact, video_file)
+            run_captions(args.artifact)
             print("\n🎉 All stages completed!")
     
     except Exception as e:

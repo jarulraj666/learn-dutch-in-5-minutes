@@ -56,14 +56,26 @@ pip install -r requirements.txt
 python -m pipeline.core.db --init
 ```
 
+## Database Management
+
+**Reset a topic status to pending (re-run it):**
+```bash
+sqlite3 db/content.db "UPDATE topics SET status = 'pending' WHERE id = 'your_topic_id';"
+```
+
+**View all topics and their statuses:**
+```bash
+sqlite3 db/content.db "SELECT id, status, category, level FROM topics ORDER BY order_index;"
+```
+
 ## Running the Pipeline
 
 **Generate all videos for a specific category (batch):**
 ```bash
-python -m pipeline.run_pipeline --language nl --level A1 --category common_words
-python -m pipeline.run_pipeline --language nl --level A1 --category grammar
-python -m pipeline.run_pipeline --language nl --level A1 --category vocabulary
-python -m pipeline.run_pipeline --language nl --level A1 --category dialogue
+python -m pipeline.run_pipeline --language nl --level A1 --category common_words --no-upload --single
+python -m pipeline.run_pipeline --language nl --level A1 --category grammar --no-upload --single
+python -m pipeline.run_pipeline --language nl --level A1 --category vocabulary --no-upload --single
+python -m pipeline.run_pipeline --language nl --level A1 --category dialogue --no-upload --single
 ```
 
 **Generate next pending topic (single video):**

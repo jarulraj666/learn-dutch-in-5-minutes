@@ -106,8 +106,8 @@ def write_wave_file(
 class GeminiTTSClient:
     """Client for multi-speaker TTS dialogue generation via Google Gemini API."""
 
-    PRIMARY_MODEL = "gemini-2.5-flash-preview-tts"
-    FALLBACK_MODEL = "gemini-3.1-flash-tts-preview"
+    FALLBACK_MODEL = "gemini-2.5-flash-preview-tts"
+    PRIMARY_MODEL = "gemini-3.1-flash-tts-preview"
 
     # Recommended word bounds per chunk for optimal prosody & audio fidelity
     TARGET_WORDS_PER_CHUNK = 100

@@ -71,6 +71,76 @@ topics:
     track: daily_life
     title_hint: "Frequency words: altijd, vaak, soms, nooit, meestal"
 
+  - id: cw_numbers_20_100
+    level: A1
+    category: common_words
+    order_index: 11
+    track: daily_life
+    title_hint: "Numbers 20 to 100: twintig, dertig, veertig, vijftig, zestig, zeventig, tachtig, negentig, honderd"
+
+  - id: cw_adjectives_basic
+    level: A1
+    category: common_words
+    order_index: 12
+    track: daily_life
+    title_hint: "Basic adjectives: groot, klein, mooi, lelijk, goed, slecht, snel, langzaam, nieuw, oud"
+
+  - id: cw_time_telling
+    level: A1
+    category: common_words
+    order_index: 13
+    track: daily_life
+    title_hint: "Telling time: hoe laat is het, uur, half, kwart over, kwart voor"
+
+  - id: cw_emotions
+    level: A1
+    category: common_words
+    order_index: 14
+    track: daily_life
+    title_hint: "Emotions: blij, verdrietig, boos, bang, moe, ziek, gelukkig, nerveus"
+
+  - id: cw_opposites
+    level: A1
+    category: common_words
+    order_index: 15
+    track: daily_life
+    title_hint: "Common opposites: groot/klein, warm/koud, snel/langzaam, oud/jong, duur/goedkoop"
+
+  - id: cw_animals
+    level: A1
+    category: common_words
+    order_index: 16
+    track: daily_life
+    title_hint: "Common animals: hond, kat, vogel, vis, paard, koe, varken, konijn"
+
+  - id: cw_nature
+    level: A1
+    category: common_words
+    order_index: 17
+    track: daily_life
+    title_hint: "Nature words: boom, bloem, zon, maan, zee, berg, rivier, gras, lucht"
+
+  - id: cw_shopping_words
+    level: A1
+    category: common_words
+    order_index: 18
+    track: shopping
+    title_hint: "Shopping words: prijs, betalen, kopen, duur, goedkoop, korting, winkel, kassa"
+
+  - id: cw_house_objects
+    level: A1
+    category: common_words
+    order_index: 19
+    track: daily_life
+    title_hint: "Household objects: sleutel, telefoon, deur, raam, lamp, tafel, stoel, spiegel"
+
+  - id: cw_ordinal_numbers
+    level: A1
+    category: common_words
+    order_index: 20
+    track: daily_life
+    title_hint: "Ordinal numbers: eerste, tweede, derde, vierde, vijfde tot tiende"
+
   # ── VOCABULARY (A1) ──────────────────────────────────────────────────────
   - id: vocab_greetings
     level: A1

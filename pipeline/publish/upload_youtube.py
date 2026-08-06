@@ -11,6 +11,7 @@ from pipeline import settings  # ensures .env is loaded
 SCOPES = [
     "https://www.googleapis.com/auth/youtube.upload",
     "https://www.googleapis.com/auth/youtube",
+    "https://www.googleapis.com/auth/youtube.force-ssl",  # required for captions API
 ]
 
 
@@ -132,6 +133,26 @@ def upload_video(artifact_path: Path, video_file: Path) -> dict:
                     import logging
                     logging.getLogger(__name__).warning("Thumbnail upload failed: %s", exc)
 
+        # Upload English SRT caption track
+        artifact_data = json.loads(artifact_path.read_text(encoding="utf-8"))
+        srt_en_raw = artifact_data.get("subtitles", {}).get("srt_en", "")
+        if srt_en_raw:
+            srt_path = Path(srt_en_raw)
+            if not srt_path.is_absolute():
+                srt_path = artifact_path.parent.parent.parent.parent / srt_en_raw
+            try:
+                caption_result = upload_captions(youtube, video_id, srt_path)
+                if caption_result:
+                    captions_uploaded.append({
+                        "caption_id": caption_result.get("id"),
+                        "language": caption_result.get("snippet", {}).get("language", "en"),
+                        "name": caption_result.get("snippet", {}).get("name", "English"),
+                        "srt_file": str(srt_path),
+                    })
+            except Exception as exc:
+                import logging
+                logging.getLogger(__name__).warning("Caption upload failed: %s", exc)
+
     return {
         "video_id": video_id,
         "playlist_name": playlist_name,
@@ -178,6 +199,99 @@ def add_video_to_playlist(youtube, playlist_id: str, video_id: str) -> None:
             }
         },
     ).execute()
+
+
+def upload_captions(
+    youtube,
+    video_id: str,
+    srt_path: Path,
+    language: str = "en",
+    name: str = "English",
+) -> dict | None:
+    """Upload an SRT caption file to a YouTube video.
+
+    Checks for an existing caption track with the same language first.
+    If one already exists, logs a warning and returns its snippet without re-uploading.
+
+    Args:
+        youtube: Authorised YouTube API client (requires youtube.force-ssl scope).
+        video_id: YouTube video ID to attach the caption to.
+        srt_path: Path to the .srt file to upload.
+        language: BCP-47 language code, e.g. "en".
+        name: Human-readable caption track name shown in YouTube Studio.
+
+    Returns:
+        Caption resource dict on success, None if the SRT file is missing.
+    """
+    import logging
+    from googleapiclient.http import MediaFileUpload as _MediaFileUpload
+
+    logger = logging.getLogger(__name__)
+
+    if not srt_path.exists():
+        logger.warning("Caption SRT file not found, skipping upload: %s", srt_path)
+        return None
+
+    # Check for an existing caption track with the same language — update it if found
+    existing = youtube.captions().list(
+        part="snippet",
+        videoId=video_id,
+    ).execute()
+
+    existing_id = None
+    for item in existing.get("items", []):
+        if item.get("snippet", {}).get("language") == language:
+            existing_id = item.get("id")
+            break
+
+    if existing_id:
+        logger.info(
+            "Caption track for language=%r already exists on video %s (id=%s); updating.",
+            language,
+            video_id,
+            existing_id,
+        )
+        response = youtube.captions().update(
+            part="snippet",
+            body={
+                "id": existing_id,
+                "snippet": {
+                    "videoId": video_id,
+                    "language": language,
+                    "name": name,
+                    "isDraft": False,
+                },
+            },
+            media_body=_MediaFileUpload(str(srt_path), mimetype="application/octet-stream"),
+        ).execute()
+        logger.info(
+            "✓ Caption updated: video=%s language=%s caption_id=%s",
+            video_id,
+            language,
+            response.get("id"),
+        )
+        return response
+
+    response = youtube.captions().insert(
+        part="snippet",
+        body={
+            "snippet": {
+                "videoId": video_id,
+                "language": language,
+                "name": name,
+                "isDraft": False,
+            }
+        },
+        media_body=_MediaFileUpload(str(srt_path), mimetype="application/octet-stream"),
+    ).execute()
+
+    logger.info(
+        "✓ Caption uploaded: video=%s language=%s caption_id=%s",
+        video_id,
+        language,
+        response.get("id"),
+    )
+    return response
 
 
 def main() -> None:

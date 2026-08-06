@@ -41,69 +41,6 @@ def _clamp_speed(speed: float) -> float:
     return speed
 
 
-def _preslow_output_path(audio_path: Path, speed: float) -> Path:
-    speed_token = f"{speed:.2f}".replace(".", "p")
-    return audio_path.with_name(f"{audio_path.stem}_preslow_{speed_token}{audio_path.suffix}")
-
-
-def _maybe_apply_pre_slow_audio(audio_path: Path) -> tuple[Path, float, bool]:
-    """Apply playback speed directly to audio before subtitle generation.
-
-    Returns: (audio_path, configured_speed, applied)
-    """
-    render_cfg = settings.load_yaml(settings.ROOT / "config/visual_style.yaml").get("render", {})
-    mode = str(render_cfg.get("speed_application", "final_output")).strip().lower()
-    speed_raw = float(render_cfg.get("playback_speed", 1.0))
-    speed = _clamp_speed(speed_raw)
-
-    if mode != "pre_slow_audio" or abs(speed - 1.0) < 1e-6:
-        return audio_path, speed, False
-
-    if not command_exists("ffmpeg"):
-        LOGGER.warning("ffmpeg not found; cannot pre-slow audio (mode=%s).", mode)
-        return audio_path, speed, False
-
-    slowed_path = _preslow_output_path(audio_path, speed)
-
-    if slowed_path.exists() and slowed_path.stat().st_mtime >= audio_path.stat().st_mtime:
-        LOGGER.info("audio.preslow.reuse speed=%.3f file=%s", speed, slowed_path)
-        return slowed_path, speed, True
-
-    cmd = [
-        "ffmpeg",
-        "-y",
-        "-i",
-        str(audio_path),
-        "-filter:a",
-        f"atempo={speed:.6f}",
-        "-ar",
-        "24000",
-        "-ac",
-        "1",
-        "-c:a",
-        "pcm_s16le",
-        str(slowed_path),
-    ]
-
-    LOGGER.info("audio.preslow.cmd %s", " ".join(cmd))
-    try:
-        subprocess.run(cmd, check=True, capture_output=True, text=True)
-        LOGGER.info("audio.preslow.applied speed=%.3f file=%s", speed, slowed_path)
-        return slowed_path, speed, True
-    except subprocess.CalledProcessError as err:
-        LOGGER.warning(
-            "audio.preslow.failed speed=%.3f stderr=%s",
-            speed,
-            (err.stderr or err.stdout or "")[-1000:],
-        )
-    except Exception as err:
-        LOGGER.warning("audio.preslow.failed speed=%.3f err=%s", speed, err)
-
-    if slowed_path.exists():
-        slowed_path.unlink(missing_ok=True)
-    return audio_path, speed, False
-
-
 def generate_voice_assets(
     script: dict[str, Any],
     output_root: str,
@@ -160,49 +97,50 @@ def generate_voice_assets(
 
     success = False
     used_provider = ""
-    if raw_audio_path.exists():
-        LOGGER.info("tts.provider.reuse_existing_raw file=%s", raw_audio_path)
-        success = True
-        used_provider = "reused_existing"
-    else:
-        providers_to_try = _resolve_provider_order(category)
-        LOGGER.info("tts.providers.try_order=%s", providers_to_try)
+    providers_to_try = _resolve_provider_order(category)
+    LOGGER.info("tts.providers.try_order=%s", providers_to_try)
 
-        errors: list[str] = []
-        for provider_name in providers_to_try:
-            try:
-                client = create_tts_client(provider_name)
-            except Exception as err:
-                msg = f"init {provider_name} failed: {err}"
-                LOGGER.warning(msg)
-                errors.append(msg)
-                continue
-
-            LOGGER.info("tts.provider.attempt=%s", provider_name)
-            success = client.generate_dialogue_audio(
-                dialogue=dialogue,
-                output_path=dialogue_audio_path,
-                level=script_level,
-                category=category,
-                speaker_genders=speaker_genders,
-                speaker_roles=speaker_roles,
-            )
-            if success:
-                used_provider = getattr(client, "provider_name", provider_name)
-                break
-
-            msg = f"generation failed for provider={provider_name}"
+    errors: list[str] = []
+    for provider_name in providers_to_try:
+        try:
+            client = create_tts_client(provider_name)
+        except Exception as err:
+            msg = f"init {provider_name} failed: {err}"
             LOGGER.warning(msg)
             errors.append(msg)
+            continue
 
-        if not success:
-            raise RuntimeError(
-                "TTS failed for all providers. "
-                f"tried={providers_to_try} errors={'; '.join(errors) if errors else 'none'}"
-            )
+        LOGGER.info("tts.provider.attempt=%s", provider_name)
+        success = client.generate_dialogue_audio(
+            dialogue=dialogue,
+            output_path=dialogue_audio_path,
+            level=script_level,
+            category=category,
+            speaker_genders=speaker_genders,
+            speaker_roles=speaker_roles,
+        )
+        if success:
+            used_provider = getattr(client, "provider_name", provider_name)
+            break
 
-    final_audio_path, configured_speed, pre_slow_applied = _maybe_apply_pre_slow_audio(raw_audio_path)
-    dialogue_audio_path = str(final_audio_path)
+        msg = f"generation failed for provider={provider_name}"
+        LOGGER.warning(msg)
+        errors.append(msg)
+
+    if not success:
+        raise RuntimeError(
+            "TTS failed for all providers. "
+            f"tried={providers_to_try} errors={'; '.join(errors) if errors else 'none'}"
+        )
+
+    render_cfg = settings.load_yaml(settings.ROOT / "config/visual_style.yaml").get("render", {})
+    speed_cfg = render_cfg.get("playback_speed", {})
+    if isinstance(speed_cfg, dict):
+        raw_speed = speed_cfg.get(category, speed_cfg.get("default", 1.0))
+    else:
+        raw_speed = speed_cfg
+    configured_speed = _clamp_speed(float(raw_speed))
+    dialogue_audio_path = str(raw_audio_path)
 
     LOGGER.info("✓ Full dialogue audio generated and saved: %s", dialogue_audio_path)
 
@@ -213,7 +151,6 @@ def generate_voice_assets(
         "dialogue_audio_raw": str(raw_audio_path),
         "dialogue_type": "full_conversation",
         "playback_speed": configured_speed,
-        "pre_slow_applied": pre_slow_applied,
         "line_count": len(dialogue),
     }
 
