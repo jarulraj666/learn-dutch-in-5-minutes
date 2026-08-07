@@ -308,6 +308,37 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
         cp["completed_stages"] = completed_stages
         _save_checkpoint(chk_path, cp)
 
+    # --- Subtitle QA (non-blocking: warns but does not block upload) ---
+    if settings.QA_SUBTITLE_CHECK:
+        try:
+            from pipeline.generate.qa_subtitles import (
+                log_subtitle_qa_report,
+                run_ass_qa,
+                run_srt_qa,
+            )
+            _script_dialogue = script.get("dialogue", [])
+            _expected_lines = len(_script_dialogue) if _script_dialogue else None
+
+            _ass_file = subtitle_plan.get("karaoke_file", "")
+            if _ass_file and Path(_ass_file).exists():
+                _ass_report = run_ass_qa(_ass_file, expected_count=_expected_lines)
+                log_subtitle_qa_report(_ass_report)
+                if not _ass_report.passed:
+                    LOGGER.warning("qa_subtitles.ass.hard_failures — check karaoke timing")
+            else:
+                LOGGER.debug("qa_subtitles.ass.skip — no ASS file available")
+
+            _srt_file = subtitle_plan.get("srt_en", "")
+            if _srt_file and Path(_srt_file).exists():
+                _srt_report = run_srt_qa(_srt_file, expected_count=_expected_lines)
+                log_subtitle_qa_report(_srt_report)
+                if not _srt_report.passed:
+                    LOGGER.warning("qa_subtitles.srt.hard_failures — check SRT timing")
+            else:
+                LOGGER.debug("qa_subtitles.srt.skip — no SRT file available")
+        except Exception:
+            LOGGER.warning("qa_subtitles.error — subtitle QA failed (non-blocking)", exc_info=True)
+
     # --- Image generation ---
     if "image_generation" in completed_stages:
         generated_image_file = cp["generated_image_file"]
@@ -452,14 +483,15 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run Dutch video content pipeline")
     parser.add_argument("--language", default="nl", help="Target language code (default: nl)")
-    parser.add_argument("--level", default="A1", choices=["A1", "A2", "B1", "B2"], help="CEFR level")
+    parser.add_argument("--level", default="A1A2", choices=["A1A2", "B1", "B2"], help="CEFR level")
     parser.add_argument(
         "--category",
         choices=["common_words", "grammar", "vocabulary", "dialogue"],
         default=None,
-        help="Filter by category. Runs all pending videos unless --single is also set.",
+        help="Filter by category. Runs all pending videos unless --single or --count is also set.",
     )
     parser.add_argument("--single", action="store_true", help="Generate only one video (next pending) even when --category is set")
+    parser.add_argument("--count", type=int, default=None, help="Generate a specific number of videos in batch mode (e.g., --count 5)")
     parser.add_argument("--log-level", default="INFO", help="DEBUG, INFO, WARNING, ERROR")
     parser.add_argument("--no-upload", action="store_true", help="Skip YouTube upload after rendering")
     parser.add_argument("--resume", metavar="CHECKPOINT", help="Resume from a checkpoint file (output/{level}/{category}/.checkpoint_{topic_id}.json)")
@@ -487,14 +519,33 @@ def main() -> None:
         print(f"\n✓ Pipeline resumed and completed. Artifact: {out_path}")
         return
 
-    if args.category and not args.single:
-        # Batch mode: generate all pending topics in the category
+    # Determine how many videos to generate (batch vs single)
+    # Priority: --count > --single > default behavior
+    video_count = None
+    if args.count is not None:
+        video_count = args.count
+    elif args.single:
+        video_count = 1
+    elif args.category:
+        # Batch mode: generate all pending topics
+        video_count = float('inf')
+    else:
+        # No category, no single, no count: default to single
+        video_count = 1
+
+    if video_count > 1 or video_count == float('inf'):
+        # Batch mode: generate multiple videos
         completed = []
         failed = []
         video_num = 1
-        while True:
+        max_videos = video_count if video_count != float('inf') else float('inf')
+        
+        while video_num <= max_videos:
             LOGGER.info(
-                "\n=== VIDEO %d | category=%s ===", video_num, args.category
+                "\n=== VIDEO %d / %s | category=%s ===", 
+                video_num, 
+                "unlimited" if max_videos == float('inf') else int(max_videos),
+                args.category
             )
             try:
                 out_path = run(language=args.language, level=args.level, category=args.category, upload=not args.no_upload)
@@ -503,7 +554,7 @@ def main() -> None:
                 video_num += 1
             except (RuntimeError, Exception) as exc:
                 if "No pending or selected topics" in str(exc):
-                    LOGGER.info("✓ All topics in category '%s' are done.", args.category)
+                    LOGGER.info("✓ All topics are done.")
                     break
                 failed.append(str(exc))
                 LOGGER.error("✗ Video %d failed: %s", video_num, exc)

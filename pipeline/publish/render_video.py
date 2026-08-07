@@ -439,7 +439,7 @@ def render_from_artifact(artifact_path: Path) -> Path:
 
     ass_path_for_render = ass_path
     scaled_ass_tmp: Path | None = None
-    LOGGER.info("ass.timestamps.unchanged (speed applied in final pass)")
+    LOGGER.info("ass.burned_in — timestamps transform not needed (frames move with speed pass)")
 
     if not ffmpeg_available:
         raise RuntimeError("ffmpeg is not installed or not on PATH.")
@@ -504,6 +504,12 @@ def render_from_artifact(artifact_path: Path) -> Path:
     # Transform the English SRT timestamps to match the final video timeline:
     #   final_time = (original_time + intro_offset) / playback_speed
     # This accounts for both the prepended intro clip and the final-output speed pass.
+    #
+    # NOTE: ASS subtitles are burned into the video frames and naturally move with
+    # them through the speed pass — no ASS transform is needed here.
+    #
+    # Always transform from the canonical original (*.orig.srt) so that re-running
+    # --render does not compound the scaling (T/0.9 → T/0.81 → ...).
     srt_needs_transform = intro_duration_sec > 0 or abs(configured_speed - 1.0) > 1e-6
     if srt_needs_transform:
         srt_en_raw = data.get("subtitles", {}).get("srt_en", "")
@@ -512,17 +518,22 @@ def render_from_artifact(artifact_path: Path) -> Path:
             if not srt_en_path.is_absolute():
                 srt_en_path = (settings.ROOT / srt_en_raw).resolve()
             if srt_en_path.exists():
-                speed_factor = configured_speed
+                # Keep an untouched original so rerenders always start from ground truth.
+                srt_orig_path = srt_en_path.with_suffix(".orig.srt")
+                if not srt_orig_path.exists():
+                    import shutil
+                    shutil.copy2(srt_en_path, srt_orig_path)
+                    LOGGER.info("srt_en.orig.saved path=%s", srt_orig_path)
                 _transform_srt_timestamps(
-                    srt_en_path,
+                    srt_orig_path,
                     srt_en_path,
                     offset_sec=intro_duration_sec,
-                    speed=speed_factor,
+                    speed=configured_speed,
                 )
                 LOGGER.info(
                     "srt_en.timestamps.transformed offset_sec=%.3f speed=%.3f path=%s",
                     intro_duration_sec,
-                    speed_factor,
+                    configured_speed,
                     srt_en_path,
                 )
 

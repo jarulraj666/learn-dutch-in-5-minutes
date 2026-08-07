@@ -35,7 +35,7 @@ def main():
     # Extract pipeline context
     ctx = script_data.get("_pipeline_context", {})
     topic_id = ctx.get("topic_id", "test")
-    level = ctx.get("level", "A1")
+    level = ctx.get("level", "A1A2")
     category = ctx.get("category", "dialogue")
     title_slug = ctx.get("title_slug", "lesson")
     topic_title = script_data.get("topic_title", "Dutch Lesson")
@@ -75,7 +75,7 @@ def main():
     except Exception as e:
         LOGGER.error("❌ Image generation failed: %s", e)
         LOGGER.error("\nTroubleshooting:")
-        LOGGER.error("- Verify GEMINI_API_KEY / GEMINI_IMAGE_CREATION_API_KEY is set")
+        LOGGER.error("- Verify GEMINI_IMAGE_CREATION_API_KEYS is set in .env")
         LOGGER.error("- Check network connection for Google Gemini API access")
         raise
 

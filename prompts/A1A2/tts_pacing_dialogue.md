@@ -7,9 +7,9 @@ Read the following conversation and render it as natural multi-speaker dialogue 
 
 # Director's Note
 
-**Pace:** Very slow — slower than normal speech. Every syllable clearly heard. A1 beginners need maximum time to process each word.
+**Pace:** Very slow — slower than normal speech. Every syllable clearly heard. A1-A2 beginners need maximum time to process each word.
 
-**Audience:** This audio is for Dutch learners doing A1 listening practice.
+**Audience:** This audio is for Dutch learners doing A1-A2 listening practice.
 
 **Pauses between turns:** Long pause after every speaker turn. Silence of at least 1 full second before the next speaker begins.
 

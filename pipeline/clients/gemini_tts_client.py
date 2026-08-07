@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 import logging
+import time
 import wave
 from pathlib import Path
 from typing import Any
@@ -103,10 +104,21 @@ def write_wave_file(
         wf.writeframes(pcm_bytes)
 
 
+def _is_tts_rate_limited(exc: Exception) -> bool:
+    """Return True if *exc* indicates a Gemini 429 / quota error."""
+    msg = str(exc).upper()
+    return "429" in msg or "RESOURCE_EXHAUSTED" in msg or "QUOTA" in msg
+
+
+def _is_service_unavailable(exc: Exception) -> bool:
+    """Return True if *exc* indicates a 503 Service Unavailable error."""
+    msg = str(exc).upper()
+    return "503" in msg or "SERVICE_UNAVAILABLE" in msg
+
+
 class GeminiTTSClient:
     """Client for multi-speaker TTS dialogue generation via Google Gemini API."""
 
-    FALLBACK_MODEL = "gemini-2.5-flash-preview-tts"
     PRIMARY_MODEL = "gemini-3.1-flash-tts-preview"
 
     # Recommended word bounds per chunk for optimal prosody & audio fidelity
@@ -124,7 +136,7 @@ class GeminiTTSClient:
     def _load_prompt(
         self,
         dialogue: list[dict[str, str]],
-        level: str = "A1",
+        level: str = "A1A2",
         category: str = "dialogue",
         speaker_genders: dict[str, str] | None = None,
         speaker_roles: dict[str, str] | None = None,
@@ -275,7 +287,7 @@ class GeminiTTSClient:
         self,
         dialogue: list[dict[str, str]],
         output_path: str | Path,
-        level: str = "A1",
+        level: str = "A1A2",
         category: str = "dialogue",
         speaker_genders: dict[str, str] | None = None,
         speaker_roles: dict[str, str] | None = None,
@@ -308,10 +320,9 @@ class GeminiTTSClient:
         speech_config = self._get_speech_config(speaker_genders=speaker_genders)
 
         LOGGER.info(
-            "Generating TTS audio in %d chunk(s) using primary model: %s (fallback: %s)",
+            "Generating TTS audio in %d chunk(s) using model: %s",
             len(dialogue_chunks),
             self.PRIMARY_MODEL,
-            self.FALLBACK_MODEL,
         )
 
         pcm_buffers: list[bytes] = []
@@ -333,10 +344,13 @@ class GeminiTTSClient:
             LOGGER.info("tts.prompt.end chunk=%d", idx)
 
             raw_pcm: bytes | None = None
-            for model_name in (self.PRIMARY_MODEL, self.FALLBACK_MODEL):
+            max_retries = 3
+            retry_delay = 1  # Start with 1 second delay
+            
+            for attempt in range(max_retries):
                 try:
                     response = self.client.models.generate_content(
-                        model=model_name,
+                        model=self.PRIMARY_MODEL,
                         contents=prompt,
                         config=types.GenerateContentConfig(
                             response_modalities=["AUDIO"],
@@ -350,34 +364,35 @@ class GeminiTTSClient:
                             data = part.inline_data.data
                             raw_pcm = base64.b64decode(data) if isinstance(data, str) else data
                             break
+                    
+                    # Success, exit retry loop
+                    break
 
-                    if raw_pcm is not None:
-                        if model_name == self.FALLBACK_MODEL:
-                            LOGGER.warning(
-                                "Successfully generated chunk %d using fallback model: %s",
-                                idx,
-                                model_name,
-                            )
-                        break
                 except Exception as err:
-                    if model_name == self.PRIMARY_MODEL:
-                        LOGGER.warning(
-                            "Primary model %s failed for chunk %d: %s. Retrying with fallback %s...",
-                            self.PRIMARY_MODEL,
-                            idx,
-                            err,
-                            self.FALLBACK_MODEL,
-                        )
+                    if _is_tts_rate_limited(err):
+                        raise RuntimeError(f"RATE_LIMITED: {err}") from err
+                    
+                    if _is_service_unavailable(err):
+                        if attempt < max_retries - 1:
+                            LOGGER.warning(
+                                "TTS model %s chunk %d got 503 Service Unavailable (attempt %d/%d). Retrying in %d seconds...",
+                                self.PRIMARY_MODEL, idx, attempt + 1, max_retries, retry_delay
+                            )
+                            time.sleep(retry_delay)
+                            retry_delay *= 2  # Exponential backoff: 1s, 2s, 4s
+                            continue
+                        else:
+                            LOGGER.error(
+                                "TTS model %s failed for chunk %d after %d retries (503 Service Unavailable): %s",
+                                self.PRIMARY_MODEL, idx, max_retries, err
+                            )
+                            break
                     else:
-                        LOGGER.error(
-                            "Fallback model %s also failed for chunk %d: %s",
-                            self.FALLBACK_MODEL,
-                            idx,
-                            err,
-                        )
+                        LOGGER.error("TTS model %s failed for chunk %d: %s", self.PRIMARY_MODEL, idx, err)
+                        break
 
             if raw_pcm is None:
-                LOGGER.error("Failed to generate audio for chunk %d with primary & fallback models.", idx)
+                LOGGER.error("Failed to generate audio for chunk %d.", idx)
                 return False
 
             # Save individual chunk for debugging
@@ -401,7 +416,7 @@ class GeminiTTSClient:
         self,
         dialogue: list[dict[str, str]],
         output_path: str | Path,
-        level: str = "A1",
+        level: str = "A1A2",
         category: str = "dialogue",
         speaker_genders: dict[str, str] | None = None,
         speaker_roles: dict[str, str] | None = None,
@@ -483,6 +498,79 @@ class GeminiTTSClient:
             total_audio_duration,
         )
         return timestamps
+
+
+class RotatingGeminiTTSClient:
+    """Drop-in wrapper around GeminiTTSClient that rotates API keys on 429.
+
+    On each ``generate_dialogue_audio`` call the wrapper iterates the
+    KeyRotator, creating a fresh ``GeminiTTSClient`` per available key.
+    When a key triggers a ``RATE_LIMITED`` RuntimeError it is marked in the
+    rotator and the next key is tried automatically.
+    """
+
+    provider_name: str = "gemini"
+
+    def __init__(self, rotator: "KeyRotator") -> None:  # noqa: F821
+        self._rotator = rotator
+
+    def generate_dialogue_audio(
+        self,
+        dialogue: list[dict[str, str]],
+        output_path: "str | Path",
+        level: str = "A1A2",
+        category: str = "dialogue",
+        speaker_genders: dict[str, str] | None = None,
+        speaker_roles: dict[str, str] | None = None,
+    ) -> bool:
+        for api_key in self._rotator.available_keys():
+            client = GeminiTTSClient(api_key)
+            try:
+                return client.generate_dialogue_audio(
+                    dialogue,
+                    output_path,
+                    level=level,
+                    category=category,
+                    speaker_genders=speaker_genders,
+                    speaker_roles=speaker_roles,
+                )
+            except RuntimeError as exc:
+                if str(exc).startswith("RATE_LIMITED:"):
+                    LOGGER.warning("TTS key rate-limited, rotating to next key")
+                    self._rotator.mark_rate_limited(api_key, exc=exc)
+                    continue
+                raise
+        # available_keys() already raises RuntimeError if all keys are exhausted;
+        # this line is only reached if the loop body never executed.
+        raise RuntimeError("No TTS keys available")
+
+    def generate_dialogue_audio_with_timestamps(
+        self,
+        dialogue: list[dict[str, str]],
+        output_path: "str | Path",
+        level: str = "A1A2",
+        category: str = "dialogue",
+        speaker_genders: dict[str, str] | None = None,
+        speaker_roles: dict[str, str] | None = None,
+    ) -> "tuple[bool, list]":
+        for api_key in self._rotator.available_keys():
+            client = GeminiTTSClient(api_key)
+            try:
+                return client.generate_dialogue_audio_with_timestamps(
+                    dialogue,
+                    output_path,
+                    level=level,
+                    category=category,
+                    speaker_genders=speaker_genders,
+                    speaker_roles=speaker_roles,
+                )
+            except RuntimeError as exc:
+                if str(exc).startswith("RATE_LIMITED:"):
+                    LOGGER.warning("TTS key rate-limited, rotating to next key")
+                    self._rotator.mark_rate_limited(api_key, exc=exc)
+                    continue
+                raise
+        raise RuntimeError("No TTS keys available")
 
 
 def create_gemini_client(api_key: str) -> GeminiTTSClient | None:

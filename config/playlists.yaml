@@ -1,18 +1,18 @@
 playlists:
-  A1:
+  A1A2:
     common_words:
-      name: "A1 | Beginners | Common Words"
-      description: "Learn the most essential Dutch words for absolute beginners. Each episode covers a themed group of everyday words with clear pronunciation, English translations, and simple example sentences. Perfect for A1 learners starting their Dutch journey."
+      name: "A1-A2 | Beginners | Common Words"
+      description: "Learn the most essential Dutch words for absolute beginners. Each episode covers a themed group of everyday words with clear pronunciation, English translations, and simple example sentences. Perfect for A1-A2 learners starting their Dutch journey."
     grammar:
-      name: "A1 | Beginners | Grammar"
-      description: "Master the building blocks of Dutch grammar at the A1 beginner level. Short focused episodes on sentence structure, verb conjugation, articles, and more — explained in English with Dutch examples."
+      name: "A1-A2 | Beginners | Grammar"
+      description: "Master the building blocks of Dutch grammar at the A1-A2 beginner level. Short focused episodes on sentence structure, verb conjugation, articles, and more — explained in English with Dutch examples."
     vocabulary:
-      name: "A1 | Beginners | Vocabulary"
-      description: "Expand your Dutch vocabulary at the A1 level with themed word sets covering daily life, home, food, numbers, and more. Each episode introduces new words with pronunciation and real-life context."
+      name: "A1-A2 | Beginners | Vocabulary"
+      description: "Expand your Dutch vocabulary at the A1-A2 level with themed word sets covering daily life, home, food, numbers, and more. Each episode introduces new words with pronunciation and real-life context."
     dialogue:
-      name: "A1 | Beginners | Dialogue"
-      description: "Practice natural Dutch conversations for beginners. Real-life dialogue episodes covering greetings, introductions, shopping, ordering food, and more — ideal for A1 learners building speaking confidence."
+      name: "A1-A2 | Beginners | Dialogue"
+      description: "Practice natural Dutch conversations for beginners. Real-life dialogue episodes covering greetings, introductions, shopping, ordering food, and more — ideal for A1-A2 learners building speaking confidence."
   fallback:
     default:
-      name: "A1 | Beginners | Dutch Complete Course"
-      description: "A complete Dutch language course for absolute beginners. This playlist combines common words, grammar, vocabulary, and real conversations to take you from zero to A1 level in Dutch."
+      name: "A1-A2 | Beginners | Dutch Complete Course"
+      description: "A complete Dutch language course for absolute beginners. This playlist combines common words, grammar, vocabulary, and real conversations to take you from zero to A1-A2 level in Dutch."

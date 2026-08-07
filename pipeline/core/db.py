@@ -30,7 +30,7 @@ def _ensure_runtime_migrations(conn: sqlite3.Connection) -> None:
     # topics table — new columns for level/category/status/order
     topic_cols = {row["name"] for row in conn.execute("PRAGMA table_info(topics)").fetchall()}
     topic_required = {
-        "level": "TEXT NOT NULL DEFAULT 'A1'",
+        "level": "TEXT NOT NULL DEFAULT 'A1A2'",
         "category": "TEXT NOT NULL DEFAULT 'dialogue'",
         "status": "TEXT NOT NULL DEFAULT 'pending'",
         "order_index": "INTEGER NOT NULL DEFAULT 0",
@@ -78,7 +78,7 @@ def seed_topics_from_config() -> None:
                     topic["id"],
                     topic.get("track", "daily_life"),
                     topic["title_hint"],
-                    topic.get("level", "A1"),
+                    topic.get("level", "A1A2"),
                     topic.get("category", "dialogue"),
                     int(topic.get("order_index", 0)),
                 ),

@@ -10,7 +10,7 @@ For Speaker1: Style: Empathetic & Encouraging. Pace: Natural & Patient. Accent: 
 A friendly, bright classroom setting, learning a new language together.
 
 ## Sample Context:
-Clear Dutch pronunciation. Long vowels held, word endings fully spoken, and consonant clusters distinct. Patient pacing with noticeable breath pauses between sentences to give A1 beginner learners time to process every syllable.
+Clear Dutch pronunciation. Long vowels held, word endings fully spoken, and consonant clusters distinct. Patient pacing with noticeable breath pauses between sentences to give A1-A2 beginner learners time to process every syllable.
 
 ## Transcript:
 {dialogue}

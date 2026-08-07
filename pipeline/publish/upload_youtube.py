@@ -40,7 +40,9 @@ def build_upload_payload(artifact_path: Path) -> dict:
             "title": metadata.get("title", "")[:100],
             "description": _sanitize_description(metadata.get("description", "")),
             "tags": list(metadata.get("tags") or []),
-            "categoryId": "27"
+            "categoryId": "27",
+            "defaultLanguage": "nl",
+            "defaultAudioLanguage": "nl",
         },
         "status": status,
         "playlist": data.get("playlist", ""),

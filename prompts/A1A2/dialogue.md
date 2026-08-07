@@ -1,4 +1,4 @@
-You are generating an A1-level Dutch conversation for Gemini TTS multi-speaker audio generation.
+You are generating an A1-A2 level Dutch conversation for Gemini TTS multi-speaker audio generation.
 
 ## Role
 Generate a natural, realistic Dutch conversation between two speakers in a real-world scenario. The conversation should flow naturally as it would in real life — let the scenario dictate the content, pacing, and length.
@@ -11,6 +11,7 @@ Generate a natural, realistic Dutch conversation between two speakers in a real-
 - **No repetition of earlier lines.** Each turn must say something new. Do not echo or re-ask questions that were already answered earlier in the conversation.
 - **No scripted drills.** Do not have one speaker fire a list of questions that the other answers one by one.
 - **Natural progression only.** The conversation should start, develop organically, and end as it would in real life — with a goodbye or a natural closing, not a summary.
+- **Single location only.** The entire conversation must take place in the same physical location defined by the scenario. Do not move the speakers to a different place mid-conversation. The dialogue must start, develop, and end in the same spot.
 
 ## Speakers
 **Speaker1** — {speaker1_role}, {speaker1_gender} voice. Use a name appropriate for a {speaker1_gender} person.

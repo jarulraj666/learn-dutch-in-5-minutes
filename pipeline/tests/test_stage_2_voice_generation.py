@@ -33,7 +33,7 @@ def main():
     script = json.loads(script_file.read_text(encoding="utf-8"))
     ctx = script.get("_pipeline_context", {})
     topic_id = ctx.get("topic_id", "test")
-    level = ctx.get("level", "A1")
+    level = ctx.get("level", "A1A2")
     category = ctx.get("category", "dialogue")
     title_slug = ctx.get("title_slug", "lesson")
     LOGGER.info(
@@ -76,7 +76,7 @@ def main():
         LOGGER.error("❌ Voice generation failed: %s", e)
         LOGGER.error("\nTroubleshooting:")
         LOGGER.error("- Verify TTS_PROVIDER and TTS_FALLBACK_PROVIDER in .env")
-        LOGGER.error("- If using Gemini: verify GEMINI_TTS_API_KEY (or GEMINI_API_KEY)")
+        LOGGER.error("- If using Gemini: verify GEMINI_TTS_API_KEYS in .env")
         LOGGER.error("- If using ElevenLabs: verify ELEVENLABS_API_KEY and voice IDs in config/pedagogy.yaml")
         LOGGER.error("- Check network connectivity to provider APIs")
         raise

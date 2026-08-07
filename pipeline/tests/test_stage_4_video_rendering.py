@@ -48,7 +48,7 @@ def main():
     image_prompt = ""
     topic_id = "dutch_lesson_1"
     topic_title = "Dutch Lesson"
-    level = "A1"
+    level = "A1A2"
     category = "dialogue"
     title_slug = "lesson"
 

@@ -1,10 +1,10 @@
 # Dutch Language Video Generator
 
-Automatically generates A1-level Dutch lesson videos with narrated dialogue, karaoke subtitles, background images, and YouTube publishing.
+Automatically generates A1-A2 level Dutch lesson videos with narrated dialogue, karaoke subtitles, background images, and YouTube publishing.
 
 ## Features
 - Single-speaker narrated lessons (common words, grammar, vocabulary, dialogue)
-- Gemini TTS audio generation with slow A1 pacing
+- Gemini TTS audio generation with slow A1-A2 pacing
 - WhisperX speech-to-text for karaoke subtitle sync
 - AI-generated classroom background images
 - FFmpeg video assembly with burned-in subtitles
@@ -28,12 +28,12 @@ pipeline/
 
 config/
   playlists.yaml        ← YouTube playlist names by level + category
-  topic_backlog.yaml    ← all topics (40 A1 topics across 4 categories)
+  topic_backlog.yaml    ← all topics (109 A1-A2 topics across 4 categories)
   pedagogy.yaml         ← pacing, speech rate, timing settings
   scheduling.yaml       ← publish cadence
 
 prompts/
-  A1/
+  A1A2/
     common_words.md     ← prompt for common words lessons
     grammar.md          ← prompt for grammar lessons
     vocabulary.md       ← prompt for vocabulary lessons
@@ -74,15 +74,23 @@ sqlite3 db/content.db "SELECT id, status, category, level FROM topics ORDER BY o
 
 **Generate all videos for a specific category (batch):**
 ```bash
-caffeinate -s python -m pipeline.run_pipeline --language nl --level A1 --category common_words --no-upload --single
-caffeinate -s python -m pipeline.run_pipeline --language nl --level A1 --category grammar --no-upload --single
-caffeinate -s python -m pipeline.run_pipeline --language nl --level A1 --category vocabulary --no-upload --single
-caffeinate -s python -m pipeline.run_pipeline --language nl --level A1 --category dialogue --no-upload --single
+caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2 --category common_words --no-upload
+caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2 --category grammar --no-upload
+caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2 --category vocabulary --no-upload
+caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2 --category dialogue --no-upload
+```
+
+**Generate a specific number of videos in batch mode:**
+```bash
+caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2 --category common_words --count 5 --no-upload
+caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2 --category grammar --count 3
 ```
 
 **Generate next pending topic (single video):**
 ```bash
-caffeinate -s python -m pipeline.run_pipeline --language nl --level A1
+caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2
+caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2 --single
+caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2 --count 1
 ```
 
 ## Publishing to YouTube
@@ -112,6 +120,33 @@ caffeinate -s python -m pipeline.publish.publish_pending --execute --job-id 1
 caffeinate -s python -m pipeline.publish.upload_youtube output/episode_X.json --dry-run
 ```
 
+## Pipeline Arguments Reference
+
+**`--language`** (default: `nl`)
+Language code for the target content.
+
+**`--level`** (default: `A1A2`, choices: `A1A2`, `B1`, `B2`)
+CEFR language proficiency level.
+
+**`--category`** (choices: `common_words`, `grammar`, `vocabulary`, `dialogue`, default: `None`)
+Filter topics by category. When combined with `--count` or without `--single`, runs in batch mode.
+
+**`--count N`** (optional integer)
+Generate exactly N videos in sequence. When set, runs in batch mode until N videos are completed or all topics are exhausted.
+- `--count 1`: Generate 1 video
+- `--count 5`: Generate 5 videos
+- `--count 100`: Generate 100 videos (or fewer if fewer topics remain)
+
+**`--single`** (optional flag)
+Generate only 1 video (equivalent to `--count 1`). Kept for backward compatibility.
+
+**`--no-upload`** (optional flag)
+Skip YouTube upload after rendering. Useful for testing or when upload will be done separately.
+
+**` CHECKPOINT`** (optional path)
+Resume a failed pipeline run from the last completed stage using a checkpoint file.
+
+
 ## Re-run a Specific Stage for an Existing Episode
 
 Use this when something goes wrong and you want to redo just one step, then re-render and re-upload without regenerating the full script/audio.
@@ -119,8 +154,8 @@ Use this when something goes wrong and you want to redo just one step, then re-r
 ### Easy Way: Use `rerun_stage.py`
 
 **Interactive mode (easiest):**
-```bash
-caffeinate -s python rerun_stage.py output/A1/common_words/episode_cw_days_of_week_days_of_the_week_maandag_tot_en_met_zondag.json
+```bash--resume
+caffeinate -s python rerun_stage.py output/A1A2/common_words/episode_cw_days_of_week_days_of_the_week_maandag_tot_en_met_zondag.json
 ```
 Then select from the menu (1-7). Option 7 runs the complete end-to-end pipeline.
 
@@ -159,8 +194,8 @@ Regenerates the entire episode: script → audio → subtitles → image → vid
 
 **Variables to substitute:**
 ```
-ARTIFACT = output/A1/common_words/episode_cw_days_of_week_days_of_the_week_maandag_tot_en_met_zondag.json
-AUDIO    = output/A1/common_words/audio/episode_cw_days_of_week_days_of_the_week_maandag_tot_en_met_zondag.wav
+ARTIFACT = output/A1A2/common_words/episode_cw_days_of_week_days_of_the_week_maandag_tot_en_met_zondag.json
+AUDIO    = output/A1A2/common_words/audio/episode_cw_days_of_week_days_of_the_week_maandag_tot_en_met_zondag.wav
 VIDEO    = output/archive/episode_22.mp4
 ```
 
@@ -174,8 +209,8 @@ import json
 artifact = json.loads(Path("ARTIFACT").read_text())
 plan_subtitles(
     "AUDIO",
-    output_root="output/A1/common_words",
-    level="A1",
+    output_root="output/A1A2/common_words",
+    level="A1A2",
     category="common_words",
     topic_id=artifact["topic_id"],
     title_slug=artifact["title_slug"],

@@ -229,6 +229,64 @@ def run_qa(artifact_path: str) -> None:
         print(f"✅ QA passed — {report.found_count}/{report.total_script_sentences} sentences found")
 
 
+def run_qa_subtitles(artifact_path: str) -> None:
+    """Run subtitle QA check: validate ASS karaoke timing and SRT timing."""
+    from pipeline.generate.qa_subtitles import (
+        log_subtitle_qa_report,
+        run_ass_qa,
+        run_srt_qa,
+    )
+
+    artifact = load_artifact(artifact_path)
+    print(f"🎯 Running subtitle QA for: {artifact['title_slug']}")
+
+    dialogue = artifact.get("script", {}).get("dialogue") or []
+    expected_count = len(dialogue) if dialogue else None
+
+    _subtitles = artifact.get("subtitles") or {}
+    ass_raw = (
+        artifact.get("karaoke_file", "")
+        or _subtitles.get("karaoke_file", "")
+        or artifact.get("subtitle_plan", {}).get("karaoke_file", "")
+    )
+    srt_raw = (
+        _subtitles.get("srt_en", "")
+        or artifact.get("srt_en", "")
+        or artifact.get("srt_file", "")
+        or _subtitles.get("srt_files", {}).get("en", "")
+        or artifact.get("subtitle_plan", {}).get("srt_en", "")
+    )
+
+    ran_any = False
+    any_hard = False
+
+    if ass_raw and Path(ass_raw).exists():
+        ass_report = run_ass_qa(ass_raw, expected_count=expected_count)
+        log_subtitle_qa_report(ass_report)
+        ran_any = True
+        if not ass_report.passed:
+            any_hard = True
+    else:
+        print("⚠️  No ASS subtitle file found in artifact (skipping ASS QA)")
+
+    if srt_raw and Path(srt_raw).exists():
+        srt_report = run_srt_qa(srt_raw, expected_count=expected_count)
+        log_subtitle_qa_report(srt_report)
+        ran_any = True
+        if not srt_report.passed:
+            any_hard = True
+    else:
+        print("ℹ️  No SRT subtitle file found in artifact (skipping SRT QA)")
+
+    if not ran_any:
+        raise FileNotFoundError("No subtitle files found in artifact")
+
+    if any_hard:
+        print("⚠️  Subtitle QA found hard issues — see WARNING logs above")
+    else:
+        print("✅ Subtitle QA passed")
+
+
 def run_captions(artifact_path: str, video_id: str | None = None) -> None:
     """Upload English SRT caption to an already-uploaded YouTube video."""
     from pipeline.publish.upload_youtube import upload_captions, _get_youtube_client
@@ -289,13 +347,14 @@ def interactive_menu(artifact_path: str, audio_path: Optional[str] = None, video
     print("  3) Re-generate audio")
     print("  4) Re-generate subtitles         (auto-detects audio from artifact)")
     print("  5) Run audio QA check            (compare WAV against script)")
-    print("  6) Re-render video")
-    print("  7) Upload to YouTube             (auto-detects video from render manifest)")
-    print("  8) Upload captions to YouTube    (requires video already uploaded)")
-    print("  9) Run all stages                (complete end-to-end pipeline)")
+    print("  6) Run subtitle QA check         (validate ASS/SRT timing)")
+    print("  7) Re-render video")
+    print("  8) Upload to YouTube             (auto-detects video from render manifest)")
+    print("  9) Upload captions to YouTube    (requires video already uploaded)")
+    print(" 10) Run all stages                (complete end-to-end pipeline)")
     print("  0) Exit")
     
-    choice = input("\nSelect operation (0-9): ").strip()
+    choice = input("\nSelect operation (0-10): ").strip()
     
     if choice == "1":
         run_script(artifact_path)
@@ -308,18 +367,21 @@ def interactive_menu(artifact_path: str, audio_path: Optional[str] = None, video
     elif choice == "5":
         run_qa(artifact_path)
     elif choice == "6":
-        run_render(artifact_path)
+        run_qa_subtitles(artifact_path)
     elif choice == "7":
-        run_upload(artifact_path, None)
+        run_render(artifact_path)
     elif choice == "8":
-        run_captions(artifact_path)
+        run_upload(artifact_path, None)
     elif choice == "9":
+        run_captions(artifact_path)
+    elif choice == "10":
         print("\n🚀 Running all stages...\n")
         run_script(artifact_path)
         run_image(artifact_path)
         audio_file = run_audio(artifact_path)
         run_subtitles(artifact_path, audio_file)
         run_qa(artifact_path)
+        run_qa_subtitles(artifact_path)
         video_file = run_render(artifact_path)
         run_upload(artifact_path, video_file)
         run_captions(artifact_path)
@@ -369,6 +431,7 @@ Examples:
     parser.add_argument("--video-id", metavar="VIDEO_ID", help="YouTube video ID override for --captions (use when artifact has no youtube.video_id)")
     parser.add_argument("--all", action="store_true", help="Run all stages (script → audio → subtitles → image → render → upload → captions)")
     parser.add_argument("--qa", action="store_true", help="Run audio QA check: compare WAV against script sentences")
+    parser.add_argument("--qa-subtitles", action="store_true", help="Run subtitle QA check: validate ASS karaoke timing and SRT timing")
     
     args = parser.parse_args()
 
@@ -379,7 +442,7 @@ Examples:
     
     try:
         # If no specific operation, show interactive menu
-        if not (args.script or args.audio_gen or args.subtitles or args.image or args.render or args.upload or args.captions or args.all or args.qa):
+        if not (args.script or args.audio_gen or args.subtitles or args.image or args.render or args.upload or args.captions or args.all or args.qa or args.qa_subtitles):
             interactive_menu(args.artifact, None, None)
             return
         
@@ -416,6 +479,9 @@ Examples:
 
         if args.qa:
             run_qa(args.artifact)
+
+        if args.qa_subtitles:
+            run_qa_subtitles(args.artifact)
         
         if args.all:
             print("\n🚀 Running all stages...\n")
@@ -424,6 +490,7 @@ Examples:
             audio_file = run_audio(args.artifact)
             run_subtitles(args.artifact, audio_file)
             run_qa(args.artifact)
+            run_qa_subtitles(args.artifact)
             video_file = run_render(args.artifact)
             run_upload(args.artifact, video_file)
             run_captions(args.artifact)

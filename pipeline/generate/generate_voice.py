@@ -158,7 +158,7 @@ def generate_voice_assets(
 def plan_voice_assets(
     script: dict[str, Any],
     output_root: str = "output",
-    level: str = "A1",
+    level: str = "A1A2",
     category: str = "dialogue",
     topic_id: str = "unknown",
     title_slug: str = "lesson",
@@ -180,7 +180,7 @@ if __name__ == "__main__":
 
     sample_script = {
         "language": "nl",
-        "level": "A1",
+        "level": "A1A2",
         "dialogue": [
             {"Speaker1" : "Hallo! Welkom bij de les van vandaag."},
             { "Speaker2" : "Hallo docent, ik ben er klaar voor."},
@@ -191,7 +191,7 @@ if __name__ == "__main__":
         result = generate_voice_assets(
             sample_script,
             output_root="output",
-            level="A1",
+            level="A1A2",
             category="dialogue",
             topic_id="test_001",
             title_slug="sample_lesson",

@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS topics (
   id TEXT PRIMARY KEY,
   track TEXT NOT NULL,
   title_hint TEXT NOT NULL,
-  level TEXT NOT NULL DEFAULT 'A1',
+  level TEXT NOT NULL DEFAULT 'A1A2',
   category TEXT NOT NULL DEFAULT 'dialogue',
   status TEXT NOT NULL DEFAULT 'pending',
   order_index INTEGER NOT NULL DEFAULT 0,

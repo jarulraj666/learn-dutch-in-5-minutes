@@ -122,8 +122,8 @@ Run all stages through this helper:
 
 Troubleshooting:
   - Stage 1 fails: ensure Ollama is running (ollama serve)
-  - Stage 2 fails: check GEMINI_API_KEY, quota, and network
-    - Stage 3a fails: check GEMINI_API_KEY and network access
+  - Stage 2 fails: check GEMINI_API_KEYS, quota, and network
+    - Stage 3a fails: check GEMINI_API_KEYS and network access
     - Stage 4 fails: ensure ffmpeg is installed and Stage 2/3a/3c/3b outputs exist
 """.strip()
     )

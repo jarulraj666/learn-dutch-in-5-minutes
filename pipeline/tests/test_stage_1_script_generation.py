@@ -26,7 +26,7 @@ LOGGER = logging.getLogger(__name__)
 
 def main():
     parser = argparse.ArgumentParser(description="Test Stage 1: Script Generation")
-    parser.add_argument("--level", default=None, choices=["A1", "A2", "B1", "B2"])
+    parser.add_argument("--level", default=None, choices=["A1A2", "B1", "B2"])
     parser.add_argument("--category", default=None, choices=["common_words", "grammar", "vocabulary", "dialogue"])
     args = parser.parse_args()
 

@@ -6,7 +6,7 @@ Reports missing, extra, truncated, and out-of-order sentences with timestamps.
 
 Usage:
     # From episode artifact JSON (recommended):
-    python -m pipeline.tests.test_stage_qa_audio output/A1/grammar/episode_grammar_present_tense_present_tense_of_regular_verbs_werken_wonen_leven.json
+    python -m pipeline.tests.test_stage_qa_audio output/A1A2/grammar/episode_grammar_present_tense_present_tense_of_regular_verbs_werken_wonen_leven.json
 
     # Explicit audio + script pair:
     python -m pipeline.tests.test_stage_qa_audio --wav path/to/audio.wav --script path/to/episode.json
@@ -115,7 +115,7 @@ def main(argv: list[str] | None = None) -> None:
         else:
             LOGGER.error(
                 "Provide an artifact JSON path, or --wav + --script.\n"
-                "Example: python -m pipeline.tests.test_stage_qa_audio output/A1/grammar/episode_*.json"
+                "Example: python -m pipeline.tests.test_stage_qa_audio output/A1A2/grammar/episode_*.json"
             )
             sys.exit(1)
 

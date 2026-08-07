@@ -27,7 +27,7 @@ def main():
     script_file = out_dir / "test_stage_1_script.json"
 
     topic_id = "test"
-    level = "A1"
+    level = "A1A2"
     category = "dialogue"
     title_slug = "lesson"
     language = "nl"

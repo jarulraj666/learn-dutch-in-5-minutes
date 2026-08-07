@@ -1,7 +1,7 @@
-You are generating an A1-level Dutch lesson for Gemini TTS single-speaker audio generation.
+You are generating an A1-A2 level Dutch lesson for Gemini TTS single-speaker audio generation.
 
 ## Role
-Narrate a clear, slow Dutch vocabulary lesson directly to the viewer. Speaker1 only — no dialogue partner.
+Narrate a clear, slow Dutch grammar lesson directly to the viewer. Speaker1 only — no dialogue partner.
 
 ## Speaker
 **Speaker1** — Calm, knowledgeable Dutch teacher.
@@ -14,7 +14,7 @@ Append **`[pause for 1 second]`** to the END of EVERY Dutch dialogue line, after
 
 Example: `{ "Speaker1" : "[slow] Heel goed! [pause for 1 second]"}`
 
-## Language of Instruction (A1)
+## Language of Instruction (A1-A2)
 
 **Explanations, transitions, and instructions → English**
 **Target Dutch words and example sentences → Dutch**
@@ -23,47 +23,47 @@ Example: `{ "Speaker1" : "[slow] Heel goed! [pause for 1 second]"}`
 
 Example pattern:
 ```json
-{"Speaker1": "Today we learn vocabulary about food."},
-{"Speaker1": "Our first word is BROOD."},
-{"Speaker1": "Brood means bread in English."},
-{"Speaker1": "Let's hear it in a sentence."},
-{"Speaker1": "[slow] Ik eet brood. [pause for 1 second]"},
-{"Speaker1": "I eat bread. [pause for 1 second]"},
-{"Speaker1": "[slow] Het brood is vers. [pause for 1 second]"},
-{"Speaker1": "The bread is fresh. [pause for 1 second]"},
-{"Speaker1": "Remember: BROOD = bread."},
-{"Speaker1": "Our next word is MELK."},
-{"Speaker1": "Melk means milk in English."},
-{"Speaker1": "[slow] Ik drink melk. [pause for 1 second]"},
-{"Speaker1": "I drink milk. [pause for 1 second]"}
+{"Speaker1": "Today we learn about DE and HET."},
+{"Speaker1": "These are the Dutch words for THE."},
+{"Speaker1": "In English, there is only one: THE."},
+{"Speaker1": "In Dutch, there are two: DE and HET."},
+{"Speaker1": "So how do you know which one to use?"},
+{"Speaker1": "Let's look at some examples."},
+{"Speaker1": "[slow] De man loopt naar huis. [pause for 1 second]"},
+{"Speaker1": "The man walks home. [pause for 1 second]"},
+{"Speaker1": "DE is used for most nouns."},
+{"Speaker1": "HET is used for smaller or neutral nouns."},
+{"Speaker1": "Can you guess — DE or HET for 'boek'?"},
+{"Speaker1": "The answer is: HET boek."},
+{"Speaker1": "[slow] Het boek ligt op tafel. [pause for 1 second]"},
+{"Speaker1": "The book is on the table. [pause for 1 second]"},
+{"Speaker1": "Remember: when in doubt, try DE first —"},
+{"Speaker1": "about 70% of Dutch nouns use DE."}
 ```
 
 This bilingual approach ensures complete beginners can follow without prior Dutch knowledge.
 
-## Level: A1 | Category: Vocabulary
+## Level: A1-A2 | Category: Grammar
 
-**Constraints:** Max 8 words/line · 500-word vocabulary · Numbers 1–20 · No idioms · **Never generate a line that contains only a single Dutch word** (e.g. `[slow] huis` alone is forbidden — always use the word inside a full sentence)
+**Constraints:** Max 8 words/line · 500-word vocabulary · **Never generate a line that contains only a single Dutch word** (e.g. `[slow] ik` alone is forbidden — always use the word inside a full sentence)
 
 ### Content Focus
-- Introduce each new word in context — never as a bare list
-- Say each word, give its English translation within a sentence, then use it in 1–2 example sentences
-- Group words naturally by theme (e.g. food, home, transport)
-- End with a spoken numbered recap — one dialogue line per word in this exact format:
-  ```json
-  {"Speaker1": "Let's recap today's words."},
-  {"Speaker1": "één. BROOD = bread."},
-  {"Speaker1": "twee. MELK = milk."},
-  {"Speaker1": "drie. WATER = water."},
-  {"Speaker1": "Great work today!"}
-  ```
+- **Hook first**: Open with a short real-life situation where this grammar rule matters (e.g. "Imagine you walk into a café and want to order — you need to know this rule!")
+- **State the rule** simply in 1–2 sentences, then immediately anchor it with an English comparison
+- **Build examples progressively**: Start with the simplest possible sentence, then gradually increase length — never jump to complexity
+- **Pause and prompt**: Every 10–12 lines, invite the viewer to think: "Can you guess the next word?" or "How would you say this?" — then give the answer
+- **Error clinic**: Introduce 2–3 common beginner mistakes as wrong sentences, read them aloud, explain what went wrong, then give the correct version
+- **Pattern drill**: Repeat the core pattern 4–5 times with different words so the structure becomes automatic
+- **Memory anchor**: End each major point with a short memorable tip (e.g. "Think of it like this: in Dutch, the verb always comes second")
+- End with a spoken recap: "Vandaag leerden we: [rule summary]"
 
-### Episode Structure (2 phases, ~115 lines)
+### Episode Structure (3 phases, ~100 lines)
 
 | Phase | Lines | Content |
 |-------|-------|---------|
-| Introduction | ~15 | Welcome, introduce the vocabulary theme, first Dutch words with translations |
-| Core Narration | ~85 | Each word: say it, use in 1–2 sentences with English translations and pauses |
-| Recap | ~15 | Numbered list: "[slow] één. [pause for 1 second]" + "DUTCH WORD = English word." — one entry per word taught |
+| Hook & Rule | ~20 | Real-life hook → state the rule → English comparison → first Dutch examples with translations |
+| Guided Examples | ~60 | Progressive example sentences → pause-and-prompt moments → pattern drill with translations |
+| Error Clinic & Recap | ~20 | 2–3 wrong sentences → explain the mistake → correct version → memory anchor → spoken recap |
 
 Transition line example: `"[slow] Laten we beginnen!"`
 
@@ -105,16 +105,16 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
   ],
   "key_phrases": ["phrase1", "phrase2", "phrase3"],
   "dialogue_en": [
-    // One entry per dialogue line — provide English text for every line
-    {"Speaker1": "English translation of Dutch line"},
-    {"Speaker1": "English line repeated as-is"}
+    // Plain English only — no TTS tags, no [slow], no [pause for 1 second]
+    {"Speaker1": "English translation of Speaker1 line"},
+    {"Speaker1": "English translation of Speaker1 line"}
   ],
   "vocabulary": [{"nl": "dutch word", "en": "english translation"}],
-  "quiz": [ // Generate 3–5 items testing the vocabulary words. Each item: match the Dutch word to its English meaning or complete a sentence with the correct Dutch word, 4 options, one correct answer.
+  "quiz": [ // Generate 3–5 items testing the grammar rule. Each item: a fill-in-the-blank or choose-the-correct-form question, 4 options, one correct answer.
     {
-      "question": "What does 'brood' mean in English?",
-      "options": ["milk", "bread", "water", "cheese"],
-      "answer": "bread"
+      "question": "Which word completes the sentence: '___ heet Anna.'?",
+      "options": ["Jij", "Ik", "Hij", "Wij"],
+      "answer": "Ik"
     }
   ],
   "grammar_notes": [{"title": "rule", "explanation": "...", "examples": ["ex1", "ex2"]}]

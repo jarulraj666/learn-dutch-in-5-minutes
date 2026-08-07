@@ -69,11 +69,23 @@ VIDEO_ARCHIVE_DIR = Path(os.getenv("VIDEO_ARCHIVE_DIR", "output/archive"))
 # TTS Provider Configuration
 TTS_PROVIDER = os.getenv("TTS_PROVIDER", "gemini")  # Options: gemini, elevenlabs
 TTS_FALLBACK_PROVIDER = os.getenv("TTS_FALLBACK_PROVIDER", "gemini")  # Options: gemini, elevenlabs
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_IMAGE_CREATION_API_KEY = os.getenv("GEMINI_IMAGE_CREATION_API_KEY", "")
-GEMINI_TTS_API_KEY = os.getenv("GEMINI_TTS_API_KEY", "")
+# Comma-separated API key lists — set these in .env to enable round-robin rotation.
+GEMINI_API_KEYS: list[str] = [k.strip() for k in os.getenv("GEMINI_API_KEYS", "").split(",") if k.strip()]
+GEMINI_IMAGE_CREATION_API_KEYS: list[str] = [k.strip() for k in os.getenv("GEMINI_IMAGE_CREATION_API_KEYS", "").split(",") if k.strip()]
+# TTS-specific key list. Falls back to GEMINI_API_KEYS if GEMINI_TTS_API_KEYS is not set.
+_raw_tts_keys = [k.strip() for k in os.getenv("GEMINI_TTS_API_KEYS", "").split(",") if k.strip()]
+GEMINI_TTS_API_KEYS: list[str] = _raw_tts_keys if _raw_tts_keys else GEMINI_API_KEYS
+
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
 ELEVENLABS_SPEED = get_env_float("ELEVENLABS_SPEED", 0.75)
+
+# Key rotators — shared singletons for 429-aware round-robin rotation.
+# Cooldown duration is taken from the API response when available; falls back to 12 hours.
+from pipeline.clients.key_rotator import KeyRotator  # noqa: E402
+
+GEMINI_KEY_ROTATOR = KeyRotator(GEMINI_API_KEYS, "gemini")
+GEMINI_IMAGE_KEY_ROTATOR = KeyRotator(GEMINI_IMAGE_CREATION_API_KEYS, "gemini_image")
+GEMINI_TTS_KEY_ROTATOR = KeyRotator(GEMINI_TTS_API_KEYS, "gemini_tts")
 
 # STT: WhisperX (medium model). Device is auto-detected (CUDA if available, else CPU).
 # Override compute type via WHISPERX_COMPUTE_TYPE (default: float16 on GPU, int8 on CPU).
@@ -82,6 +94,11 @@ WHISPERX_MODEL = os.getenv("WHISPERX_MODEL", "medium")
 # QA: Audio vs script sentence validation (runs after voice generation in run_pipeline.py).
 # Set QA_AUDIO_CHECK=false in .env to disable.
 QA_AUDIO_CHECK = os.getenv("QA_AUDIO_CHECK", "true").lower() not in ("false", "0", "no")
+
+# QA: Subtitle timing validation (runs after subtitle generation in run_pipeline.py).
+# Checks ASS karaoke tag sums, SRT sequence ordering, overlaps, and line count vs script.
+# Set QA_SUBTITLE_CHECK=false in .env to disable.
+QA_SUBTITLE_CHECK = os.getenv("QA_SUBTITLE_CHECK", "true").lower() not in ("false", "0", "no")
 WHISPERX_COMPUTE_TYPE = os.getenv("WHISPERX_COMPUTE_TYPE", "")
 
 PEDAGOGY_CONFIG = load_yaml(ROOT / "config/pedagogy.yaml")

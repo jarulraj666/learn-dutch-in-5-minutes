@@ -19,7 +19,7 @@ class TopicChoice:
     topic_id: str
     track: str
     title_hint: str
-    level: str = "A1"
+    level: str = "A1A2"
     category: str = "dialogue"
     # Multi-speaker dialogue fields (optional, only for dialogue category)
     scenario: str | None = None
@@ -29,7 +29,7 @@ class TopicChoice:
     speaker2_gender: str | None = None
 
 
-def choose_next_topic(level: str = "A1", category: str | None = None) -> TopicChoice:
+def choose_next_topic(level: str = "A1A2", category: str | None = None) -> TopicChoice:
     """Pick the next topic from the DB.
 
     Priority:

@@ -107,7 +107,7 @@ def _extract_json(text: str) -> dict[str, Any]:
 
 
 def _prompt_for_topic(
-    topic: TopicChoice, language: str, level: str = "A1"
+    topic: TopicChoice, language: str, level: str = "A1A2"
 ) -> str:
     category = getattr(topic, "category", "dialogue")
     LOGGER.info(
@@ -161,11 +161,8 @@ def _build_script_text(turns: list[tuple[str, str]]) -> str:
 
 
 def generate_script(
-    topic: TopicChoice, language: str = "nl", level: str = "A1"
+    topic: TopicChoice, language: str = "nl", level: str = "A1A2"
 ) -> dict[str, Any]:
-    if not settings.GEMINI_API_KEY:
-        raise ValueError("GEMINI_API_KEY is not set in settings/environment.")
-
     effective_level = getattr(topic, "level", None) or level
     category = getattr(topic, "category", "dialogue")
     prompt = _prompt_for_topic(topic, language, level=effective_level)
@@ -195,39 +192,54 @@ def generate_script(
     return script
 
 
+def _is_rate_limited(exc: Exception) -> bool:
+    """Return True if the exception indicates a Gemini 429 / quota error."""
+    msg = str(exc).upper()
+    return "429" in msg or "RESOURCE_EXHAUSTED" in msg or "QUOTA" in msg
+
+
 def _generate_script_gemini(prompt: str) -> dict[str, Any]:
     from google import genai
     from google.genai import types
 
-    client = genai.Client(api_key=settings.GEMINI_API_KEY)
-    models_to_try = ["gemini-3.6-flash", "gemini-3.5-flash-lite"]
+    if not settings.GEMINI_API_KEYS:
+        raise ValueError("No Gemini API keys configured. Set GEMINI_API_KEYS in .env")
 
-    for model_name in models_to_try:
-        try:
-            response = client.models.generate_content(
-                model=model_name,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                ),
-            )
-            model_output = response.text
-            if not model_output:
-                LOGGER.warning(
-                    "Empty response from %s, trying next model", model_name
+    models_to_try = ["gemini-3.6-flash", "gemini-3.5-flash"]
+
+    for api_key in settings.GEMINI_KEY_ROTATOR.available_keys():
+        client = genai.Client(api_key=api_key)
+        for model_name in models_to_try:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                    ),
                 )
+                model_output = response.text
+                if not model_output:
+                    LOGGER.warning(
+                        "Empty response from %s, trying next model", model_name
+                    )
+                    continue
+                LOGGER.info(
+                    "Script generated via Gemini model=%s chars=%d",
+                    model_name, len(model_output),
+                )
+                return _extract_json(model_output)
+            except Exception as e:
+                if _is_rate_limited(e):
+                    LOGGER.warning(
+                        "Gemini 429 rate limit on %s — rotating to next key", model_name,
+                    )
+                    settings.GEMINI_KEY_ROTATOR.mark_rate_limited(api_key, exc=e)
+                    break  # skip remaining models for this key, try next key
+                LOGGER.warning("Gemini model %s failed: %s", model_name, str(e))
                 continue
-            LOGGER.info(
-                "Script generated via Gemini model=%s chars=%d",
-                model_name,
-                len(model_output),
-            )
-            return _extract_json(model_output)
-        except Exception as e:
-            LOGGER.warning("Gemini model %s failed: %s", model_name, str(e))
-            continue
 
-    raise RuntimeError("All Gemini models failed for script generation")
+    raise RuntimeError("All Gemini API keys and models exhausted for script generation")
 
 
 def _build_speaker_metadata(topic: TopicChoice) -> dict[str, Any] | None:

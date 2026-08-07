@@ -1,291 +1,599 @@
 topics:
 
-  # ── COMMON WORDS (A1) ────────────────────────────────────────────────────
+  # ── COMMON WORDS (A1A2) ────────────────────────────────────────────────────
   - id: cw_pronouns
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 1
     track: daily_life
     title_hint: "Personal pronouns: ik, jij, hij, zij, wij, jullie, zij"
 
   - id: cw_numbers_1_20
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 2
     track: daily_life
     title_hint: "Numbers 1 to 20"
 
   - id: cw_colors
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 3
     track: daily_life
     title_hint: "Basic colors: rood, blauw, groen, geel, zwart, wit, oranje"
 
   - id: cw_days_of_week
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 4
     track: daily_life
     title_hint: "Days of the week: maandag tot en met zondag"
 
   - id: cw_months
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 5
     track: daily_life
     title_hint: "Months of the year: januari tot december"
 
   - id: cw_prepositions
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 6
     track: daily_life
     title_hint: "Common prepositions: in, op, aan, bij, van, naar, voor, met"
 
   - id: cw_question_words
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 7
     track: daily_life
     title_hint: "Question words: wie, wat, waar, wanneer, hoe, waarom"
 
   - id: cw_top_verbs
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 8
     track: daily_life
     title_hint: "Top 10 Dutch verbs: zijn, hebben, gaan, komen, doen, zeggen, zien, weten, willen, kunnen"
 
   - id: cw_conjunctions_basic
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 9
     track: daily_life
     title_hint: "Basic conjunctions: en, maar, of, want, dus"
 
   - id: cw_frequency_words
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 10
     track: daily_life
     title_hint: "Frequency words: altijd, vaak, soms, nooit, meestal"
 
   - id: cw_numbers_20_100
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 11
     track: daily_life
     title_hint: "Numbers 20 to 100: twintig, dertig, veertig, vijftig, zestig, zeventig, tachtig, negentig, honderd"
 
   - id: cw_adjectives_basic
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 12
     track: daily_life
     title_hint: "Basic adjectives: groot, klein, mooi, lelijk, goed, slecht, snel, langzaam, nieuw, oud"
 
   - id: cw_time_telling
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 13
     track: daily_life
     title_hint: "Telling time: hoe laat is het, uur, half, kwart over, kwart voor"
 
   - id: cw_emotions
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 14
     track: daily_life
     title_hint: "Emotions: blij, verdrietig, boos, bang, moe, ziek, gelukkig, nerveus"
 
   - id: cw_opposites
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 15
     track: daily_life
     title_hint: "Common opposites: groot/klein, warm/koud, snel/langzaam, oud/jong, duur/goedkoop"
 
   - id: cw_animals
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 16
     track: daily_life
     title_hint: "Common animals: hond, kat, vogel, vis, paard, koe, varken, konijn"
 
   - id: cw_nature
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 17
     track: daily_life
     title_hint: "Nature words: boom, bloem, zon, maan, zee, berg, rivier, gras, lucht"
 
   - id: cw_shopping_words
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 18
     track: shopping
     title_hint: "Shopping words: prijs, betalen, kopen, duur, goedkoop, korting, winkel, kassa"
 
   - id: cw_house_objects
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 19
     track: daily_life
     title_hint: "Household objects: sleutel, telefoon, deur, raam, lamp, tafel, stoel, spiegel"
 
   - id: cw_ordinal_numbers
-    level: A1
+    level: A1A2
     category: common_words
     order_index: 20
     track: daily_life
     title_hint: "Ordinal numbers: eerste, tweede, derde, vierde, vijfde tot tiende"
 
-  # ── VOCABULARY (A1) ──────────────────────────────────────────────────────
+  - id: cw_seasons
+    level: A1A2
+    category: common_words
+    order_index: 21
+    track: daily_life
+    title_hint: "Seasons: lente, zomer, herfst, winter — and seasonal weather words"
+
+  - id: cw_quantities
+    level: A1A2
+    category: common_words
+    order_index: 22
+    track: daily_life
+    title_hint: "Quantity words: veel, weinig, meer, minder, genoeg, heel, erg"
+
+  - id: cw_professions_basic
+    level: A1A2
+    category: common_words
+    order_index: 23
+    track: daily_life
+    title_hint: "Common professions: leraar, dokter, kok, politieagent, verpleegkundige, ingenieur"
+
+  - id: cw_direction_words
+    level: A1A2
+    category: common_words
+    order_index: 24
+    track: daily_life
+    title_hint: "Direction words: links, rechts, rechtdoor, om de hoek, dichtbij, ver weg"
+
+  - id: cw_health_words
+    level: A1A2
+    category: common_words
+    order_index: 25
+    track: daily_life
+    title_hint: "Health words: ziek, pijn, hoofd, buik, keel, beter, rust, dokter, medicijn"
+
+  - id: cw_degree_adverbs
+    level: A1A2
+    category: common_words
+    order_index: 26
+    track: daily_life
+    title_hint: "Degree adverbs: heel, erg, echt, vrij, tamelijk, zo, best, nogal"
+
+  - id: cw_city_places
+    level: A1A2
+    category: common_words
+    order_index: 27
+    track: daily_life
+    title_hint: "City places: supermarkt, bibliotheek, ziekenhuis, postkantoor, station, park, apotheek"
+
+  - id: cw_verbs_daily_actions
+    level: A1A2
+    category: common_words
+    order_index: 28
+    track: daily_life
+    title_hint: "Daily action verbs: eten, drinken, slapen, werken, lopen, rijden, koken, bellen"
+
+  - id: cw_linking_words
+    level: A1A2
+    category: common_words
+    order_index: 29
+    track: daily_life
+    title_hint: "Linking words: eerst, dan, daarna, tot slot, ook, wel, toch, eigenlijk"
+
+  - id: cw_numbers_large
+    level: A1A2
+    category: common_words
+    order_index: 30
+    track: daily_life
+    title_hint: "Large numbers: honderd, duizend, miljoen — and reading years and prices"
+
+  - id: cw_polite_basics
+    level: A1A2
+    category: common_words
+    order_index: 31
+    track: daily_life
+    title_hint: "Polite basics: ja, nee, oké, alsjeblieft, graag, pardon — essential response words"
+
+  - id: cw_negative_indefinites
+    level: A1A2
+    category: common_words
+    order_index: 32
+    track: daily_life
+    title_hint: "Negative indefinites: niemand, niets, nergens, nooit, bijna, nauwelijks"
+
+  # ── VOCABULARY (A1A2) ──────────────────────────────────────────────────────
   - id: vocab_greetings
-    level: A1
+    level: A1A2
     category: vocabulary
     order_index: 1
     track: introductions
     title_hint: "Greetings and farewells: hallo, goedemorgen, tot ziens, dag"
 
   - id: vocab_family
-    level: A1
+    level: A1A2
     category: vocabulary
     order_index: 2
     track: daily_life
     title_hint: "Family members: vader, moeder, broer, zus, oma, opa"
 
   - id: vocab_food_drinks
-    level: A1
+    level: A1A2
     category: vocabulary
     order_index: 3
     track: food
     title_hint: "Food and drinks: brood, kaas, melk, water, koffie, thee, appel"
 
   - id: vocab_clothing
-    level: A1
+    level: A1A2
     category: vocabulary
     order_index: 4
     track: shopping
     title_hint: "Clothing items: broek, shirt, jas, schoenen, trui, jurk"
 
   - id: vocab_body_parts
-    level: A1
+    level: A1A2
     category: vocabulary
     order_index: 5
     track: daily_life
     title_hint: "Body parts: hoofd, hand, voet, oog, oor, mond, neus"
 
   - id: vocab_weather
-    level: A1
+    level: A1A2
     category: vocabulary
     order_index: 6
     track: daily_life
     title_hint: "Weather words: zon, regen, wind, bewolkt, koud, warm, sneeuw"
 
   - id: vocab_home_rooms
-    level: A1
+    level: A1A2
     category: vocabulary
     order_index: 7
     track: daily_life
     title_hint: "Rooms and furniture: keuken, slaapkamer, woonkamer, tafel, stoel, bed"
 
   - id: vocab_transport
-    level: A1
+    level: A1A2
     category: vocabulary
     order_index: 8
     track: transport
     title_hint: "Transport words: trein, bus, fiets, auto, tram, metro, vliegtuig"
 
   - id: vocab_time
-    level: A1
+    level: A1A2
     category: vocabulary
     order_index: 9
     track: daily_life
     title_hint: "Time expressions: nu, later, vandaag, morgen, gisteren, vroeg, laat"
 
   - id: vocab_school_items
-    level: A1
+    level: A1A2
     category: vocabulary
     order_index: 10
     track: education
     title_hint: "School items: boek, pen, potlood, schrift, tas, gum"
 
-  # ── GRAMMAR (A1) ─────────────────────────────────────────────────────────
+  - id: vocab_at_restaurant
+    level: A1A2
+    category: vocabulary
+    order_index: 11
+    track: food
+    title_hint: "At the restaurant: menu, bestellen, voorgerecht, hoofdgerecht, dessert, rekening, fooi"
+
+  - id: vocab_sports_hobbies
+    level: A1A2
+    category: vocabulary
+    order_index: 12
+    track: daily_life
+    title_hint: "Sports and hobbies: voetbal, zwemmen, fietsen, lezen, koken, muziek, schilderen"
+
+  - id: vocab_city_navigation
+    level: A1A2
+    category: vocabulary
+    order_index: 13
+    track: daily_life
+    title_hint: "Navigating a city: straat, plein, brug, tunnel, kruispunt, stoplight, oversteken"
+
+  - id: vocab_work_office
+    level: A1A2
+    category: vocabulary
+    order_index: 14
+    track: daily_life
+    title_hint: "Work and office: werken, collega, vergadering, kantoor, baas, salaris, sollicitatie"
+
+  - id: vocab_celebrations
+    level: A1A2
+    category: vocabulary
+    order_index: 15
+    track: daily_life
+    title_hint: "Celebrations: verjaardag, feest, cadeau, taart, gelukkig, kaart, uitnodiging"
+
+  - id: vocab_banking_money
+    level: A1A2
+    category: vocabulary
+    order_index: 16
+    track: daily_life
+    title_hint: "Banking and money: rekening, pinnen, euro, wisselgeld, ATM, overschrijving"
+
+  - id: vocab_health_body
+    level: A1A2
+    category: vocabulary
+    order_index: 17
+    track: daily_life
+    title_hint: "Health and body: pijn hebben, ziek zijn, koorts, hoesten, pillen, recept, apotheker"
+
+  - id: vocab_nature_outdoor
+    level: A1A2
+    category: vocabulary
+    order_index: 18
+    track: daily_life
+    title_hint: "Nature and outdoors: bos, strand, duin, polder, wandelen, natuur, vogels"
+
+  - id: vocab_digital_daily
+    level: A1A2
+    category: vocabulary
+    order_index: 19
+    track: daily_life
+    title_hint: "Digital daily life: telefoon, internet, app, bericht, e-mail, opladen, wifi, wachtwoord"
+
+  - id: vocab_clothing_shopping
+    level: A1A2
+    category: vocabulary
+    order_index: 20
+    track: shopping
+    title_hint: "Clothing and shopping: maat, passen, kassa, kortingsbon, ruilen, te groot, te klein"
+
+  - id: vocab_vegetables_fruit
+    level: A1A2
+    category: vocabulary
+    order_index: 21
+    track: food
+    title_hint: "Vegetables and fruit: appel, banaan, tomaat, aardappel, wortel, ui, sla, druiven, peer"
+
+  - id: vocab_polite_expressions
+    level: A1A2
+    category: vocabulary
+    order_index: 22
+    track: daily_life
+    title_hint: "Polite expressions: alsjeblieft/alstublieft, dank je/u wel, graag, sorry, excuseer, geen dank"
+
+  - id: vocab_cooking
+    level: A1A2
+    category: vocabulary
+    order_index: 23
+    track: food
+    title_hint: "Cooking and kitchen: koken, bakken, snijden, pan, pot, mes, bord, vork, lepel, recept"
+
+  # ── GRAMMAR (A1A2) ─────────────────────────────────────────────────────────
   - id: grammar_de_het
-    level: A1
+    level: A1A2
     category: grammar
     order_index: 1
     track: daily_life
     title_hint: "Dutch articles: de and het — when to use each"
 
   - id: grammar_present_tense
-    level: A1
+    level: A1A2
     category: grammar
     order_index: 2
     track: daily_life
     title_hint: "Present tense of regular verbs: werken, wonen, leven"
 
   - id: grammar_zijn_hebben
-    level: A1
+    level: A1A2
     category: grammar
     order_index: 3
     track: daily_life
     title_hint: "Irregular verbs zijn and hebben in the present tense"
 
   - id: grammar_negation
-    level: A1
+    level: A1A2
     category: grammar
     order_index: 4
     track: daily_life
     title_hint: "Negation in Dutch: niet and geen"
 
   - id: grammar_word_order
-    level: A1
+    level: A1A2
     category: grammar
     order_index: 5
     track: daily_life
     title_hint: "Basic Dutch word order: subject-verb-object"
 
   - id: grammar_questions
-    level: A1
+    level: A1A2
     category: grammar
     order_index: 6
     track: daily_life
     title_hint: "Forming simple questions with inversion"
 
   - id: grammar_plural
-    level: A1
+    level: A1A2
     category: grammar
     order_index: 7
     track: daily_life
     title_hint: "Plural nouns in Dutch: -en and -s endings"
 
   - id: grammar_possessive_pronouns
-    level: A1
+    level: A1A2
     category: grammar
     order_index: 8
     track: daily_life
     title_hint: "Possessive pronouns: mijn, jouw, zijn, haar, ons, jullie, hun"
 
   - id: grammar_modal_verbs
-    level: A1
+    level: A1A2
     category: grammar
     order_index: 9
     track: daily_life
     title_hint: "Modal verbs in present tense: kunnen, mogen, moeten, willen"
 
   - id: grammar_adjective_basics
-    level: A1
+    level: A1A2
     category: grammar
     order_index: 10
     track: daily_life
     title_hint: "Adjective basics: adjective before noun and simple agreement"
 
-  # ── DIALOGUE (A1) ────────────────────────────────────────────────────────
+  - id: grammar_perfect_tense
+    level: A1A2
+    category: grammar
+    order_index: 11
+    track: daily_life
+    title_hint: "Perfect tense (voltooid tegenwoordige tijd): hebben/zijn + ge-verb"
+
+  - id: grammar_separable_verbs
+    level: A1A2
+    category: grammar
+    order_index: 12
+    track: daily_life
+    title_hint: "Separable verbs: opbellen, meenemen, afwassen — prefix splits in main clause"
+
+  - id: grammar_er
+    level: A1A2
+    category: grammar
+    order_index: 13
+    track: daily_life
+    title_hint: "The word 'er': er is/zijn, er staat, er ligt — location and existence"
+
+  - id: grammar_imperative
+    level: A1A2
+    category: grammar
+    order_index: 14
+    track: daily_life
+    title_hint: "Imperative (gebiedende wijs): giving commands and instructions"
+
+  - id: grammar_diminutives
+    level: A1A2
+    category: grammar
+    order_index: 15
+    track: daily_life
+    title_hint: "Diminutives with -je/-tje/-pje: kopje, boekje, huisje — meaning and usage"
+
+  - id: grammar_comparative
+    level: A1A2
+    category: grammar
+    order_index: 16
+    track: daily_life
+    title_hint: "Comparative and superlative: groter dan, het grootst — comparing things in Dutch"
+
+  - id: grammar_prepositions_time
+    level: A1A2
+    category: grammar
+    order_index: 17
+    track: daily_life
+    title_hint: "Prepositions of time: om (for clock times), op, in, van...tot, over"
+
+  - id: grammar_want_omdat
+    level: A1A2
+    category: grammar
+    order_index: 18
+    track: daily_life
+    title_hint: "Subordinate clauses with want and omdat — word order difference"
+
+  - id: grammar_prepositions_place
+    level: A1A2
+    category: grammar
+    order_index: 19
+    track: daily_life
+    title_hint: "Prepositions of place: naast, tussen, achter, voor, boven, onder, op, in"
+
+  - id: grammar_past_tense_zijn
+    level: A1A2
+    category: grammar
+    order_index: 20
+    track: daily_life
+    title_hint: "Perfect tense with zijn: zijn gegaan, zijn geweest, zijn gekomen"
+
+  - id: grammar_object_pronouns
+    level: A1A2
+    category: grammar
+    order_index: 21
+    track: daily_life
+    title_hint: "Object pronouns: mij/me, jou/je, hem, haar, ons, jullie, hen/hun"
+
+  - id: grammar_demonstratives
+    level: A1A2
+    category: grammar
+    order_index: 22
+    track: daily_life
+    title_hint: "Demonstratives: deze/dit (near) vs die/dat (far) — linked to de/het gender"
+
+  - id: grammar_future_gaan
+    level: A1A2
+    category: grammar
+    order_index: 23
+    track: daily_life
+    title_hint: "Near future with gaan + infinitive: ik ga morgen werken, we gaan eten"
+
+  - id: grammar_reflexive_verbs
+    level: A1A2
+    category: grammar
+    order_index: 24
+    track: daily_life
+    title_hint: "Reflexive verbs: zich wassen, zich voelen, zich vergissen — me/je/zich/ons"
+
+  - id: grammar_om_te
+    level: A1A2
+    category: grammar
+    order_index: 25
+    track: daily_life
+    title_hint: "Infinitive with om...te: om te slapen, om te leren, om gezond te blijven"
+
+  - id: grammar_relative_clauses
+    level: A1A2
+    category: grammar
+    order_index: 26
+    track: daily_life
+    title_hint: "Relative clauses with die and dat: het boek dat ik lees, de man die werkt"
+
+  - id: grammar_als_conditional
+    level: A1A2
+    category: grammar
+    order_index: 27
+    track: daily_life
+    title_hint: "Conditional and temporal clauses with als: Als ik tijd heb, ga ik fietsen"
+
+  - id: grammar_directional_prepositions
+    level: A1A2
+    category: grammar
+    order_index: 28
+    track: daily_life
+    title_hint: "Directional prepositions: naar (movement to), uit (out of), van (from), bij (at/near)"
+
+  - id: grammar_dat_clauses
+    level: A1A2
+    category: grammar
+    order_index: 29
+    track: daily_life
+    title_hint: "Dat-clauses: Ik denk dat hij werkt / Ze zegt dat ze morgen komt — indirect speech and opinions"
+
+  # ── DIALOGUE (A1A2) ────────────────────────────────────────────────────────
   - id: intro_name_origin
-    level: A1
+    level: A1A2
     category: dialogue
     order_index: 1
     track: introductions
@@ -297,7 +605,7 @@ topics:
     speaker2_gender: "male"
 
   - id: cafe_order_basic
-    level: A1
+    level: A1A2
     category: dialogue
     order_index: 2
     track: food
@@ -309,7 +617,7 @@ topics:
     speaker2_gender: "male"
 
   - id: supermarket_help
-    level: A1
+    level: A1A2
     category: dialogue
     order_index: 3
     track: shopping
@@ -321,7 +629,7 @@ topics:
     speaker2_gender: "male"
 
   - id: train_ticket
-    level: A1
+    level: A1A2
     category: dialogue
     order_index: 4
     track: transport
@@ -333,7 +641,7 @@ topics:
     speaker2_gender: "male"
 
   - id: asking_directions
-    level: A1
+    level: A1A2
     category: dialogue
     order_index: 5
     track: daily_life
@@ -345,7 +653,7 @@ topics:
     speaker2_gender: "male"
 
   - id: weather_chat
-    level: A1
+    level: A1A2
     category: dialogue
     order_index: 6
     track: daily_life
@@ -357,7 +665,7 @@ topics:
     speaker2_gender: "male"
 
   - id: making_appointment
-    level: A1
+    level: A1A2
     category: dialogue
     order_index: 7
     track: daily_life
@@ -369,7 +677,7 @@ topics:
     speaker2_gender: "male"
 
   - id: at_the_doctor
-    level: A1
+    level: A1A2
     category: dialogue
     order_index: 8
     track: daily_life
@@ -381,7 +689,7 @@ topics:
     speaker2_gender: "male"
 
   - id: hotel_checkin
-    level: A1
+    level: A1A2
     category: dialogue
     order_index: 9
     track: daily_life
@@ -393,7 +701,7 @@ topics:
     speaker2_gender: "male"
 
   - id: phone_call_basic
-    level: A1
+    level: A1A2
     category: dialogue
     order_index: 10
     track: daily_life
@@ -405,7 +713,7 @@ topics:
     speaker2_gender: "male"
 
   - id: at_the_market
-    level: A1
+    level: A1A2
     category: dialogue
     order_index: 11
     track: shopping
@@ -413,6 +721,174 @@ topics:
     scenario: "market"
     speaker1_role: "vendor"
     speaker2_role: "customer"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_restaurant_meal
+    level: A1A2
+    category: dialogue
+    order_index: 12
+    track: food
+    title_hint: "Ordering a full meal at a restaurant: menu, bestellen, betalen"
+    scenario: "restaurant"
+    speaker1_role: "waiter"
+    speaker2_role: "customer"
+    speaker1_gender: "male"
+    speaker2_gender: "female"
+
+  - id: dialogue_at_pharmacy
+    level: A1A2
+    category: dialogue
+    order_index: 13
+    track: daily_life
+    title_hint: "At the pharmacy: asking for medicine, describing symptoms, getting advice"
+    scenario: "pharmacy"
+    speaker1_role: "pharmacist"
+    speaker2_role: "customer"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_shopping_clothes
+    level: A1A2
+    category: dialogue
+    order_index: 14
+    track: shopping
+    title_hint: "Shopping for clothes: asking for a size, trying on, returning an item"
+    scenario: "clothing_store"
+    speaker1_role: "shop_assistant"
+    speaker2_role: "customer"
+    speaker1_gender: "female"
+    speaker2_gender: "female"
+
+  - id: dialogue_weekend_plans
+    level: A1A2
+    category: dialogue
+    order_index: 15
+    track: daily_life
+    title_hint: "Making weekend plans with a friend: inviting, agreeing, time and place"
+    scenario: "casual_conversation"
+    speaker1_role: "friend1"
+    speaker2_role: "friend2"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_bus_stop
+    level: A1A2
+    category: dialogue
+    order_index: 16
+    track: transport
+    title_hint: "Taking the bus: asking which stop, validating ticket, checking the route"
+    scenario: "bus_stop"
+    speaker1_role: "passenger"
+    speaker2_role: "bus_driver"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_visiting_friend
+    level: A1A2
+    category: dialogue
+    order_index: 17
+    track: daily_life
+    title_hint: "Visiting a friend at home: arrival, offering drinks, small talk"
+    scenario: "home_visit"
+    speaker1_role: "host"
+    speaker2_role: "guest"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_at_library
+    level: A1A2
+    category: dialogue
+    order_index: 18
+    track: education
+    title_hint: "At the library: borrowing a book, returning a book, asking for help"
+    scenario: "library"
+    speaker1_role: "librarian"
+    speaker2_role: "visitor"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_first_day_work
+    level: A1A2
+    category: dialogue
+    order_index: 19
+    track: daily_life
+    title_hint: "First day at work: meeting a colleague, introducing yourself, asking about the office"
+    scenario: "office"
+    speaker1_role: "new_employee"
+    speaker2_role: "colleague"
+    speaker1_gender: "male"
+    speaker2_gender: "female"
+
+  - id: dialogue_at_bank
+    level: A1A2
+    category: dialogue
+    order_index: 20
+    track: daily_life
+    title_hint: "At the bank: asking about an account, withdrawing money, simple transaction"
+    scenario: "bank"
+    speaker1_role: "bank_employee"
+    speaker2_role: "customer"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_booking_restaurant
+    level: A1A2
+    category: dialogue
+    order_index: 21
+    track: food
+    title_hint: "Booking a table at a restaurant by phone: date, time, number of people"
+    scenario: "phone_call"
+    speaker1_role: "restaurant_host"
+    speaker2_role: "caller"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_post_office
+    level: A1A2
+    category: dialogue
+    order_index: 22
+    track: daily_life
+    title_hint: "At the post office: sending a package, buying stamps, asking about delivery"
+    scenario: "post_office"
+    speaker1_role: "postal_worker"
+    speaker2_role: "customer"
+    speaker1_gender: "male"
+    speaker2_gender: "female"
+
+  - id: dialogue_neighbors
+    level: A1A2
+    category: dialogue
+    order_index: 23
+    track: daily_life
+    title_hint: "Meeting the neighbors: introducing yourself, chatting about the area"
+    scenario: "apartment_building"
+    speaker1_role: "neighbor1"
+    speaker2_role: "neighbor2"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_lost_item
+    level: A1A2
+    category: dialogue
+    order_index: 24
+    track: daily_life
+    title_hint: "Lost item: reporting a lost wallet or phone to staff or police"
+    scenario: "police_desk"
+    speaker1_role: "officer"
+    speaker2_role: "citizen"
+    speaker1_gender: "male"
+    speaker2_gender: "female"
+
+  - id: dialogue_language_class
+    level: A1A2
+    category: dialogue
+    order_index: 25
+    track: education
+    title_hint: "In a Dutch language class: asking teacher to repeat, not understanding a word, asking about homework"
+    scenario: "classroom"
+    speaker1_role: "teacher"
+    speaker2_role: "student"
     speaker1_gender: "female"
     speaker2_gender: "male"
 

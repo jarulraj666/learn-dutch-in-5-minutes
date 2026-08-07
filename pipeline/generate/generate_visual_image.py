@@ -41,9 +41,6 @@ def generate_topic_image(
             f"Image generation failed for topic {topic_id}: 'image_prompt' is empty"
         )
 
-    if not settings.GEMINI_API_KEY:
-        raise ValueError("GEMINI_API_KEY is not set in settings/environment.")
-
     started_at = time.perf_counter()
     visuals_dir = output_root / "visuals"
     visuals_dir.mkdir(parents=True, exist_ok=True)
@@ -66,23 +63,35 @@ def generate_topic_image(
     try:
         from google import genai
 
-        client = genai.Client(api_key=settings.GEMINI_IMAGE_CREATION_API_KEY)
-
-        # Using Gemini 3.1 Flash Image
-        response = client.models.generate_content(
-            model="gemini-3.1-flash-lite-image",
-            contents=f"Generate a 16:9 image: {image_prompt}",
-        )
+        if not settings.GEMINI_IMAGE_CREATION_API_KEYS:
+            raise ValueError("No Gemini image API keys configured. Set GEMINI_IMAGE_CREATION_API_KEYS in .env")
 
         image_bytes = None
-        if response.candidates:
-            for part in response.candidates[0].content.parts:
-                if hasattr(part, "inline_data") and part.inline_data:
-                    image_bytes = part.inline_data.data
+        for api_key in settings.GEMINI_IMAGE_KEY_ROTATOR.available_keys():
+            try:
+                client = genai.Client(api_key=api_key)
+                response = client.models.generate_content(
+                    model="gemini-3.1-flash-lite-image",
+                    contents=f"Generate a 16:9 image: {image_prompt}",
+                )
+                if response.candidates:
+                    for part in response.candidates[0].content.parts:
+                        if hasattr(part, "inline_data") and part.inline_data:
+                            image_bytes = part.inline_data.data
+                            break
+                if image_bytes:
+                    LOGGER.info("image_generation.success")
                     break
+            except Exception as key_exc:
+                msg = str(key_exc).upper()
+                if "429" in msg or "RESOURCE_EXHAUSTED" in msg or "QUOTA" in msg:
+                    LOGGER.warning("Gemini image 429 — rotating to next key")
+                    settings.GEMINI_IMAGE_KEY_ROTATOR.mark_rate_limited(api_key, exc=key_exc)
+                    continue
+                raise  # non-quota error: propagate immediately
 
         if not image_bytes:
-            raise RuntimeError("No image data returned from Gemini 3.1 Flash Lite Image.")
+            raise RuntimeError("No image data returned from Gemini (all keys tried).")
 
         image = Image.open(BytesIO(image_bytes))
         image.save(output_png, format="PNG")
@@ -230,7 +239,7 @@ def generate_image_from_artifact(
     """
     topic_id = artifact.get("topic_id", "unknown")
     topic_title = artifact.get("topic_title", "Untitled")
-    level = artifact.get("level", "A1")
+    level = artifact.get("level", "A1A2")
     category = artifact.get("category", "dialogue")
     image_prompt = artifact.get("image_prompt", "")
     
@@ -321,7 +330,7 @@ def main():
             output_root = args.artifact_file.parent
         elif args.db and args.topic_id:
             artifact = load_artifact_from_database(args.topic_id)
-            level = artifact.get("level", "A1")
+            level = artifact.get("level", "A1A2")
             category = artifact.get("category", "dialogue")
             output_root = settings.OUTPUT_DIR / level / category
         else:

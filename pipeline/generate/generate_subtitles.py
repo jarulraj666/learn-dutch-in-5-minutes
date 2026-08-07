@@ -616,7 +616,7 @@ if __name__ == "__main__":
         results = plan_subtitles(
             wav_path=sample_audio_path,
             output_root="output",
-            level="A1",
+            level="A1A2",
             category="grammar",
             topic_id="cw_pronouns",
             title_slug="personal_pronouns",

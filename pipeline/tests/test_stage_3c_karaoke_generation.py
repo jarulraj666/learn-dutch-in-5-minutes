@@ -34,7 +34,7 @@ def main() -> None:
     ctx = payload.get("_pipeline_context", {})
 
     topic_id = ctx.get("topic_id", "test")
-    level = ctx.get("level", "A1")
+    level = ctx.get("level", "A1A2")
     category = ctx.get("category", "dialogue")
     title_slug = ctx.get("title_slug", "lesson")
 
