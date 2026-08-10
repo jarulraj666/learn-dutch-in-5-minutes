@@ -21,6 +21,8 @@ Read the following conversation and render it as natural multi-speaker dialogue 
 
 **Voice Consistency:** Keep each speaker's voice identity stable for the full transcript. Speaker1 and Speaker2 must sound clearly different from each other from first line to last line.
 
+**Dialogue Chunking:** The full dialogue script is converted into chunks. Each chunk is rendered separately. Speaker1 may start a chunk with English or Dutch depending on what appears in that specific chunk of the script. Process each chunk as it is written — do not assume language continuity across chunk boundaries. Speak the language of each line exactly as it appears in the chunk.
+
 There are no inline speech tags in this transcript. Speak naturally according to these directions only.
 
 **Strict Rule:** Read ONLY the lines present in the transcript. Do not add, translate, infer, or generate any lines not explicitly listed. Speak each line in the exact language it is written — English stays English, Dutch stays Dutch.

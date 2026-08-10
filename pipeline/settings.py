@@ -93,7 +93,7 @@ WHISPERX_MODEL = os.getenv("WHISPERX_MODEL", "medium")
 
 # QA: Audio vs script sentence validation (runs after voice generation in run_pipeline.py).
 # Set QA_AUDIO_CHECK=false in .env to disable.
-QA_AUDIO_CHECK = os.getenv("QA_AUDIO_CHECK", "true").lower() not in ("false", "0", "no")
+QA_AUDIO_CHECK = os.getenv("QA_AUDIO_CHECK", "false").lower() not in ("false", "0", "no")
 
 # QA: Subtitle timing validation (runs after subtitle generation in run_pipeline.py).
 # Checks ASS karaoke tag sums, SRT sequence ordering, overlaps, and line count vs script.

@@ -378,6 +378,7 @@ def _write_ass_karaoke(
     visual_config = settings.load_yaml(settings.ROOT / "config/visual_style.yaml")
     margins = visual_config.get("render", {}).get("subtitle_margins", {})
     single = visual_config.get("render", {}).get("single_speaker_margins", {})
+    dialogue_align = visual_config.get("render", {}).get("dialogue_alignment", {})
 
     # Get margin values with fallbacks
     left_l = margins.get("left_speaker_margin_l", 20)
@@ -385,6 +386,10 @@ def _write_ass_karaoke(
     right_l = margins.get("right_speaker_margin_l", 800)
     right_r = margins.get("right_speaker_margin_r", 20)
     margin_v = margins.get("margin_v", 486)
+
+    # Dialogue alignment (multi-speaker)
+    left_align = dialogue_align.get("left_speaker", 1)
+    right_align = dialogue_align.get("right_speaker", 3)
 
     # Single-speaker margin values with fallbacks
     ss_margin_l = single.get("margin_l", 650)
@@ -404,8 +409,8 @@ PlayResY: 1080
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: SpeakerL,Roboto,54,&H00FFFFFF,&H0000FFFF,&H00000000,&HC0000000,-1,0,0,0,100,100,0,0,3,5,0,1,{left_l},{left_r},{margin_v},1
-Style: SpeakerR,Roboto,54,&H00FFFFFF,&H0000FFFF,&H00000000,&HC0000000,-1,0,0,0,100,100,0,0,3,5,0,3,{right_l},{right_r},{margin_v},1
+Style: SpeakerL,Roboto,54,&H00FFFFFF,&H0000FFFF,&H00000000,&HC0000000,-1,0,0,0,100,100,0,0,3,5,0,{left_align},{left_l},{left_r},{margin_v},1
+Style: SpeakerR,Roboto,54,&H00FFFFFF,&H0000FFFF,&H00000000,&HC0000000,-1,0,0,0,100,100,0,0,3,5,0,{right_align},{right_l},{right_r},{margin_v},1
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
@@ -420,7 +425,7 @@ PlayResY: 1080
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Roboto,54,&H00FFFFFF,&H0000FFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,3,0,{ss_alignment},{ss_margin_l},{ss_margin_r},{ss_margin_v},1
+Style: Default,Roboto,58,&H00FFFFFF,&H0000FFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,3,0,{ss_alignment},{ss_margin_l},{ss_margin_r},{ss_margin_v},1
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
@@ -486,7 +491,7 @@ def generate_karaoke_from_segments(
     """
     del script_dialogue  # Kept for API compatibility
 
-    out_dir = Path(output_root) / "subtitles"
+    out_dir = Path(output_root) / "subtitles" / f"episode_{topic_id}_{title_slug}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # Collect raw segment data with speaker info
@@ -526,6 +531,15 @@ def generate_karaoke_from_segments(
     _write_ass_karaoke(ass_path, stitched_rows, category=category)
 
     result: dict[str, str] = {"ass_karaoke": str(ass_path)}
+
+    # Dutch SRT: use plain segment text (before karaoke tag injection) for clean timing lookup
+    dutch_rows: list[tuple[float, float, str, str | None]] = [
+        (start, stitched_timing[i][1] if i < len(stitched_timing) else orig_end, text, speaker)
+        for i, (start, orig_end, text, words, speaker) in enumerate(raw)
+    ]
+    srt_nl_path = out_dir / f"episode_{topic_id}_{title_slug}_nl.srt"
+    _write_srt(srt_nl_path, dutch_rows, dialogue_en=None)
+    result["nl"] = str(srt_nl_path)
 
     srt_en_path = out_dir / f"episode_{topic_id}_{title_slug}_en.srt"
     _write_srt(srt_en_path, stitched_rows, dialogue_en=dialogue_en)
@@ -588,8 +602,10 @@ def plan_subtitles(
     )
     return {
         "karaoke_file": subtitle_files.get("ass_karaoke", ""),
+        "srt_nl": subtitle_files.get("nl", ""),
         "srt_en": subtitle_files.get("en", ""),
         "srt_files": subtitle_files,
+        "nl": subtitle_files.get("nl", ""),
     }
 
 

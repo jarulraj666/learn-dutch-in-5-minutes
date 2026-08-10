@@ -7,9 +7,14 @@ by prompt templates and pipeline configuration settings.
 from __future__ import annotations
 
 import base64
+import hashlib
+import json
 import logging
+import re
+import threading
 import time
 import wave
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +27,9 @@ from pipeline.utils import iter_dialogue_turns
 LOGGER = logging.getLogger(__name__)
 
 _PROMPTS_DIR = Path(__file__).parent.parent.parent / "prompts"
+
+# Matches any bracketed pacing directive, e.g. [pause for 1 second], [pause], [slow], [breath]
+_PACING_TAG_RE = re.compile(r"\[pause[^\]]*\]", re.IGNORECASE)
 
 
 def _trim_long_silences(
@@ -123,7 +131,7 @@ class GeminiTTSClient:
 
     # Recommended word bounds per chunk for optimal prosody & audio fidelity
     MAX_WORDS_PER_CHUNK = 130
-    FORCE_SINGLE_CHUNK_DIALOGUE = True
+    FORCE_SINGLE_CHUNK_DIALOGUE = False
 
     def __init__(self, api_key: str) -> None:
         """Initializes the Gemini TTS Client with an API key.
@@ -160,7 +168,7 @@ class GeminiTTSClient:
         )
 
         formatted_dialogue = "\n\n".join(
-            f"{speaker}: {line}"
+            f"{speaker}: {_PACING_TAG_RE.sub('', line).strip()}"
             for speaker, line in iter_dialogue_turns(dialogue)
             if line
         )
@@ -241,6 +249,128 @@ class GeminiTTSClient:
                 ]
             )
         )
+
+    def _call_chunk_api(
+        self,
+        prompt: str,
+        speech_config: types.SpeechConfig,
+        idx: int,
+        total_chunks: int,
+    ) -> bytes:
+        """Call the Gemini API for one chunk prompt with retries.
+
+        Returns:
+            Raw PCM bytes.
+
+        Raises:
+            RuntimeError: Prefixed with "RATE_LIMITED:" on quota/429 errors.
+            RuntimeError: If all retries are exhausted without audio data.
+        """
+        max_retries = 3
+        retry_delay = 1
+        raw_pcm: bytes | None = None
+
+        for attempt in range(max_retries):
+            try:
+                response = self.client.models.generate_content(
+                    model=self.PRIMARY_MODEL,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["AUDIO"],
+                        speech_config=speech_config,
+                    ),
+                )
+                for part in (response.candidates or [{}])[0].content.parts if response.candidates else []:
+                    if hasattr(part, "inline_data") and part.inline_data:
+                        data = part.inline_data.data
+                        raw_pcm = base64.b64decode(data) if isinstance(data, str) else data
+                        break
+
+                if raw_pcm is not None:
+                    break
+
+                LOGGER.warning(
+                    "TTS model %s chunk %d returned no audio data (attempt %d/%d). Retrying...",
+                    self.PRIMARY_MODEL, idx, attempt + 1, max_retries,
+                )
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    retry_delay *= 2
+
+            except Exception as err:
+                if _is_tts_rate_limited(err):
+                    raise RuntimeError(f"RATE_LIMITED: {err}") from err
+                if _is_service_unavailable(err):
+                    if attempt < max_retries - 1:
+                        LOGGER.warning(
+                            "TTS model %s chunk %d got 503 Service Unavailable (attempt %d/%d). Retrying in %d seconds...",
+                            self.PRIMARY_MODEL, idx, attempt + 1, max_retries, retry_delay,
+                        )
+                        time.sleep(retry_delay)
+                        retry_delay *= 2
+                        continue
+                    else:
+                        LOGGER.error(
+                            "TTS model %s failed for chunk %d after %d retries (503 Service Unavailable): %s",
+                            self.PRIMARY_MODEL, idx, max_retries, err,
+                        )
+                        break
+                else:
+                    LOGGER.error("TTS model %s failed for chunk %d: %s", self.PRIMARY_MODEL, idx, err)
+                    break
+
+        if raw_pcm is None:
+            raise RuntimeError(f"Failed to generate audio for chunk {idx} after {max_retries} retries")
+        return raw_pcm
+
+    def _process_one_chunk(
+        self,
+        chunk: list[dict[str, str]],
+        idx: int,
+        total_chunks: int,
+        prompt: str,
+        speech_config: types.SpeechConfig,
+        chunk_file: Path,
+        cached_hash: str,
+        dialogue_hash: str,
+    ) -> bytes:
+        """Process one dialogue chunk: check cache, call API if needed, trim silence, save.
+
+        Returns:
+            PCM bytes for this chunk.
+
+        Raises:
+            RuntimeError: Prefixed with "RATE_LIMITED:" on quota/429 errors.
+            RuntimeError: If audio generation fails.
+        """
+        chunk_word_count = sum(len(line.split()) for _, line in iter_dialogue_turns(chunk))
+
+        # Resume: load cached chunk if available and script hash matches
+        if cached_hash == dialogue_hash and chunk_file.exists():
+            try:
+                with wave.open(str(chunk_file), "rb") as wf:
+                    raw_pcm = wf.readframes(wf.getnframes())
+                LOGGER.info(
+                    "chunk_cache: loaded chunk %d/%d from disk (%d bytes): %s",
+                    idx, total_chunks, len(raw_pcm), chunk_file,
+                )
+                return raw_pcm
+            except Exception as cache_err:
+                LOGGER.warning("chunk_cache: failed to load chunk %d, will regenerate: %s", idx, cache_err)
+
+        LOGGER.info(
+            "Processing chunk %d/%d (%d dialogue lines, ~%d words)",
+            idx, total_chunks, len(chunk), chunk_word_count,
+        )
+        LOGGER.info("tts.prompt.start chunk=%d", idx)
+        LOGGER.info("%s", prompt)
+        LOGGER.info("tts.prompt.end chunk=%d", idx)
+
+        raw_pcm = self._call_chunk_api(prompt, speech_config, idx, total_chunks)
+        raw_pcm = _trim_long_silences(raw_pcm, sample_rate=24000, max_silence_sec=2.0)
+        write_wave_file(chunk_file, raw_pcm, channels=1, rate=24000, sample_width=2)
+        LOGGER.info("chunk %d/%d saved: %s", idx, total_chunks, chunk_file)
+        return raw_pcm
 
     def _chunk_dialogue(
         self,
@@ -327,87 +457,48 @@ class GeminiTTSClient:
 
         pcm_buffers: list[bytes] = []
 
+        # --- Chunk-level cache: resume from last successful chunk ---
+        target_file = Path(output_path).with_suffix(".wav")
+        hash_file = target_file.with_name(f"{target_file.stem}_chunk_hash.txt")
+
+        # Compute a hash of the full dialogue so we can detect script changes
+        dialogue_hash = hashlib.sha256(
+            json.dumps(dialogue, ensure_ascii=False, sort_keys=True).encode()
+        ).hexdigest()
+
+        # Load existing hash; invalidate all chunk caches if the script changed
+        cached_hash = hash_file.read_text(encoding="utf-8").strip() if hash_file.exists() else ""
+        if cached_hash != dialogue_hash:
+            if cached_hash:
+                LOGGER.info(
+                    "chunk_cache: script changed — invalidating all cached chunks for %s",
+                    target_file.stem,
+                )
+            # Remove any stale chunk files
+            for stale in target_file.parent.glob(f"{target_file.stem}_chunk_*.wav"):
+                stale.unlink(missing_ok=True)
+
         for idx, chunk in enumerate(dialogue_chunks, start=1):
             prompt = self._load_prompt(chunk, level=level, category=category, speaker_genders=speaker_genders, speaker_roles=speaker_roles)
-            chunk_word_count = sum(len(line.split()) for _, line in iter_dialogue_turns(chunk))
-
-            LOGGER.info(
-                "Processing chunk %d/%d (%d dialogue lines, ~%d words)",
-                idx,
-                len(dialogue_chunks),
-                len(chunk),
-                chunk_word_count,
-            )
-
-            LOGGER.info("tts.prompt.start chunk=%d", idx)
-            LOGGER.info("%s", prompt)
-            LOGGER.info("tts.prompt.end chunk=%d", idx)
-
-            raw_pcm: bytes | None = None
-            max_retries = 3
-            retry_delay = 1  # Start with 1 second delay
-            
-            for attempt in range(max_retries):
-                try:
-                    response = self.client.models.generate_content(
-                        model=self.PRIMARY_MODEL,
-                        contents=prompt,
-                        config=types.GenerateContentConfig(
-                            response_modalities=["AUDIO"],
-                            speech_config=speech_config,
-                        ),
-                    )
-
-                    # Extract PCM audio from response parts
-                    for part in (response.candidates or [{}])[0].content.parts if response.candidates else []:
-                        if hasattr(part, "inline_data") and part.inline_data:
-                            data = part.inline_data.data
-                            raw_pcm = base64.b64decode(data) if isinstance(data, str) else data
-                            break
-                    
-                    # Success, exit retry loop
-                    break
-
-                except Exception as err:
-                    if _is_tts_rate_limited(err):
-                        raise RuntimeError(f"RATE_LIMITED: {err}") from err
-                    
-                    if _is_service_unavailable(err):
-                        if attempt < max_retries - 1:
-                            LOGGER.warning(
-                                "TTS model %s chunk %d got 503 Service Unavailable (attempt %d/%d). Retrying in %d seconds...",
-                                self.PRIMARY_MODEL, idx, attempt + 1, max_retries, retry_delay
-                            )
-                            time.sleep(retry_delay)
-                            retry_delay *= 2  # Exponential backoff: 1s, 2s, 4s
-                            continue
-                        else:
-                            LOGGER.error(
-                                "TTS model %s failed for chunk %d after %d retries (503 Service Unavailable): %s",
-                                self.PRIMARY_MODEL, idx, max_retries, err
-                            )
-                            break
-                    else:
-                        LOGGER.error("TTS model %s failed for chunk %d: %s", self.PRIMARY_MODEL, idx, err)
-                        break
-
-            if raw_pcm is None:
-                LOGGER.error("Failed to generate audio for chunk %d.", idx)
-                return False
-
-            # Save individual chunk for debugging
-            target_file = Path(output_path).with_suffix(".wav")
             chunk_file = target_file.with_name(f"{target_file.stem}_chunk_{idx}.wav")
-            write_wave_file(chunk_file, raw_pcm, channels=1, rate=24000, sample_width=2)
-            LOGGER.info("chunk %d/%d saved: %s", idx, len(dialogue_chunks), chunk_file)
-
+            try:
+                raw_pcm = self._process_one_chunk(
+                    chunk, idx, len(dialogue_chunks), prompt, speech_config, chunk_file, cached_hash, dialogue_hash
+                )
+            except RuntimeError as err:
+                if str(err).startswith("RATE_LIMITED:"):
+                    raise
+                LOGGER.error("Failed to generate audio for chunk %d: %s", idx, err)
+                return False
             pcm_buffers.append(raw_pcm)
 
         # Write concatenated audio with silence trimming
         full_pcm = b"".join(pcm_buffers)
         full_pcm = _trim_long_silences(full_pcm, sample_rate=24000, max_silence_sec=2.0)
-        target_file = Path(output_path).with_suffix(".wav")
         write_wave_file(target_file, full_pcm, channels=1, rate=24000, sample_width=2)
+
+        # Persist dialogue hash so next run can resume from cached chunks
+        hash_file.write_text(dialogue_hash, encoding="utf-8")
 
         LOGGER.info("✓ Full dialogue audio generated & saved: %s", target_file)
         return True
@@ -523,26 +614,117 @@ class RotatingGeminiTTSClient:
         speaker_genders: dict[str, str] | None = None,
         speaker_roles: dict[str, str] | None = None,
     ) -> bool:
-        for api_key in self._rotator.available_keys():
-            client = GeminiTTSClient(api_key)
-            try:
-                return client.generate_dialogue_audio(
-                    dialogue,
-                    output_path,
-                    level=level,
-                    category=category,
-                    speaker_genders=speaker_genders,
-                    speaker_roles=speaker_roles,
+        """Generate dialogue audio using parallel chunk processing with per-chunk key rotation.
+
+        Each chunk is dispatched concurrently; chunks are assigned distinct API keys
+        round-robin so that simultaneous requests hit different quota pools.
+        """
+        if not dialogue:
+            LOGGER.error("Empty dialogue provided.")
+            return False
+
+        available_keys = list(self._rotator.available_keys())
+
+        # Use first key for setup: chunking, speech config, prompt building.
+        setup_client = GeminiTTSClient(available_keys[0])
+
+        # --- Cache setup (mirrors GeminiTTSClient.generate_dialogue_audio) ---
+        target_file = Path(output_path).with_suffix(".wav")
+        hash_file = target_file.with_name(f"{target_file.stem}_chunk_hash.txt")
+        dialogue_hash = hashlib.sha256(
+            json.dumps(dialogue, ensure_ascii=False, sort_keys=True).encode()
+        ).hexdigest()
+        cached_hash = hash_file.read_text(encoding="utf-8").strip() if hash_file.exists() else ""
+
+        if cached_hash != dialogue_hash:
+            if cached_hash:
+                LOGGER.info(
+                    "chunk_cache: script changed — invalidating all cached chunks for %s",
+                    target_file.stem,
                 )
-            except RuntimeError as exc:
-                if str(exc).startswith("RATE_LIMITED:"):
-                    LOGGER.warning("TTS key rate-limited, rotating to next key")
-                    self._rotator.mark_rate_limited(api_key, exc=exc)
-                    continue
-                raise
-        # available_keys() already raises RuntimeError if all keys are exhausted;
-        # this line is only reached if the loop body never executed.
-        raise RuntimeError("No TTS keys available")
+            for stale in target_file.parent.glob(f"{target_file.stem}_chunk_*.wav"):
+                stale.unlink(missing_ok=True)
+
+        # --- Chunk the dialogue ---
+        if category == "dialogue" and GeminiTTSClient.FORCE_SINGLE_CHUNK_DIALOGUE:
+            dialogue_chunks = [dialogue]
+            LOGGER.info("dialogue.single_chunk enabled: processing full dialogue in one request")
+        else:
+            dialogue_chunks = setup_client._chunk_dialogue(dialogue)
+
+        speech_config = setup_client._get_speech_config(speaker_genders=speaker_genders)
+        total = len(dialogue_chunks)
+
+        LOGGER.info(
+            "Generating TTS audio in %d chunk(s) [parallel, %d key(s)] using model: %s",
+            total, len(available_keys), GeminiTTSClient.PRIMARY_MODEL,
+        )
+
+        # Build per-chunk tasks: assign keys round-robin
+        chunk_tasks: list[tuple[int, list, str, Path, str]] = []
+        for idx, chunk in enumerate(dialogue_chunks, start=1):
+            prompt = setup_client._load_prompt(
+                chunk, level=level, category=category,
+                speaker_genders=speaker_genders, speaker_roles=speaker_roles,
+            )
+            chunk_file = target_file.with_name(f"{target_file.stem}_chunk_{idx}.wav")
+            api_key = available_keys[(idx - 1) % len(available_keys)]
+            chunk_tasks.append((idx, chunk, prompt, chunk_file, api_key))
+
+        pcm_results: dict[int, bytes] = {}
+        _mark_lock = threading.Lock()
+
+        def _run_chunk(
+            idx: int,
+            chunk: list,
+            prompt: str,
+            chunk_file: Path,
+            primary_key: str,
+        ) -> tuple[int, bytes]:
+            # Try primary (round-robin) key first, then remaining keys as fallback.
+            fallback_keys = [k for k in available_keys if k != primary_key]
+            keys_to_try = [primary_key] + fallback_keys
+            for api_key in keys_to_try:
+                client = GeminiTTSClient(api_key)
+                try:
+                    pcm = client._process_one_chunk(
+                        chunk, idx, total, prompt, speech_config, chunk_file, cached_hash, dialogue_hash
+                    )
+                    return idx, pcm
+                except RuntimeError as exc:
+                    if str(exc).startswith("RATE_LIMITED:"):
+                        with _mark_lock:
+                            self._rotator.mark_rate_limited(api_key, exc=exc)
+                        LOGGER.warning(
+                            "chunk %d: key rate-limited, trying next key (%d remaining)",
+                            idx, len(keys_to_try) - keys_to_try.index(api_key) - 1,
+                        )
+                        continue
+                    raise
+            raise RuntimeError(f"All {len(keys_to_try)} key(s) exhausted for chunk {idx}")
+
+        with ThreadPoolExecutor(max_workers=total) as executor:
+            future_to_idx = {
+                executor.submit(_run_chunk, idx, chunk, prompt, chunk_file, api_key): idx
+                for idx, chunk, prompt, chunk_file, api_key in chunk_tasks
+            }
+            for future in as_completed(future_to_idx):
+                chunk_idx = future_to_idx[future]
+                try:
+                    result_idx, pcm = future.result()
+                    pcm_results[result_idx] = pcm
+                except Exception as exc:
+                    LOGGER.error("chunk %d processing failed: %s", chunk_idx, exc)
+                    raise
+
+        # Concatenate chunks in order, trim silence, write final WAV
+        full_pcm = b"".join(pcm_results[i] for i in range(1, total + 1))
+        full_pcm = _trim_long_silences(full_pcm, sample_rate=24000, max_silence_sec=2.0)
+        write_wave_file(target_file, full_pcm, channels=1, rate=24000, sample_width=2)
+        hash_file.write_text(dialogue_hash, encoding="utf-8")
+
+        LOGGER.info("✓ Full dialogue audio generated & saved: %s", target_file)
+        return True
 
     def generate_dialogue_audio_with_timestamps(
         self,

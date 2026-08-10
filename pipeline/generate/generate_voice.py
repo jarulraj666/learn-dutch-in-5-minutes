@@ -79,7 +79,7 @@ def generate_voice_assets(
             speaker_genders[sid] = s.get("gender", "")
             speaker_roles[sid] = s.get("role", "")
 
-    voice_dir = Path(output_root) / "audio"
+    voice_dir = Path(output_root) / "audio" / f"episode_{topic_id}_{title_slug}"
     voice_dir.mkdir(parents=True, exist_ok=True)
 
     audio_filename = f"episode_{topic_id}_{title_slug}.wav"

@@ -188,6 +188,22 @@ def generate_script(
         if speaker_metadata:
             script["speakers"] = speaker_metadata["speakers"]
             script.setdefault("scenario", speaker_metadata.get("scenario"))
+            
+            # Generate 5-6 scene-based image prompts for dialogue (new multi-image feature)
+            try:
+                image_prompts = _generate_multiple_image_prompts(script, speaker_metadata, topic)
+                if image_prompts:
+                    script["image_prompts"] = image_prompts
+                    LOGGER.info(
+                        "Generated %d image prompts for dialogue scenes (multi-image feature)",
+                        len(image_prompts),
+                    )
+            except Exception as e:
+                LOGGER.warning(
+                    "Failed to generate multiple image prompts for dialogue: %s. Falling back to single image.",
+                    str(e),
+                )
+                # image_prompt field remains available from LLM response for backward compatibility
 
     return script
 
@@ -290,3 +306,185 @@ def _build_speaker_metadata(topic: TopicChoice) -> dict[str, Any] | None:
         "speakers": speakers,
         "scenario": getattr(topic, "scenario", None),
     }
+
+
+def _generate_multiple_image_prompts(
+    script: dict[str, Any],
+    speaker_metadata: dict[str, Any],
+    topic: TopicChoice,
+) -> list[dict[str, Any]]:
+    """Generate 5-6 scene-based image prompts keyed to Dutch trigger sentences.
+    
+    Identifies 5-6 distinct visual scenes from the dialogue and stores the exact
+    Dutch sentence that triggers each scene change. At render time (Stage 4), the
+    ASS subtitle file is used to look up when that sentence was spoken to get
+    precise image display timing.
+    
+    See: prompts/dialogue_image_prompt.md for template details and examples.
+    
+    Args:
+        script: Generated script dict containing dialogue and image_prompt
+        speaker_metadata: Speaker info including scenario
+        topic: Topic metadata
+    
+    Returns:
+        List of dicts with keys: scene, prompt, description, trigger_sentence
+    """
+    from google import genai
+    from google.genai import types
+    
+    dialogue = script.get("dialogue", [])
+    scenario = speaker_metadata.get("scenario", "Dutch conversation")
+    speakers = speaker_metadata.get("speakers", [])
+    
+    if not dialogue or len(dialogue) < 10:
+        LOGGER.warning("Dialogue too short for multi-scene generation; using single prompt")
+        return []
+    
+    s1 = next((s for s in speakers if s["id"] == "Speaker1"), {})
+    s2 = next((s for s in speakers if s["id"] == "Speaker2"), {})
+    speaker1_gender = s1.get("gender", "female")
+    speaker2_gender = s2.get("gender", "male")
+    speaker1_role = s1.get("role", "Speaker1")
+    speaker2_role = s2.get("role", "Speaker2")
+    
+    # Build dialogue text with line numbers for LLM scene analysis (no timing needed)
+    dialogue_lines = []
+    for idx, line_dict in enumerate(dialogue):
+        if isinstance(line_dict, dict):
+            for speaker, content in line_dict.items():
+                dialogue_lines.append(f"Line {idx+1} - {speaker}: {content}")
+                break
+        else:
+            dialogue_lines.append(f"Line {idx+1}: {line_dict}")
+    
+    dialogue_text = "\n".join(dialogue_lines)
+    
+    # Ask LLM to identify scenes by the exact Dutch sentence that starts each scene
+    scene_detection_prompt = f"""You are analyzing a Dutch dialogue to identify 5-6 distinct visual scenes for video illustration.
+
+## Dialogue
+{dialogue_text}
+
+## Metadata
+- Scenario: {scenario}
+- Speaker 1 ({speaker1_role}): {speaker1_gender}
+- Speaker 2 ({speaker2_role}): {speaker2_gender}
+- Title hint: {topic.title_hint}
+
+## Task
+Identify 5-6 distinct visual moments in this dialogue where the scene naturally shifts.
+For each scene, pick the EXACT Dutch sentence from the dialogue that marks the START of that scene.
+
+Rules:
+- Copy the sentence exactly as it appears in the dialogue (keep original Dutch text, spelling, punctuation)
+- Each trigger_sentence must be a unique line from the dialogue
+- Scenes should cover the full dialogue from start to finish
+- First scene should start with the very first line
+
+Output ONLY valid JSON with no text before or after:
+{{
+  "scenes": [
+    {{
+      "scene": 1,
+      "trigger_sentence": "Exact Dutch sentence from the dialogue",
+      "visual_focus": "greeting and initial setup",
+      "description": "Two speakers meeting and greeting each other"
+    }},
+    {{
+      "scene": 2,
+      "trigger_sentence": "Another exact Dutch sentence from the dialogue",
+      "visual_focus": "main conversation topic",
+      "description": "Engaged discussion about the main topic"
+    }}
+  ]
+}}
+"""
+    
+    if not settings.GEMINI_API_KEYS:
+        LOGGER.warning("No Gemini API keys for scene detection; returning empty list")
+        return []
+    
+    scenes_data = None
+    for api_key in settings.GEMINI_KEY_ROTATOR.available_keys():
+        try:
+            client = genai.Client(api_key=api_key)
+            response = client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=scene_detection_prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                ),
+            )
+            scenes_data = _extract_json(response.text)
+            LOGGER.info("Scene detection successful; found %d scenes", len(scenes_data.get("scenes", [])))
+            break
+        except Exception as e:
+            if _is_rate_limited(e):
+                LOGGER.warning("Gemini 429 on scene detection — rotating to next key")
+                settings.GEMINI_KEY_ROTATOR.mark_rate_limited(api_key, exc=e)
+                continue
+            LOGGER.warning("Scene detection failed: %s", str(e))
+            continue
+    
+    if not scenes_data or not scenes_data.get("scenes"):
+        LOGGER.warning("Failed to detect scenes from dialogue")
+        return []
+    
+    scenes = scenes_data.get("scenes", [])
+    if len(scenes) > 6:
+        scenes = scenes[:6]
+    
+    # Load the level-specific dialogue_image_prompt.md template as the consistent
+    # base for ALL scene prompts — ensures identical character style across all images.
+    level = script.get("level", "A1A2")
+    template_path = settings.ROOT / f"prompts/{level}/dialogue_image_prompt.md"
+    if template_path.exists():
+        template_text = template_path.read_text(encoding="utf-8").strip()
+        base_prompt = (
+            template_text
+            .replace("{scenario}", scenario)
+            .replace("{topic_title}", topic.title_hint)
+            .replace("{speaker1_role}", speaker1_role)
+            .replace("{speaker1_gender}", speaker1_gender)
+            .replace("{speaker2_role}", speaker2_role)
+            .replace("{speaker2_gender}", speaker2_gender)
+        )
+        LOGGER.debug("Loaded dialogue_image_prompt.md from %s", template_path)
+    else:
+        LOGGER.warning("dialogue_image_prompt.md not found at %s; using script image_prompt", template_path)
+        base_prompt = script.get("image_prompt", "")
+    
+    # Merge in the LLM's scene description (specific environment details from Stage 1)
+    scene_description_from_script = script.get("image_prompt", "")
+    
+    # Build scene-specific prompts keyed to trigger sentences
+    image_prompts = []
+    for scene_item in scenes:
+        scene_num = scene_item.get("scene", 0)
+        trigger_sentence = scene_item.get("trigger_sentence", "")
+        visual_focus = scene_item.get("visual_focus", "conversation")
+        description = scene_item.get("description", "")
+        
+        # Build prompt: consistent template base + scene-specific environment + scene focus
+        # The template ensures same characters; environment and focus change per scene.
+        scene_prompt = (
+            f"{base_prompt} "
+            f"Environment: {scene_description_from_script} "
+            f"Scene focus: {description}. "
+            f"Visual emphasis: {visual_focus}."
+        )
+        
+        image_prompts.append({
+            "scene": scene_num,
+            "prompt": scene_prompt,
+            "description": description,
+            "trigger_sentence": trigger_sentence,
+        })
+        LOGGER.debug(
+            "Scene %d: trigger=%r — visual focus: %s",
+            scene_num, trigger_sentence[:60], visual_focus
+        )
+    
+    LOGGER.info("Generated %d scene-based image prompts with trigger sentences", len(image_prompts))
+    return image_prompts

@@ -47,6 +47,7 @@ def build_upload_payload(artifact_path: Path) -> dict:
         "status": status,
         "playlist": data.get("playlist", ""),
         "playlist_description": data.get("playlist_description", ""),
+        "playlist_id": data.get("playlist_id", ""),
         "topic": data.get("topic", {}),
         "thumbnail": data.get("generated_image_file", ""),
     }
@@ -109,11 +110,25 @@ def upload_video(artifact_path: Path, video_file: Path) -> dict:
     response = request.execute()
 
     playlist_name = payload.get("playlist", "")
+    configured_playlist_id = str(payload.get("playlist_id") or "").strip()
     playlist_id = None
-    if playlist_name:
-        playlist_id = ensure_playlist(youtube, playlist_name, payload.get("playlist_description", ""))
-        if playlist_id and response.get("id"):
-            add_video_to_playlist(youtube, playlist_id, response["id"])
+    if response.get("id"):
+        if configured_playlist_id:
+            playlist_id = configured_playlist_id
+            try:
+                add_video_to_playlist(youtube, playlist_id, response["id"])
+            except Exception:
+                # Fallback for stale/invalid configured IDs.
+                if playlist_name:
+                    playlist_id = ensure_playlist(youtube, playlist_name, payload.get("playlist_description", ""))
+                    if playlist_id:
+                        add_video_to_playlist(youtube, playlist_id, response["id"])
+                else:
+                    raise
+        elif playlist_name:
+            playlist_id = ensure_playlist(youtube, playlist_name, payload.get("playlist_description", ""))
+            if playlist_id:
+                add_video_to_playlist(youtube, playlist_id, response["id"])
 
     captions_uploaded = []
     thumbnail_uploaded = False

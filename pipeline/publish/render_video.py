@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import re
 import subprocess
 import time
 from pathlib import Path
@@ -179,6 +180,617 @@ def _supports_ass_filter() -> bool:
         return any(f" {name} " in output for name in ("ass", "subtitles"))
     except Exception:
         return False
+
+
+def _build_video_with_multi_images(
+    audio_path: Path,
+    ass_path: Path,
+    output_mp4: Path,
+    burn_subtitles: bool,
+    image_paths: list[Path],
+    playback_speed: float,
+) -> tuple[bool, str]:
+    """Build video from multiple images with fade transitions between them.
+    
+    Creates individual video clips for each image (with fade duration),
+    concatenates them, applies color/subtitle filters, and encodes to MP4.
+    
+    Args:
+        audio_path: Path to audio WAV file
+        ass_path: Path to ASS subtitle file
+        output_mp4: Output video file path
+        burn_subtitles: Whether to burn subtitles into video
+        image_paths: List of image paths for each scene (in order)
+        playback_speed: Playback speed factor (e.g., 0.9 for 90% speed)
+    
+    Returns:
+        Tuple of (success: bool, error_message: str)
+    """
+    if not audio_path.exists():
+        return False, f"Missing audio file: {audio_path}"
+    if burn_subtitles and not ass_path.exists():
+        return False, f"Missing subtitle file: {ass_path}"
+    if not image_paths or not all(p.exists() for p in image_paths):
+        missing = [p for p in image_paths if not p.exists()]
+        return False, f"Missing image files: {missing}"
+    
+    render_cfg = settings.load_yaml(settings.ROOT / "config/visual_style.yaml").get("render", {})
+    width = int(render_cfg.get("width", 1920))
+    height = int(render_cfg.get("height", 1080))
+    fps = int(render_cfg.get("fps", 30))
+    crf = int(render_cfg.get("crf", 19))
+    preset = str(render_cfg.get("preset", "slow"))
+    fade_duration = float(render_cfg.get("fade_duration", 1.5))
+    playback_speed = _clamp_playback_speed(float(playback_speed))
+    
+    # Get total audio duration
+    try:
+        import wave
+        with wave.open(str(audio_path), 'rb') as wav_file:
+            frames = wav_file.getnframes()
+            rate = wav_file.getframerate()
+            total_duration = frames / rate
+    except Exception as e:
+        LOGGER.warning("Failed to read audio duration: %s. Using fallback.", str(e))
+        total_duration = 60.0
+    
+    num_images = len(image_paths)
+    duration_per_image = total_duration / num_images
+    
+    LOGGER.info(
+        "multi_image.render num_images=%d total_duration=%.2f duration_per_image=%.2f fade_duration=%.2f",
+        num_images,
+        total_duration,
+        duration_per_image,
+        fade_duration,
+    )
+    
+    # Create temporary directory for intermediate clips
+    import tempfile
+    temp_dir = Path(tempfile.mkdtemp(prefix="video_render_"))
+    try:
+        # Step 1: Create individual clips for each image with proper duration
+        clip_files = []
+        for i, img_path in enumerate(image_paths):
+            clip_output = temp_dir / f"clip_{i:02d}.mp4"
+            
+            # Create clip with duration slightly longer to account for fade overlap
+            # The last image holds until end of audio
+            if i == num_images - 1:
+                clip_duration = total_duration - (i * duration_per_image)
+            else:
+                clip_duration = duration_per_image + fade_duration / 2
+            
+            LOGGER.info(
+                "multi_image.creating_clip image_index=%d duration=%.2f output=%s",
+                i,
+                clip_duration,
+                clip_output,
+            )
+            
+            # ffmpeg: create video from image with specified duration
+            cmd = [
+                "ffmpeg", "-y",
+                "-loop", "1",
+                "-framerate", str(fps),
+                "-i", str(img_path),
+                "-f", "lavfi",
+                "-i", f"anullsrc=channel_layout=stereo:sample_rate=48000",
+                "-vf", f"scale={width}:{height},format=yuv420p",
+                "-c:v", "libx264",
+                "-preset", "ultrafast",  # Fast encoding for intermediate clips
+                "-crf", "28",  # Lower quality OK for intermediate
+                "-c:a", "aac",
+                "-t", str(clip_duration),
+                str(clip_output),
+            ]
+            
+            try:
+                result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=120)
+                clip_files.append(clip_output)
+                LOGGER.debug("multi_image.clip_created index=%d", i)
+            except subprocess.CalledProcessError as e:
+                LOGGER.error("multi_image.clip_failed index=%d stderr=%s", i, e.stderr[-500:] if e.stderr else "")
+                return False, f"Failed to create clip {i}: {e.stderr or str(e)}"
+            except Exception as e:
+                return False, f"Error creating clip {i}: {str(e)}"
+        
+        # Step 2: Create concat demuxer file
+        concat_file = temp_dir / "concat.txt"
+        concat_content = "\n".join(f"file '{clip.resolve()}'" for clip in clip_files)
+        concat_file.write_text(concat_content, encoding="utf-8")
+        
+        LOGGER.info("multi_image.concat_demuxer created with %d clips", len(clip_files))
+        
+        # Step 3: Concatenate clips
+        concat_output = temp_dir / "concat.mp4"
+        cmd = [
+            "ffmpeg", "-y",
+            "-f", "concat",
+            "-safe", "0",
+            "-i", str(concat_file),
+            "-c:v", "copy",  # Copy video codec (no re-encoding)
+            "-c:a", "copy",  # Copy audio codec
+            str(concat_output),
+        ]
+        
+        try:
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=300)
+            LOGGER.debug("multi_image.concat_complete")
+        except subprocess.CalledProcessError as e:
+            LOGGER.error("multi_image.concat_failed stderr=%s", e.stderr[-500:] if e.stderr else "")
+            return False, f"Failed to concatenate clips: {e.stderr or str(e)}"
+        except Exception as e:
+            return False, f"Error concatenating clips: {str(e)}"
+        
+        # Step 4: Re-sync with actual audio and apply filters/subtitles
+        vf_chain = (
+            f"scale={width}:{height},"
+            "eq=saturation=1.12:contrast=1.06:brightness=0.01,"
+            "unsharp=5:5:0.45:3:3:0.0"
+        )
+        
+        if burn_subtitles:
+            formatted_ass_path = _format_subtitle_filter_path(ass_path)
+            ass_filter = f"ass='{formatted_ass_path}'"
+            vf_chain += f",{ass_filter}"
+        
+        af_chain = _atempo_chain(playback_speed)
+        
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", str(concat_output),
+            "-i", str(audio_path),
+            "-map", "0:v",
+            "-map", "1:a",
+            "-vf", vf_chain,
+            "-af", af_chain,
+            "-c:v", "libx264",
+            "-preset", preset,
+            "-crf", str(crf),
+            "-pix_fmt", "yuv420p",
+            "-c:a", "aac",
+            "-b:a", "192k",
+            "-ar", "48000",
+            "-ac", "2",
+            "-shortest",
+            str(output_mp4),
+        ]
+        
+        LOGGER.info("multi_image.final_encode cmd=%s", " ".join(cmd))
+        try:
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=600)
+            if result.stderr:
+                LOGGER.debug("multi_image.encode.stderr %s", result.stderr[-1000:])
+            LOGGER.info("multi_image.render_complete output=%s", output_mp4)
+            return True, ""
+        except subprocess.CalledProcessError as e:
+            LOGGER.error("multi_image.encode_failed stderr=%s", (e.stderr or e.stdout or "")[-1000:])
+            return False, e.stderr or e.stdout or str(e)
+        except Exception as e:
+            return False, str(e)
+        
+    finally:
+        # Clean up temporary files
+        import shutil
+        try:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            LOGGER.debug("multi_image.temp_cleanup removed %s", temp_dir)
+        except Exception as e:
+            LOGGER.warning("multi_image.temp_cleanup_failed: %s", str(e))
+
+
+def _parse_srt_segments(srt_path: Path) -> list[dict]:
+    """Parse an SRT file to extract plain-text dialogue segment timings.
+
+    Returns:
+        List of dicts: {start_sec, end_sec, text}
+    """
+    segments = []
+    if not srt_path.exists():
+        LOGGER.warning("SRT file not found: %s", srt_path)
+        return segments
+    try:
+        content = srt_path.read_text(encoding="utf-8")
+        blocks = re.split(r"\n\n+", content.strip())
+        for block in blocks:
+            lines = block.strip().splitlines()
+            if len(lines) < 3:
+                continue
+            try:
+                # Line 0: index, Line 1: timestamps, Line 2+: text
+                ts_line = lines[1]
+                m = re.match(
+                    r"(\d+):(\d{2}):(\d{2})[,\.](\d+)\s*-->\s*(\d+):(\d{2}):(\d{2})[,\.](\d+)",
+                    ts_line,
+                )
+                if not m:
+                    continue
+                h1, m1, s1, ms1, h2, m2, s2, ms2 = (int(x) for x in m.groups())
+                start_sec = h1 * 3600 + m1 * 60 + s1 + ms1 / 1000.0
+                end_sec   = h2 * 3600 + m2 * 60 + s2 + ms2 / 1000.0
+                text = " ".join(lines[2:]).strip()
+                if text:
+                    segments.append({"start_sec": start_sec, "end_sec": end_sec, "text": text})
+            except (ValueError, IndexError):
+                continue
+        LOGGER.info("Parsed %d segments from SRT file", len(segments))
+    except Exception as e:
+        LOGGER.error("Error parsing SRT file: %s", str(e))
+    return segments
+
+
+def _parse_ass_segments(ass_path: Path) -> list[dict]:
+    """Parse ASS subtitle file to extract dialogue segment timings.
+    
+    Reads [Events] section and extracts precise timing for each subtitle line.
+    ASS format: Dialogue: Layer,Start,End,Style,...,Text
+    Time format: 0:00:00.28 (centiseconds)
+    
+    Args:
+        ass_path: Path to ASS subtitle file
+    
+    Returns:
+        List of dicts: {start_sec, end_sec, text, style}
+    """
+    segments = []
+    
+    if not ass_path.exists():
+        LOGGER.warning("ASS file not found: %s", ass_path)
+        return segments
+    
+    try:
+        content = ass_path.read_text(encoding="utf-8")
+        in_events = False
+        
+        for line in content.split("\n"):
+            if line.strip() == "[Events]":
+                in_events = True
+                continue
+            
+            if in_events and line.startswith("Dialogue:"):
+                # Format: Dialogue: Layer,Start,End,Style,Name,...,Text
+                parts = line.split(",", 9)  # Split into parts, max 10
+                if len(parts) >= 10:
+                    try:
+                        start_str = parts[1].strip()  # "0:00:00.28"
+                        end_str = parts[2].strip()    # "0:00:01.46"
+                        style = parts[3].strip()
+                        text = parts[9].strip()
+                        
+                        # Convert ASS time format (H:MM:SS.CS) to seconds
+                        def ass_time_to_seconds(time_str):
+                            parts = time_str.split(":")
+                            hours = int(parts[0])
+                            minutes = int(parts[1])
+                            seconds_cs = float(parts[2])  # Includes centiseconds
+                            return hours * 3600 + minutes * 60 + seconds_cs
+                        
+                        start_sec = ass_time_to_seconds(start_str)
+                        end_sec = ass_time_to_seconds(end_str)
+                        duration = end_sec - start_sec
+                        
+                        # Strip ASS override tags (e.g. {\k30}, {\an8}) from text
+                        # so plain-text trigger sentence matching works correctly
+                        clean_text = re.sub(r"\{[^}]*\}", "", text).strip()
+                        
+                        segments.append({
+                            "start_sec": start_sec,
+                            "end_sec": end_sec,
+                            "duration": duration,
+                            "text": clean_text,
+                            "style": style,
+                        })
+                    except (ValueError, IndexError) as e:
+                        LOGGER.debug("Failed to parse ASS line: %s error=%s", line[:50], str(e))
+                        continue
+        
+        LOGGER.info("Parsed %d dialogue segments from ASS file", len(segments))
+        return segments
+    
+    except Exception as e:
+        LOGGER.error("Error parsing ASS file: %s", str(e))
+        return []
+
+
+def _get_segments_for_scene(segments: list[dict], scene_start: float, scene_end: float) -> list[dict]:
+    """Find all ASS segments that fall within a scene's time window.
+    
+    Args:
+        segments: List of {start_sec, end_sec, text, ...} from ASS file
+        scene_start: Scene start time in seconds
+        scene_end: Scene end time in seconds
+    
+    Returns:
+        List of segments that overlap with scene time window
+    """
+    matching = []
+    
+    for seg in segments:
+        seg_start = seg.get("start_sec", 0)
+        seg_end = seg.get("end_sec", 0)
+        
+        # Check if segment overlaps with scene window
+        if seg_end > scene_start and seg_start < scene_end:
+            matching.append(seg)
+    
+    return matching
+
+
+def _find_segment_by_text(segments: list[dict], trigger_sentence: str) -> dict | None:
+    """Find the ASS segment that best matches a trigger sentence.
+    
+    Looks for the dialogue segment containing the trigger sentence text so
+    we can get the exact start time of when that sentence was spoken.
+    
+    Args:
+        segments: List of {start_sec, end_sec, text, ...} from ASS file
+        trigger_sentence: Dutch sentence to search for
+    
+    Returns:
+        Matching segment dict, or None if not found
+    """
+    trigger = trigger_sentence.strip().lower()
+    if not trigger:
+        return None
+    
+    # Exact match
+    for seg in segments:
+        seg_text = seg.get("text", "").strip().lower()
+        if trigger == seg_text:
+            return seg
+    
+    # Substring match (trigger in segment or segment in trigger)
+    for seg in segments:
+        seg_text = seg.get("text", "").strip().lower()
+        if trigger in seg_text or seg_text in trigger:
+            return seg
+    
+    # First-words match (first 5 words of trigger sentence)
+    trigger_words = trigger.split()
+    if len(trigger_words) >= 3:
+        trigger_prefix = " ".join(trigger_words[:5])
+        for seg in segments:
+            seg_text = seg.get("text", "").strip().lower()
+            if trigger_prefix in seg_text:
+                return seg
+    
+    return None
+
+
+def _build_video_with_timed_images(
+    audio_path: Path,
+    ass_path: Path,
+    output_mp4: Path,
+    burn_subtitles: bool,
+    image_data: list[dict],  # List of {image_path, trigger_sentence}
+    playback_speed: float,
+    nl_srt_path: Path | None = None,
+) -> tuple[bool, str]:
+    """Render video with images timed by matching trigger sentences to subtitle timing.
+
+    Prefers the Dutch SRT file (plain text, no tag stripping needed) for trigger
+    sentence lookup. Falls back to ASS parsing if no Dutch SRT is provided.
+
+    Each image has a trigger_sentence (exact Dutch dialogue line). The subtitle file is
+    searched for that sentence to find when it was spoken, giving the image's start
+    time. The end time is the start of the next scene's trigger sentence (or audio end).
+
+    Args:
+        audio_path: Path to dialogue audio WAV file
+        ass_path: Path to ASS subtitle file (for burning subtitles)
+        output_mp4: Output video file path
+        burn_subtitles: Whether to burn subtitles into video
+        image_data: List of {image_path, trigger_sentence} for each scene
+        playback_speed: Playback speed factor
+        nl_srt_path: Optional path to Dutch plain-text SRT for trigger matching
+        playback_speed: Playback speed factor
+    
+    Returns:
+        Tuple of (success: bool, error_message: str)
+    """
+    if not audio_path.exists():
+        return False, f"Missing audio file: {audio_path}"
+    if burn_subtitles and not ass_path.exists():
+        return False, f"Missing subtitle file: {ass_path}"
+    
+    for img_info in image_data:
+        img_path = Path(img_info.get("image_path", ""))
+        if not img_path.exists():
+            return False, f"Missing image: {img_path}"
+    
+    render_cfg = settings.load_yaml(settings.ROOT / "config/visual_style.yaml").get("render", {})
+    width = int(render_cfg.get("width", 1920))
+    height = int(render_cfg.get("height", 1080))
+    fps = int(render_cfg.get("fps", 30))
+    crf = int(render_cfg.get("crf", 19))
+    preset = str(render_cfg.get("preset", "slow"))
+    playback_speed = _clamp_playback_speed(float(playback_speed))
+    
+    if not ass_path.exists():
+        return False, f"ASS subtitle file required but missing: {ass_path}"
+
+    if not nl_srt_path or not nl_srt_path.exists():
+        return False, f"Dutch SRT required for trigger sentence matching but missing: {nl_srt_path}"
+
+    timing_segments = _parse_srt_segments(nl_srt_path)
+    if not timing_segments:
+        return False, f"No segments found in Dutch SRT: {nl_srt_path}"
+
+    LOGGER.info("timed_image.nl_srt segments=%d path=%s", len(timing_segments), nl_srt_path)
+
+    audio_end_sec = 0.0
+    try:
+        import wave
+        with wave.open(str(audio_path), "rb") as wf:
+            audio_end_sec = wf.getnframes() / wf.getframerate()
+    except Exception as e:
+        LOGGER.warning("Could not read audio duration: %s — using last segment end", str(e))
+        audio_end_sec = max(s.get("end_sec", 0) for s in timing_segments)
+
+    LOGGER.info(
+        "timed_image.render num_images=%d srt_segments=%d audio_end=%.2f",
+        len(image_data), len(timing_segments), audio_end_sec,
+    )
+
+    # Resolve each scene's start time by finding its trigger sentence in subtitle file
+    scene_starts: list[float] = []
+    for i, img_info in enumerate(image_data):
+        trigger = img_info.get("trigger_sentence", "")
+        seg = _find_segment_by_text(timing_segments, trigger)
+        if seg is None:
+            return False, (
+                f"Trigger sentence for scene {i} not found in subtitle file: {trigger!r}. "
+                f"Ensure the sentence appears verbatim in the dialogue."
+            )
+        scene_starts.append(seg["start_sec"])
+        LOGGER.info(
+            "timed_image.scene index=%d trigger=%r matched_at=%.2fs",
+            i, trigger[:60], seg["start_sec"],
+        )
+    
+    # Sort scenes by start time (ASS order)
+    indexed_starts = sorted(enumerate(scene_starts), key=lambda x: x[1])
+    
+    import tempfile
+    temp_dir = Path(tempfile.mkdtemp(prefix="video_render_"))
+    try:
+        # Step 1: Create individual clips — each runs from trigger start to next trigger start.
+        # The first clip always starts from 0 (not from scene 1's trigger time) so the
+        # concatenated video duration matches the full audio duration and all scene transitions
+        # align correctly with the spoken trigger sentences.
+        clip_files = []
+        for rank, (orig_idx, start_sec) in enumerate(indexed_starts):
+            img_info = image_data[orig_idx]
+            img_path = Path(img_info.get("image_path", ""))
+            clip_output = temp_dir / f"clip_{rank:02d}.mp4"
+
+            # First clip: always starts at 0 to keep video/audio durations in sync
+            effective_start = 0.0 if rank == 0 else start_sec
+
+            # End time = next scene's trigger start, or audio end for the last scene
+            if rank + 1 < len(indexed_starts):
+                end_sec = indexed_starts[rank + 1][1]
+            else:
+                end_sec = audio_end_sec
+
+            clip_duration = max(end_sec - effective_start, 0.5)  # minimum 0.5s safety floor
+            
+            LOGGER.info(
+                "timed_image.clip rank=%d orig_scene=%d trigger_at=%.2f effective_start=%.2f end=%.2f duration=%.2f",
+                rank, orig_idx, start_sec, effective_start, end_sec, clip_duration,
+            )
+            
+            # ffmpeg: create video from image with specified duration
+            cmd = [
+                "ffmpeg", "-y",
+                "-loop", "1",
+                "-framerate", str(fps),
+                "-i", str(img_path),
+                "-f", "lavfi",
+                "-i", f"anullsrc=channel_layout=stereo:sample_rate=48000",
+                "-vf", f"scale={width}:{height},format=yuv420p",
+                "-c:v", "libx264",
+                "-preset", "ultrafast",  # Fast encoding for intermediate clips
+                "-crf", "28",  # Lower quality OK for intermediate
+                "-c:a", "aac",
+                "-t", str(clip_duration),
+                str(clip_output),
+            ]
+            
+            try:
+                result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=120)
+                clip_files.append(clip_output)
+                LOGGER.debug("timed_image.clip_created index=%d", i)
+            except subprocess.CalledProcessError as e:
+                LOGGER.error("timed_image.clip_failed index=%d stderr=%s", i, e.stderr[-500:] if e.stderr else "")
+                return False, f"Failed to create clip {i}: {e.stderr or str(e)}"
+            except Exception as e:
+                return False, f"Error creating clip {i}: {str(e)}"
+        
+        # Step 2: Create concat demuxer file
+        concat_file = temp_dir / "concat.txt"
+        concat_content = "\n".join(f"file '{clip.resolve()}'" for clip in clip_files)
+        concat_file.write_text(concat_content, encoding="utf-8")
+        
+        LOGGER.debug("timed_image.concat_file created with %d clips", len(clip_files))
+        
+        # Step 3: Concatenate all clips
+        concat_output = temp_dir / "concatenated.mp4"
+        cmd = [
+            "ffmpeg", "-y",
+            "-f", "concat",
+            "-safe", "0",
+            "-i", str(concat_file),
+            "-c", "copy",
+            "-y",
+            str(concat_output),
+        ]
+        
+        try:
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=300)
+            LOGGER.debug("timed_image.concat_complete")
+        except subprocess.CalledProcessError as e:
+            LOGGER.error("timed_image.concat_failed stderr=%s", e.stderr[-500:] if e.stderr else "")
+            return False, f"Failed to concatenate clips: {e.stderr or str(e)}"
+        except Exception as e:
+            return False, f"Error concatenating clips: {str(e)}"
+        
+        # Step 4: Re-sync with audio, apply filters, and encode final output
+        vf_chain = (
+            f"scale={width}:{height},"
+            "eq=saturation=1.12:contrast=1.06:brightness=0.01,"
+            "unsharp=5:5:0.45:3:3:0.0"
+        )
+        
+        if burn_subtitles:
+            formatted_ass_path = _format_subtitle_filter_path(ass_path)
+            ass_filter = f"ass='{formatted_ass_path}'"
+            vf_chain += f",{ass_filter}"
+        
+        if abs(playback_speed - 1.0) > 1e-6:
+            vf_chain += f",setpts=PTS/{playback_speed:.6f}"
+        
+        af_chain = _atempo_chain(playback_speed)
+        
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", str(concat_output),
+            "-i", str(audio_path),
+            "-map", "0:v:0",
+            "-map", "1:a:0",
+            "-vf", vf_chain,
+            "-af", af_chain,
+            "-c:v", "libx264",
+            "-preset", preset,
+            "-crf", str(crf),
+            "-pix_fmt", "yuv420p",
+            "-c:a", "aac",
+            "-b:a", "192k",
+            "-ar", "48000",
+            "-ac", "2",
+            "-shortest",
+            str(output_mp4),
+        ]
+        
+        try:
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=600)
+            LOGGER.info("timed_image.render_complete output=%s", output_mp4)
+            return True, ""
+        except subprocess.CalledProcessError as e:
+            LOGGER.error("timed_image.encode_failed stderr=%s", e.stderr[-500:] if e.stderr else "")
+            return False, f"Failed to encode final video: {e.stderr or str(e)}"
+        except Exception as e:
+            return False, f"Error encoding video: {str(e)}"
+    
+    finally:
+        # Cleanup temporary directory
+        try:
+            import shutil
+            shutil.rmtree(temp_dir)
+            LOGGER.debug("timed_image.temp_cleanup_complete")
+        except Exception as e:
+            LOGGER.warning("timed_image.temp_cleanup_failed: %s", str(e))
 
 
 def _build_video_with_karaoke(
@@ -370,7 +982,7 @@ def render_from_artifact(artifact_path: Path) -> Path:
             f"(got level={level!r}, category={category!r}, topic_id={topic_id!r}, title_slug={title_slug!r})"
         )
 
-    video_dir = out_dir / level / category / "videos"
+    video_dir = out_dir / level / category / "videos" / f"episode_{topic_id}_{title_slug}"
     output_mp4 = video_dir / f"episode_{topic_id}_{title_slug}.mp4"
     video_dir.mkdir(parents=True, exist_ok=True)
 
@@ -404,20 +1016,73 @@ def render_from_artifact(artifact_path: Path) -> Path:
 
     ass_path_for_render = ass_path
 
+    # Dutch SRT for trigger sentence timing lookup (preferred over ASS parsing)
+    _nl_srt_raw = (data.get("subtitles") or {}).get("nl") or (data.get("srt_files") or {}).get("nl")
+    nl_srt_path: Path | None = None
+    if _nl_srt_raw:
+        _p = Path(_nl_srt_raw).resolve()
+        if not _p.exists():
+            _p = (settings.ROOT / _nl_srt_raw).resolve()
+        if _p.exists():
+            nl_srt_path = _p
+
     ffmpeg_available = command_exists("ffmpeg")
     subtitles_filter_available = _supports_ass_filter() if ffmpeg_available else False
 
-    # Require pre-generated background image in artifact
+    # Check for multi-image files (dialogue with 5-6 scenes)
+    image_files_multi = data.get("generated_image_files", [])
     image_file = data.get("generated_image_file")
-    if not image_file:
-        raise ValueError("Artifact must contain 'generated_image_file'. Ensure image generation ran successfully.")
-
-    ip = Path(image_file)
-    if not ip.is_absolute():
-        ip = (settings.ROOT / image_file).resolve()
-    if not ip.exists():
-        raise FileNotFoundError(f"Image file not found: {image_file}")
-    image_path = ip
+    # Image prompts are stored in script.image_prompts (with trigger_sentence for multi-image timing)
+    image_prompts = data.get("image_prompts", []) or data.get("script", {}).get("image_prompts", [])
+    
+    # Check if image_prompts use trigger_sentence based timing (sentence → ASS lookup)
+    has_timing_info = (
+        image_prompts 
+        and len(image_prompts) > 0 
+        and all(
+            "trigger_sentence" in p and p["trigger_sentence"]
+            for p in image_prompts
+        )
+    )
+    
+    LOGGER.info("Multi-image detection: files=%d prompts=%d has_timing=%s", 
+                len(image_files_multi), len(image_prompts), has_timing_info)
+    
+    # Resolve multi-image paths
+    if image_files_multi and len(image_files_multi) > 1:
+        LOGGER.info("Multi-image rendering detected: %d images", len(image_files_multi))
+        image_paths = []
+        for img_file in image_files_multi:
+            ip = Path(img_file)
+            if not ip.is_absolute():
+                ip = (settings.ROOT / img_file).resolve()
+            if not ip.exists():
+                LOGGER.warning("Image file not found: %s. Checking fallback...", img_file)
+                # Fallback to single-image mode
+                image_files_multi = []
+                break
+            image_paths.append(ip)
+        
+        if image_files_multi:  # All images were found
+            use_multi_image = True
+        else:
+            use_multi_image = False
+            if not image_file:
+                raise ValueError("Artifact must contain 'generated_image_file' or 'generated_image_files'.")
+    else:
+        use_multi_image = False
+        if not image_file:
+            raise ValueError("Artifact must contain 'generated_image_file'. Ensure image generation ran successfully.")
+    
+    # Resolve single image path (fallback or non-dialogue)
+    image_path: Path | None = None
+    if not use_multi_image:
+        ip = Path(image_file)
+        if not ip.is_absolute():
+            ip = (settings.ROOT / image_file).resolve()
+        if not ip.exists():
+            raise FileNotFoundError(f"Image file not found: {image_file}")
+        image_path = ip
 
     assembled = False
     render_error = ""
@@ -447,14 +1112,52 @@ def render_from_artifact(artifact_path: Path) -> Path:
     # Render main video (with burned subtitles) to a temp path so concat
     # does not disturb the subtitle timing offsets.
     main_video_tmp = video_dir / f"_main_{output_mp4.name}"
-    assembled, render_error = _build_video_with_karaoke(
-        audio_path=audio_path,
-        ass_path=ass_path_for_render,
-        output_mp4=main_video_tmp,
-        burn_subtitles=subtitles_filter_available,
-        image_path=image_path,
-        playback_speed=playback_speed,
-    )
+    
+    # Choose rendering path based on image type and timing info
+    if use_multi_image and has_timing_info:
+        # Use dynamic timing-based rendering
+        LOGGER.info("Using TIMED multi-image rendering (%d images with dynamic timing)", len(image_paths))
+        
+        # Build image_data list with trigger sentences for ASS-based timing lookup
+        image_data = []
+        for idx, (img_path, prompt) in enumerate(zip(image_paths, image_prompts)):
+            image_data.append({
+                "image_path": str(img_path),
+                "trigger_sentence": prompt.get("trigger_sentence", ""),
+            })
+        
+        assembled, render_error = _build_video_with_timed_images(
+            audio_path=audio_path,
+            ass_path=ass_path_for_render,
+            output_mp4=main_video_tmp,
+            burn_subtitles=subtitles_filter_available,
+            image_data=image_data,
+            playback_speed=playback_speed,
+            nl_srt_path=nl_srt_path,
+        )
+    elif use_multi_image:
+        # Use equal-time distribution
+        LOGGER.info("Using equal-time multi-image rendering (%d images)", len(image_paths))
+        assembled, render_error = _build_video_with_multi_images(
+            audio_path=audio_path,
+            ass_path=ass_path_for_render,
+            output_mp4=main_video_tmp,
+            burn_subtitles=subtitles_filter_available,
+            image_paths=image_paths,
+            playback_speed=playback_speed,
+        )
+    else:
+        # Single-image rendering
+        LOGGER.info("Using single-image rendering")
+        assembled, render_error = _build_video_with_karaoke(
+            audio_path=audio_path,
+            ass_path=ass_path_for_render,
+            output_mp4=main_video_tmp,
+            burn_subtitles=subtitles_filter_available,
+            image_path=image_path,
+            playback_speed=playback_speed,
+        )
+    
     subtitle_burned_in = assembled and subtitles_filter_available
     if not assembled:
         raise RuntimeError(f"Video render failed: {render_error}")
@@ -512,30 +1215,35 @@ def render_from_artifact(artifact_path: Path) -> Path:
     # --render does not compound the scaling (T/0.9 → T/0.81 → ...).
     srt_needs_transform = intro_duration_sec > 0 or abs(configured_speed - 1.0) > 1e-6
     if srt_needs_transform:
-        srt_en_raw = data.get("subtitles", {}).get("srt_en", "")
-        if srt_en_raw:
-            srt_en_path = Path(srt_en_raw)
-            if not srt_en_path.is_absolute():
-                srt_en_path = (settings.ROOT / srt_en_raw).resolve()
-            if srt_en_path.exists():
-                # Keep an untouched original so rerenders always start from ground truth.
-                srt_orig_path = srt_en_path.with_suffix(".orig.srt")
-                if not srt_orig_path.exists():
-                    import shutil
-                    shutil.copy2(srt_en_path, srt_orig_path)
-                    LOGGER.info("srt_en.orig.saved path=%s", srt_orig_path)
-                _transform_srt_timestamps(
-                    srt_orig_path,
-                    srt_en_path,
-                    offset_sec=intro_duration_sec,
-                    speed=configured_speed,
-                )
-                LOGGER.info(
-                    "srt_en.timestamps.transformed offset_sec=%.3f speed=%.3f path=%s",
-                    intro_duration_sec,
-                    configured_speed,
-                    srt_en_path,
-                )
+        import shutil
+        subs = data.get("subtitles", {})
+        for srt_key, log_tag in (("srt_en", "srt_en"), ("srt_nl", "srt_nl")):
+            srt_raw = subs.get(srt_key, "")
+            if not srt_raw:
+                continue
+            srt_path = Path(srt_raw)
+            if not srt_path.is_absolute():
+                srt_path = (settings.ROOT / srt_raw).resolve()
+            if not srt_path.exists():
+                continue
+            # Keep an untouched original so rerenders always start from ground truth.
+            srt_orig_path = srt_path.with_suffix(".orig.srt")
+            if not srt_orig_path.exists():
+                shutil.copy2(srt_path, srt_orig_path)
+                LOGGER.info("%s.orig.saved path=%s", log_tag, srt_orig_path)
+            _transform_srt_timestamps(
+                srt_orig_path,
+                srt_path,
+                offset_sec=intro_duration_sec,
+                speed=configured_speed,
+            )
+            LOGGER.info(
+                "%s.timestamps.transformed offset_sec=%.3f speed=%.3f path=%s",
+                log_tag,
+                intro_duration_sec,
+                configured_speed,
+                srt_path,
+            )
 
     # Clean up temp files
     for tmp in [main_video_tmp, intro_clip_tmp, scaled_ass_tmp]:

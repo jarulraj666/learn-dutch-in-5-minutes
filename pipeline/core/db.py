@@ -85,8 +85,32 @@ def seed_topics_from_config() -> None:
             )
 
 
+def get_topic_by_id(topic_id: str) -> dict | None:
+    """Fetch a single topic row by ID. Returns None if not found."""
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT id, track, title_hint, level, category, status, order_index FROM topics WHERE id = ?",
+            (topic_id,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def mark_topic_generated(topic_id: str) -> None:
+    """Mark a topic as generated (video rendered) but not yet uploaded to YouTube."""
+    from pipeline.utils import now_utc_iso
+    with get_connection() as conn:
+        conn.execute(
+            """
+            UPDATE topics
+            SET status = 'generated', last_used_at = ?
+            WHERE id = ?
+            """,
+            (now_utc_iso(), topic_id),
+        )
+
+
 def mark_topic_done(topic_id: str) -> None:
-    """Mark a topic as done after successful generation."""
+    """Mark a topic as done after successful YouTube upload."""
     from pipeline.utils import now_utc_iso
     with get_connection() as conn:
         conn.execute(

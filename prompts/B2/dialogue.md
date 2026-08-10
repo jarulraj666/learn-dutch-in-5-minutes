@@ -52,15 +52,7 @@ Aim for approximately **150 dialogue turns** total.
 
 ## Image Prompt
 
-Generate a detailed image prompt under `"image_prompt"` reflecting the scenario: **{scenario}**
-
-3D stylized animation render of {scenario}. 16:9 aspect ratio, Pixar aesthetic, warm lighting, highly detailed. **Light, airy background colours** — soft pastels, creamy whites, warm beiges, pale blues or light warm tones. Bright and cheerful feel. No dark or saturated backgrounds.
-
-LAYOUT (strict):
-- Full background: The {scenario} environment fills 100% of the frame — rich, detailed, and in focus.
-- Left 25–30% (with 40px left margin): {speaker1_gender} character ({speaker1_role}) standing or positioned naturally, facing inward toward the center.
-- Right 25–30% (with 40px right margin): {speaker2_gender} character ({speaker2_role}) standing or positioned naturally, facing inward toward the center.
-- Center 40–50%: Open space — no characters, no obstructions. Clear area for subtitle overlays at the bottom 15% of the frame.
+Generate a single-sentence `image_prompt` field in the JSON that describes the specific scene: the exact environment, what makes it visually distinct, and any notable props or details from this particular dialogue. Do not include character layout or style instructions — those are handled separately.
 
 ## Output JSON Structure
 
@@ -70,7 +62,7 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
 {
   "topic_id": "string",
   "topic_title": "Dutch title",
-  "image_prompt": "3D stylized animation render of {scenario} - {title_hint}. 16:9 aspect ratio, Pixar aesthetic, warm lighting, highly detailed. Light, airy background colours — soft pastels, creamy whites, warm beiges, pale blues or light warm tones. Bright and cheerful feel. No dark or saturated backgrounds. Full background: the {scenario} environment fills 100% of the frame — rich, detailed, and in focus. Left 25-30%: {speaker1_gender} character ({speaker1_role}) positioned naturally, facing inward toward the center. Right 25-30%: {speaker2_gender} character ({speaker2_role}) positioned naturally, facing inward toward the center. Center 40-50%: open space — no characters, no obstructions.",
+  "image_prompt": "A modern corporate office meeting room with a glass table, city view through large windows, and a presentation screen on the wall.",
   "language": "nl",
   "dialogue": [
     {"Speaker1": "[pause for 1 second] [medium slow] Goedemiddag\!"},

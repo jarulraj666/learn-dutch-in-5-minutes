@@ -34,24 +34,24 @@ python -m pipeline.tests.test_stage_3a_speech_to_text
 ```
 ✓ Creates: `output/test_stage_3a_stt_segments.json`
 
-### Stage 3c: Generate Karaoke/SRT from STT Segments (Fast - <1 min)
+### Stage 3b: Generate Karaoke/SRT from STT Segments (Fast - <1 min)
 ```bash
 source .venv311/bin/activate
-python -m pipeline.tests.test_stage_3c_karaoke_generation
+python -m pipeline.tests.test_stage_3b_karaoke_generation
 ```
 ✓ Creates: `output/{level}/{category}/subtitles/episode_{topic_id}_{slug}.ass`
 ✓ Creates: `output/test_stage_3_subtitle_plan.json`
 
-### Stage 3b: Generate Background Image (Gemini 2.5 Flash Image - 3-5 min)
-> Can run in parallel with Stages 2 & 3 — only requires Stage 1 output.
+### Stage 3c: Generate Background Image (Gemini 2.5 Flash Image - 3-5 min)
+> Requires Stage 3b (karaoke/ASS subtitles) to be complete — image generation uses the ASS subtitle file.
 ```bash
 source .venv311/bin/activate
-python -m pipeline.tests.test_stage_3b_image_generation
+python -m pipeline.tests.test_stage_3c_image_generation
 ```
 ✓ Creates: `output/{level}/{category}/visuals/episode_{topic_id}_{slug}.png`
 
 ### Stage 4: Render Video (FFmpeg - 10-15 min)
-> Requires Stages 2, 3a, 3c, and 3b to be complete.
+> Requires Stages 2, 3a, 3b, and 3c to be complete.
 ```bash
 source .venv311/bin/activate
 python -m pipeline.tests.test_stage_4_video_rendering
@@ -64,16 +64,19 @@ source .venv311/bin/activate
 python -m pipeline.tests.test_all_stages --all
 ```
 
-## Recommended Parallel Run Order
+## Recommended Run Order
 ```
 Stage 1   →  python -m pipeline.tests.test_stage_1_script_generation [--level A1] [--category dialogue]
-               ↓                          ↓
-Stage 2   python -m pipeline.tests.test_stage_2_voice_generation
-Stage 3a  python -m pipeline.tests.test_stage_3a_speech_to_text
-Stage 3c  python -m pipeline.tests.test_stage_3c_karaoke_generation
-Stage 3b  python -m pipeline.tests.test_stage_3b_image_generation    ← runs in parallel with 2 & 3
                ↓
-Stage 4   python -m pipeline.tests.test_stage_4_video_rendering
+Stage 2      python -m pipeline.tests.test_stage_2_voice_generation
+               ↓
+Stage 3a     python -m pipeline.tests.test_stage_3a_speech_to_text
+               ↓
+Stage 3b     python -m pipeline.tests.test_stage_3b_karaoke_generation
+               ↓
+Stage 3c     python -m pipeline.tests.test_stage_3c_image_generation    ← requires ASS subtitles from Stage 3b
+               ↓
+Stage 4      python -m pipeline.tests.test_stage_4_video_rendering
 ```
 
 ## View Testing Instructions
@@ -111,13 +114,14 @@ speech:
 - Check API Key: `echo $GEMINI_API_KEY`
 - Check network access to Gemini APIs
 
-**Stage 3c (Karaoke build) fails:**
+**Stage 3b (Karaoke build) fails:**
 - Ensure `output/test_stage_3a_stt_segments.json` exists
-- Re-run Stage 3a, then Stage 3c
+- Re-run Stage 3a, then Stage 3b
 
-**Stage 3b (Image generation) fails:**
+**Stage 3c (Image generation) fails:**
 - Image API Key: `echo $GEMINI_IMAGE_CREATION_API_KEY`
 - Script file: Verify `output/test_stage_1_script.json` exists and has `image_prompt`
+- ASS subtitle file: Verify Stage 3b has run — `ls -la output/{level}/{category}/subtitles/`
 
 **Stage 4 (Video) fails:**
 - FFmpeg: `which ffmpeg`
@@ -143,7 +147,7 @@ speech:
 | CPU cores | 2+ | Stage 4 (faster encoding) |
 | Network | Required | All stages (Gemini APIs) |
 | GEMINI_API_KEY | Valid API key | Stages 2, 4 |
-| GEMINI_IMAGE_CREATION_API_KEY | Valid API key | Stage 3b |
+| GEMINI_IMAGE_CREATION_API_KEY | Valid API key | Stage 3c |
 
 ## Pipeline Changes (No Expansion)
 
@@ -202,7 +206,7 @@ ls -lh output/A1/dialogue/audio/episode_*.wav
 ```
 Expected: Multi-speaker WAV file with alternating voices
 
-#### 3. Speaker-Aware STT Alignment (Stage 3a/3c - Subtitles)
+#### 3. Speaker-Aware STT Alignment (Stage 3a/3b - Subtitles)
 **What to check:**
 - Aligned segments should have `"speaker"` field (Speaker1 or Speaker2)
 - Karaoke subtitle file (ASS) should be generated without errors
@@ -223,7 +227,7 @@ with open('output/test_stage_3a_stt_segments.json') as f:
 
 Expected: `{'Speaker1', 'Speaker2'}` for dialogue
 
-#### 4. Dynamic ASS Subtitle Styling (Stage 3c)
+#### 4. Dynamic ASS Subtitle Styling (Stage 3b)
 **What to check:**
 - Dialogue ASS files should have two styles: `SpeakerL` and `SpeakerR`
 - Non-dialogue ASS files should have single `Default` style
@@ -252,7 +256,7 @@ Style: Default,Arial,54,...,8,550,240,
 Dialogue: ...Default...
 ```
 
-#### 5. Scenario-Aware Image Prompt (Stage 3b - Image Generation)
+#### 5. Scenario-Aware Image Prompt (Stage 3c - Image Generation)
 **What to check:**
 - Dialogue image prompt should be enriched from dialogue.md template
 - Should include scenario, speaker roles
@@ -299,12 +303,12 @@ with open(manifest_file) as f:
 | **1 (Script)** | other | NO speakers field |
 | **2 (TTS)** | dialogue | Multi-speaker timestamps returned |
 | **2 (TTS)** | other | Single speaker (no timestamps) |
-| **3a/3c (STT)** | dialogue | Segments tagged with Speaker1/Speaker2 |
-| **3a/3c (STT)** | other | No speaker field (or same speaker) |
-| **3c (ASS)** | dialogue | Styles: SpeakerL, SpeakerR |
-| **3c (ASS)** | other | Style: Default (center-aligned) |
-| **3b (Image)** | dialogue | Scenario-enriched from template |
-| **3b (Image)** | other | Original image_prompt |
+| **3a/3b (STT)** | dialogue | Segments tagged with Speaker1/Speaker2 |
+| **3a/3b (STT)** | other | No speaker field (or same speaker) |
+| **3b (ASS)** | dialogue | Styles: SpeakerL, SpeakerR |
+| **3b (ASS)** | other | Style: Default (center-aligned) |
+| **3c (Image)** | dialogue | ASS subtitles (from 3b) + scenario-enriched prompt |
+| **3c (Image)** | other | ASS subtitles (from 3b) + original image_prompt |
 | **4 (Render)** | dialogue | SpeakerL/SpeakerR subtitles in video |
 | **4 (Render)** | other | Default center-aligned subtitles |
 
@@ -321,11 +325,11 @@ python -m pipeline.tests.test_stage_2_voice_generation
 # Stage 3a: STT (extract speaker segments)
 python -m pipeline.tests.test_stage_3a_speech_to_text
 
-# Stage 3c: ASS karaoke (with speaker styling)
-python -m pipeline.tests.test_stage_3c_karaoke_generation
+# Stage 3b: ASS karaoke (with speaker styling)
+python -m pipeline.tests.test_stage_3b_karaoke_generation
 
-# Stage 3b: Image (scenario-aware prompt)
-python -m pipeline.tests.test_stage_3b_image_generation
+# Stage 3c: Image (uses ASS subtitle file from Stage 3b)
+python -m pipeline.tests.test_stage_3c_image_generation
 
 # Stage 4: Render (combine with speaker-aware subtitles)
 python -m pipeline.tests.test_stage_4_video_rendering
@@ -374,6 +378,6 @@ Expected: No subtitle styling changes for non-dialogue categories
 | Dialogue prompt not enriched | dialogue.md not found | Check: `ls prompts/{level}/dialogue.md` |
 | Speaker mismatch in ASS | Timestamps misaligned | Re-run Stage 2 (TTS) + Stage 3a (STT) |
 | Video shows single speaker | ASS styles not applied | Check FFmpeg version + ASS support |
-| Margins incorrect | visual_style.yaml outdated | Update margins in config → re-run Stage 3c |
+| Margins incorrect | visual_style.yaml outdated | Update margins in config → re-run Stage 3b |
 
 ---

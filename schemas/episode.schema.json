@@ -74,6 +74,35 @@
           }
         }
       }
+    },
+    "image_prompt": {
+      "type": "string",
+      "description": "Single image prompt (backward compatibility)"
+    },
+    "image_prompts": {
+      "type": "array",
+      "description": "Multiple image prompts for dialogue scenes (multi-image feature)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "scene": {"type": "integer"},
+          "prompt": {"type": "string"},
+          "description": {"type": "string"}
+        }
+      }
+    },
+    "image_segments": {
+      "type": "array",
+      "description": "Timing segments for multi-image rendering",
+      "items": {
+        "type": "object",
+        "properties": {
+          "scene": {"type": "integer"},
+          "start_sec": {"type": "number"},
+          "end_sec": {"type": "number"},
+          "image_file": {"type": "string"}
+        }
+      }
     }
   }
 }

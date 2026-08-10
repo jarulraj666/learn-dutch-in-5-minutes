@@ -3,32 +3,32 @@
 Automatically generates A1-A2 level Dutch lesson videos with narrated dialogue, karaoke subtitles, background images, and YouTube publishing.
 
 ## Features
-- Single-speaker narrated lessons (common words, grammar, vocabulary, dialogue)
+- Dialogue and narrated lessons (common words, grammar, vocabulary, dialogue)
 - Gemini TTS audio generation with slow A1-A2 pacing
 - WhisperX speech-to-text for karaoke subtitle sync
-- AI-generated classroom background images
+- AI-generated scene images (single or multi-scene per episode)
 - FFmpeg video assembly with burned-in subtitles
 - YouTube upload with auto-created playlists, title, description, and tags
-- SQLite topic memory with anti-repeat scheduling
-- 2-day publish cadence
+- SQLite topic memory with status tracking (`pending` → `generated` → `done`)
+- Single entry point: `pipeline/run_pipeline.py`
 
 ## Project Structure
 
 ```
 pipeline/
-  run_pipeline.py       ← main entry point
+  run_pipeline.py       ← single entry point (full pipeline + interactive stage re-runs)
+  stages.py             ← pure stage functions shared across all modes
   settings.py           ← config and env vars
   utils.py              ← shared helpers
 
-  core/                 ← DB, topic selection, storage, scheduling, QA
-  generate/             ← script, metadata, voice, subtitles, image generation
+  core/                 ← DB, topic selection, storage, scheduling
+  generate/             ← script, metadata, voice, subtitles, image, QA
   clients/              ← Gemini TTS and Ollama API clients
   publish/              ← YouTube upload, render video, publish queue
-  tests/                ← stage-by-stage test runners
 
 config/
   playlists.yaml        ← YouTube playlist names by level + category
-  topic_backlog.yaml    ← all topics (109 A1-A2 topics across 4 categories)
+  topic_backlog.yaml    ← all topics across 4 categories
   pedagogy.yaml         ← pacing, speech rate, timing settings
   scheduling.yaml       ← publish cadence
 
@@ -56,9 +56,13 @@ caffeinate -s pip install -r requirements.txt
 caffeinate -s python -m pipeline.core.db --init
 ```
 
+> **Tip:** Prefix any long-running command with `caffeinate -s` to prevent macOS from sleeping.
+
 ## Database Management
 
-**Reset a topic status to pending (re-run it):**
+**Topic statuses:** `pending` → *(pipeline runs)* → `generated` → *(upload succeeds)* → `done`
+
+**Reset a topic to pending (re-run it):**
 ```bash
 sqlite3 db/content.db "UPDATE topics SET status = 'pending' WHERE id = 'your_topic_id';"
 ```
@@ -68,30 +72,99 @@ sqlite3 db/content.db "UPDATE topics SET status = 'pending' WHERE id = 'your_top
 sqlite3 db/content.db "SELECT id, status, category, level FROM topics ORDER BY order_index;"
 ```
 
-> **Tip:** Prefix any long-running command with `caffeinate -s` to prevent macOS from sleeping while it runs.
-
 ## Running the Pipeline
-
-**Generate all videos for a specific category (batch):**
-```bash
-caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2 --category common_words --no-upload
-caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2 --category grammar --no-upload
-caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2 --category vocabulary --no-upload
-caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2 --category dialogue --no-upload
-```
-
-**Generate a specific number of videos in batch mode:**
-```bash
-caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2 --category common_words --count 5 --no-upload
-caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2 --category grammar --count 3
-```
 
 **Generate next pending topic (single video):**
 ```bash
-caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2
-caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2 --single
-caffeinate -s python -m pipeline.run_pipeline --language nl --level A1A2 --count 1
+caffeinate -s python -m pipeline.run_pipeline --level A1A2 --category dialogue
+caffeinate -s python -m pipeline.run_pipeline --level A1A2 --category dialogue --no-upload
 ```
+
+**Generate a specific topic by ID:**
+```bash
+caffeinate -s python -m pipeline.run_pipeline --topic-id weather_chat --no-upload
+```
+
+**Generate only the script (no audio, image, render, upload):**
+```bash
+caffeinate -s python -m pipeline.run_pipeline --topic-id weather_chat --script-only
+```
+Creates an artifact with just the script and metadata. Use `--artifact` to add other stages interactively.
+
+**Batch mode — generate N videos:**
+```bash
+caffeinate -s python -m pipeline.run_pipeline --level A1A2 --category common_words --count 5 --no-upload
+caffeinate -s python -m pipeline.run_pipeline --level A1A2 --category dialogue --count 3
+```
+
+**Resume a failed run from its checkpoint:**
+```bash
+caffeinate -s python -m pipeline.run_pipeline --resume output/A1A2/dialogue/.checkpoint_weather_chat.json
+```
+
+## Re-running Stages on an Existing Episode
+
+Use `--artifact` to open an interactive menu on any existing episode artifact:
+
+```bash
+caffeinate -s python -m pipeline.run_pipeline --artifact output/A1A2/dialogue/episode_xxx.json
+```
+
+Menu prompt:
+
+```
+📺  talk_about_the_weather_mooi_weer_regen_temperatuur
+    Level: A1A2 | Category: dialogue
+
+   1) Script
+   2) Image
+   3) Audio
+   4) Subtitles
+   5) Audio QA
+   6) Subtitle QA
+   7) Render video
+   8) Upload YouTube
+   9) Upload captions
+
+Select stages to run — space or comma separated (e.g. '3 4 7')
+Type 'all' to run every stage, or '0' to exit.
+
+>
+```
+
+Pick any combination: `3 4 7` runs Audio → Subtitles → Render. Each stage updates the artifact in place.
+
+## Pipeline Arguments Reference
+
+**`--artifact PATH`**
+Load an existing episode artifact and show the interactive stage menu. Skips full pipeline.
+
+**`--topic-id TOPIC_ID`**
+Run the full pipeline for a specific topic ID instead of auto-selecting the next pending one. Required when used with `--script-only`.
+
+**`--script-only`**
+Generate only the script and create an artifact (skip audio, subtitles, image, render, upload). Requires `--topic-id`. Useful for reviewing/tweaking scripts before full generation.
+
+**`--level`** (default: `A1A2`, choices: `A1A2`, `B1`, `B2`)
+CEFR language proficiency level.
+
+**`--category`** (choices: `common_words`, `grammar`, `vocabulary`, `dialogue`)
+Filter topics by category.
+
+**`--count N`**
+Generate exactly N videos in sequence.
+
+**`--single`**
+Generate only 1 video (equivalent to `--count 1`).
+
+**`--no-upload`**
+Skip YouTube upload. Topic is marked `generated` (not `done`) until uploaded.
+
+**`--resume CHECKPOINT`**
+Resume a failed pipeline run from a checkpoint file (`output/{level}/{category}/.checkpoint_{topic_id}.json`).
+
+**`--language`** (default: `nl`)
+Language code for the target content.
 
 ## Publishing to YouTube
 
@@ -110,140 +183,6 @@ caffeinate -s python -m pipeline.publish.publish_pending --include-future
 caffeinate -s python -m pipeline.publish.publish_pending --execute --include-future
 ```
 
-**Upload a specific job:**
-```bash
-caffeinate -s python -m pipeline.publish.publish_pending --execute --job-id 1
-```
-
-**Test a single artifact:**
-```bash
-caffeinate -s python -m pipeline.publish.upload_youtube output/episode_X.json --dry-run
-```
-
-## Pipeline Arguments Reference
-
-**`--language`** (default: `nl`)
-Language code for the target content.
-
-**`--level`** (default: `A1A2`, choices: `A1A2`, `B1`, `B2`)
-CEFR language proficiency level.
-
-**`--category`** (choices: `common_words`, `grammar`, `vocabulary`, `dialogue`, default: `None`)
-Filter topics by category. When combined with `--count` or without `--single`, runs in batch mode.
-
-**`--count N`** (optional integer)
-Generate exactly N videos in sequence. When set, runs in batch mode until N videos are completed or all topics are exhausted.
-- `--count 1`: Generate 1 video
-- `--count 5`: Generate 5 videos
-- `--count 100`: Generate 100 videos (or fewer if fewer topics remain)
-
-**`--single`** (optional flag)
-Generate only 1 video (equivalent to `--count 1`). Kept for backward compatibility.
-
-**`--no-upload`** (optional flag)
-Skip YouTube upload after rendering. Useful for testing or when upload will be done separately.
-
-**` CHECKPOINT`** (optional path)
-Resume a failed pipeline run from the last completed stage using a checkpoint file.
-
-
-## Re-run a Specific Stage for an Existing Episode
-
-Use this when something goes wrong and you want to redo just one step, then re-render and re-upload without regenerating the full script/audio.
-
-### Easy Way: Use `rerun_stage.py`
-
-**Interactive mode (easiest):**
-```bash--resume
-caffeinate -s python rerun_stage.py output/A1A2/common_words/episode_cw_days_of_week_days_of_the_week_maandag_tot_en_met_zondag.json
-```
-Then select from the menu (1-7). Option 7 runs the complete end-to-end pipeline.
-
-**Auto-detection:**
-- `--subtitles`: Automatically finds audio file from `artifact["audio_file"]` if not specified
-- `--upload`: Automatically finds video from `_render_manifest.json` or `artifact["video_file"]` if not specified
-
-**Quick commands:**
-```bash
-# Re-generate script
-caffeinate -s python rerun_stage.py artifact.json --script
-
-# Re-generate audio
-caffeinate -s python rerun_stage.py artifact.json --audio-gen
-
-# Re-generate subtitles (auto-detects audio from artifact)
-caffeinate -s python rerun_stage.py artifact.json --subtitles
-
-# Re-generate background image
-caffeinate -s python rerun_stage.py artifact.json --image
-
-# Re-render video
-caffeinate -s python rerun_stage.py artifact.json --render
-
-# Upload to YouTube (auto-detects video from render manifest)
-caffeinate -s python rerun_stage.py artifact.json --upload
-
-# Run all stages at once (complete end-to-end pipeline)
-caffeinate -s python rerun_stage.py artifact.json --all
-```
-
-**What `--all` does:**
-Regenerates the entire episode: script → audio → subtitles → image → video render → YouTube upload. No external files needed.
-
-### Advanced: Manual Commands
-
-**Variables to substitute:**
-```
-ARTIFACT = output/A1A2/common_words/episode_cw_days_of_week_days_of_the_week_maandag_tot_en_met_zondag.json
-AUDIO    = output/A1A2/common_words/audio/episode_cw_days_of_week_days_of_the_week_maandag_tot_en_met_zondag.wav
-VIDEO    = output/archive/episode_22.mp4
-```
-
-**Re-generate subtitles only:**
-```python
-# Run inside Python (or paste in a script)
-from pathlib import Path
-from pipeline.generate.generate_subtitles import plan_subtitles
-import json
-
-artifact = json.loads(Path("ARTIFACT").read_text())
-plan_subtitles(
-    "AUDIO",
-    output_root="output/A1A2/common_words",
-    level="A1A2",
-    category="common_words",
-    topic_id=artifact["topic_id"],
-    title_slug=artifact["title_slug"],
-    script_dialogue=artifact.get("script", {}).get("dialogue"),
-)
-```
-
-**Re-generate background image only:**
-```bash
-caffeinate -s python -m pipeline.generate.generate_visual_image --artifact-file ARTIFACT
-```
-
-**Re-render video (after subtitles or image are fixed):**
-```bash
-caffeinate -s python -m pipeline.publish.render_video ARTIFACT
-```
-
-**Upload to YouTube (after render):**
-```bash
-caffeinate -s python -m pipeline.publish.upload_youtube ARTIFACT --video-file VIDEO
-```
-
----
-
-## Test Stages (run individually)
-
-```bash
-caffeinate -s python -m pipeline.tests.test_stage_1_script_generation
-caffeinate -s python -m pipeline.tests.test_stage_2_voice_generation
-caffeinate -s python -m pipeline.tests.test_stage_3_subtitle_generation
-caffeinate -s python -m pipeline.tests.test_stage_4_video_rendering
-```
-
 ## YouTube Playlists
 
 Videos are automatically assigned to the correct playlist:
@@ -260,3 +199,4 @@ Videos are automatically assigned to the correct playlist:
 - Real YouTube upload requires `YOUTUBE_CLIENT_SECRETS` env var and first-run OAuth browser consent. Token saved to `output/youtube_token.json`.
 - Rendered videos are archived to `output/archive/` with stable paths stored in DB for upload retries.
 - Dutch subtitle tracks are uploaded as separate YouTube caption tracks when present.
+- The artifact JSON is written incrementally after each stage — if the pipeline fails, a partial artifact exists on disk and can be resumed via `--artifact`.

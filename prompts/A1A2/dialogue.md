@@ -11,7 +11,7 @@ Generate a natural, realistic Dutch conversation between two speakers in a real-
 - **No repetition of earlier lines.** Each turn must say something new. Do not echo or re-ask questions that were already answered earlier in the conversation.
 - **No scripted drills.** Do not have one speaker fire a list of questions that the other answers one by one.
 - **Natural progression only.** The conversation should start, develop organically, and end as it would in real life — with a goodbye or a natural closing, not a summary.
-- **Single location only.** The entire conversation must take place in the same physical location defined by the scenario. Do not move the speakers to a different place mid-conversation. The dialogue must start, develop, and end in the same spot.
+- **Location flexibility.** The conversation can move between different locations within the scenario as it naturally unfolds (e.g., from street to shop, or inside a building). Follow what feels natural for the dialogue.
 
 ## Speakers
 **Speaker1** — {speaker1_role}, {speaker1_gender} voice. Use a name appropriate for a {speaker1_gender} person.
@@ -34,15 +34,7 @@ Aim for approximately **120–140 dialogue turns** total.
 
 ## Image Prompt
 
-Generate a detailed image prompt under `"image_prompt"` reflecting the scenario of the dialogue**
-
-3D stylized animation render of {scenario} - {title_hint}. 16:9 aspect ratio, Pixar aesthetic, warm lighting, highly detailed. **Light, airy background colours** — soft pastels, creamy whites, warm beiges, pale blues or light warm tones. Bright and cheerful feel. No dark or saturated backgrounds. Check the dialogue and fit the environment based on the dialogue.
-
-LAYOUT (strict):
-- Full background: The {scenario} - {title_hint} environment fills 100% of the frame — rich, detailed, and in focus.
-- Left 35–40% : {speaker1_gender} character ({speaker1_role}) positioned naturally, facing inward toward the center.
-- Right 35–40% : {speaker2_gender} character ({speaker2_role}) positioned naturally, facing inward toward the center.
-- Center 20%: Open space — no characters, no obstructions.
+Generate a single-sentence `image_prompt` field in the JSON that describes the specific scene: the exact environment, what makes it visually distinct, and any notable props or details from this particular dialogue. Do not include character layout or style instructions — those are handled separately.
 
 ## Output JSON Structure
 
@@ -53,7 +45,7 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
   "topic_id": "string",
   "topic_title": "Dutch title",
   "topic_title_en": "English title used for YouTube metadata",
-  "image_prompt": "3D stylized animation render of {scenario} - {title_hint}. 16:9 aspect ratio, Pixar aesthetic, warm lighting, highly detailed. Light, airy background colours — soft pastels, creamy whites, warm beiges, pale blues or light warm tones. Bright and cheerful feel. No dark or saturated backgrounds. Full background: the {scenario} environment fills 100% of the frame — rich, detailed, and in focus. Left 35-40%: {speaker1_gender} character ({speaker1_role}) positioned naturally, facing inward toward the center. Right 35-40%: {speaker2_gender} character ({speaker2_role}) positioned naturally, facing inward toward the center. Center 20%: open space — no characters, no obstructions.",
+  "image_prompt": "A busy supermarket aisle with colourful product shelves, a checkout counter visible in the background, and a shopping trolley nearby.",
   "language": "nl",
   "dialogue": [
     {"Speaker1": "Goedemiddag!"},

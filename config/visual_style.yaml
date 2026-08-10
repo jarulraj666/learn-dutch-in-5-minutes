@@ -5,6 +5,12 @@ render:
   crf: 19
   preset: slow
   speed_application: final_output  # Speed is applied as a final FFmpeg pass after rendering
+  # Fade duration for multi-image transitions (dialogue only)
+  fade_duration: 1.5  # seconds (crossfade between images)
+  # Static seed image used as character reference for multi-scene dialogue images.
+  # All scene images are generated using this as a visual reference to maintain
+  # consistent character appearance across all scenes.
+  dialogue_seed_image: assets/static_images/seed_image.png
   # Playback speed per category (<1.0 = slower, >1.0 = faster)
   playback_speed:
     dialogue: 0.90
@@ -19,9 +25,13 @@ render:
     right_speaker_margin_l: 600    # Speaker2 (right) - left margin
     right_speaker_margin_r: 320     # Speaker2 (right) - right margin
     margin_v: 350                  # Vertical margin (bottom)
+  # Multi-speaker alignment (ASS alignment codes)
+  dialogue_alignment:
+    left_speaker: 1                # Speaker1 (left) - alignment 1 = bottom-left
+    right_speaker: 3               # Speaker2 (right) - alignment 3 = bottom-right
   # Single-speaker subtitle positioning (grammar, vocabulary, etc.)
   single_speaker_margins:
-    margin_l: 650                  # Left margin
-    margin_r: 150                  # Right margin
-    margin_v: 486                  # Vertical margin (bottom)
-    alignment: 8                   # ASS alignment (8 = top-center, 2 = bottom-center)
+    margin_l: 700                  # Left margin
+    margin_r: 100                  # Right margin
+    margin_v: 350                  # Vertical margin (bottom)
+    alignment: 2                 # ASS alignment (8 = top-center, 2 = bottom-center)

@@ -226,6 +226,13 @@ topics:
     title_hint: "Negative indefinites: niemand, niets, nergens, nooit, bijna, nauwelijks"
 
   # ── VOCABULARY (A1A2) ──────────────────────────────────────────────────────
+  - id: vocab_alphabet_pronunciation
+    level: A1A2
+    category: vocabulary
+    order_index: 0
+    track: daily_life
+    title_hint: "Pronouncing letters in Dutch: het alfabet — a, b, c through z with correct Dutch sounds"
+
   - id: vocab_greetings
     level: A1A2
     category: vocabulary

@@ -45,6 +45,27 @@ def ensure_output_dir(level: str, category: str, file_type: str | None = None) -
     return output_path
 
 
+def ensure_episode_file_dir(level: str, category: str, file_type: str, topic_id: str, title: str) -> Path:
+    """Ensure episode-specific file type directory exists.
+    
+    Creates structure: output/{level}/{category}/{file_type}/episode_{topic_id}_{title_slug}/
+    
+    Args:
+        level: Level (A1, A2, B1, B2)
+        category: Category (common_words, dialogue, grammar, etc.)
+        file_type: File type subdirectory (visuals, audio, videos, subtitles)
+        topic_id: Topic ID
+        title: Episode title
+    
+    Returns:
+        Path to the episode-specific file type directory
+    """
+    slug = create_title_slug(title) if title else f"topic_{topic_id}"
+    episode_file_dir = settings.OUTPUT_DIR / level / category / file_type / f"episode_{topic_id}_{slug}"
+    episode_file_dir.mkdir(parents=True, exist_ok=True)
+    return episode_file_dir
+
+
 def get_artifact_path(topic_id: str, title: str, level: str, category: str) -> Path:
     """Get the full path for an episode artifact file.
     
