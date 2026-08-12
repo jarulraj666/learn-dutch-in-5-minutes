@@ -9,8 +9,10 @@ Automatically generates A1-A2 level Dutch lesson videos with narrated dialogue, 
 - AI-generated scene images (single or multi-scene per episode)
 - FFmpeg video assembly with burned-in subtitles
 - YouTube upload with auto-created playlists, title, description, and tags
+- Instagram Reels upload (one vertical short per scene via Meta Graph API)
 - SQLite topic memory with status tracking (`pending` → `generated` → `done`)
 - Single entry point: `pipeline/run_pipeline.py`
+- **Web dashboard** for managing topics, triggering the pipeline, and monitoring publishing
 
 ## Project Structure
 
@@ -24,13 +26,14 @@ pipeline/
   core/                 ← DB, topic selection, storage, scheduling
   generate/             ← script, metadata, voice, subtitles, image, QA
   clients/              ← Gemini TTS and Ollama API clients
-  publish/              ← YouTube upload, render video, publish queue
+  publish/              ← YouTube upload, Instagram Reels, render video, publish queue
 
 config/
   playlists.yaml        ← YouTube playlist names by level + category
   topic_backlog.yaml    ← all topics across 4 categories
   pedagogy.yaml         ← pacing, speech rate, timing settings
   scheduling.yaml       ← publish cadence
+  visual_style.yaml     ← render resolution, FPS, encoding settings
 
 prompts/
   A1A2/
@@ -38,6 +41,13 @@ prompts/
     grammar.md          ← prompt for grammar lessons
     vocabulary.md       ← prompt for vocabulary lessons
     dialogue.md         ← prompt for dialogue lessons
+
+webapp/
+  backend/              ← FastAPI server (uses the same .venv311 as the pipeline)
+  frontend/             ← Next.js 14 + Tailwind CSS dashboard
+  scripts/
+    start_backend.sh    ← start FastAPI on :8000
+    start_frontend.sh   ← start Next.js on :3000
 ```
 
 ## Setup
@@ -193,6 +203,87 @@ Videos are automatically assigned to the correct playlist:
 | grammar      | A1 \| Beginners \| Grammar       |
 | vocabulary   | A1 \| Beginners \| Vocabulary    |
 | dialogue     | A1 \| Beginners \| Dialogue      |
+
+## Web Dashboard
+
+A local web app for managing topics, triggering the pipeline, previewing media, and managing YouTube/Instagram publishing.
+
+### Dashboard Setup
+
+**Backend** (FastAPI — reuses the pipeline's `.venv311`):
+```bash
+./webapp/scripts/start_backend.sh
+# → http://localhost:8000
+```
+
+**Frontend** (Next.js — separate terminal):
+```bash
+./webapp/scripts/start_frontend.sh
+# → http://localhost:3000
+```
+
+Open **http://localhost:3000** in your browser.
+
+### Dashboard Pages
+
+| Page | URL | Description |
+|---|---|---|
+| Dashboard | `/` | Stats cards, active pipeline jobs, recent activity, system health banner |
+| Topics | `/topics` | Filterable table — filter by level, category, status, search by name |
+| Topic Detail | `/topics/[id]` | 6-tab view: Overview, Script, Media, Pipeline, YouTube, Instagram |
+| Run Pipeline | `/run` | Launch the pipeline with a form + live SSE log streaming terminal |
+| Publish Queue | `/publish` | YouTube publish queue — dry-run preview and execute uploads |
+| Config | `/config` | Edit YAML config files in-browser with validation before save |
+
+### Topic Detail Tabs
+
+- **Overview** — metadata, status, playlist, publish dates
+- **Script** — speaker-coloured dialogue, grammar notes, quiz questions
+- **Media** — audio player, video player, scene image gallery, subtitle download links; checkpoint warning if a run was interrupted
+- **Pipeline** — stage-by-stage status indicators; select any combination of stages and re-run them (mirrors `--artifact` CLI mode)
+- **YouTube** — embedded YouTube player, video ID, scheduled/published dates
+- **Instagram** — per-scene Reels grid with video preview, draft/published status, "Publish Draft" button
+
+### System Health
+
+The dashboard banner at `/` checks:
+- SQLite database accessible
+- `ffmpeg` present
+- `GEMINI_TTS_API_KEYS` set
+- `YOUTUBE_CLIENT_SECRETS` set + `youtube_token.json` present
+- `INSTAGRAM_ACCESS_TOKEN`, `INSTAGRAM_ACCOUNT_ID`, and video hosting configured
+
+### Backend API Reference
+
+```
+GET  /api/topics                         list topics (filter: level, category, status, search)
+GET  /api/topics/:id                     topic detail + artifact media
+PATCH /api/topics/:id/status             reset status (e.g. back to pending)
+GET  /api/stats                          counts by status / level / category
+
+POST /api/pipeline/run                   start pipeline run → returns job_id
+POST /api/pipeline/run-stages            re-run specific stages on an artifact
+POST /api/pipeline/abort/:job_id         SIGTERM a running job
+GET  /api/pipeline/jobs                  list all jobs
+GET  /api/pipeline/jobs/:job_id          job detail + full log buffer
+GET  /api/pipeline/logs/:job_id          SSE stream of live log output
+
+GET  /api/publish/queue                  publish_jobs table
+POST /api/publish/dry-run                preview upload payloads
+POST /api/publish/execute                trigger real YouTube uploads
+PATCH /api/publish/:job_id/reschedule    update scheduled_at
+GET  /api/publish/instagram/:id/shorts   list scene shorts + Reel status
+POST /api/publish/instagram/:id/publish-draft  publish a held Instagram container
+
+GET  /api/media/audio?path=…             stream WAV file
+GET  /api/media/video?path=…             stream MP4 file
+GET  /api/media/image?path=…             serve generated image
+GET  /api/media/subtitle?path=…          serve SRT/ASS subtitle file
+
+GET  /api/config/:name                   read YAML config
+PUT  /api/config/:name                   write YAML config (validates before save)
+GET  /api/health                         system readiness checks
+```
 
 ## Notes
 - Requires `ffmpeg` for video assembly. Without it, a render manifest is produced and assembly is skipped gracefully.

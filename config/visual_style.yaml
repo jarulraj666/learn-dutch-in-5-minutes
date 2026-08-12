@@ -7,10 +7,15 @@ render:
   speed_application: final_output  # Speed is applied as a final FFmpeg pass after rendering
   # Fade duration for multi-image transitions (dialogue only)
   fade_duration: 1.5  # seconds (crossfade between images)
-  # Static seed image used as character reference for multi-scene dialogue images.
-  # All scene images are generated using this as a visual reference to maintain
-  # consistent character appearance across all scenes.
-  dialogue_seed_image: assets/static_images/seed_image.png
+  # Static seed images used as character reference for multi-scene dialogue images.
+  # One is chosen at random per episode to maintain consistent character appearance
+  # across all scenes while allowing variation between episodes.
+  dialogue_seed_images:
+    - assets/static_images/seed_image.png
+    - assets/static_images/seed_image_2.png
+    - assets/static_images/seed_image_3.png
+    - assets/static_images/seed_image_4.png
+    - assets/static_images/seed_image_5.png
   # Playback speed per category (<1.0 = slower, >1.0 = faster)
   playback_speed:
     dialogue: 0.90

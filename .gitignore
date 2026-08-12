@@ -37,3 +37,19 @@ env/
 # Model cache
 *.ckpt
 *.safetensors
+
+# Web dashboard — frontend
+webapp/frontend/node_modules/
+webapp/frontend/.next/
+webapp/frontend/out/
+webapp/frontend/.env.local
+webapp/frontend/.env*.local
+
+# Web dashboard — backend
+webapp/backend/__pycache__/
+webapp/backend/**/__pycache__/
+
+# Google / YouTube / Instagram credentials
+config/gcloud_service_account.json
+config/gcloud_token.json
+output/youtube_token.json

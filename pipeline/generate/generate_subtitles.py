@@ -409,8 +409,8 @@ PlayResY: 1080
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: SpeakerL,Roboto,54,&H00FFFFFF,&H0000FFFF,&H00000000,&HC0000000,-1,0,0,0,100,100,0,0,3,5,0,{left_align},{left_l},{left_r},{margin_v},1
-Style: SpeakerR,Roboto,54,&H00FFFFFF,&H0000FFFF,&H00000000,&HC0000000,-1,0,0,0,100,100,0,0,3,5,0,{right_align},{right_l},{right_r},{margin_v},1
+Style: SpeakerL,Roboto,64,&H00FFFFFF,&H0000FFFF,&H00000000,&HC0000000,-1,0,0,0,100,100,0,0,3,5,0,{left_align},{left_l},{left_r},{margin_v},1
+Style: SpeakerR,Roboto,64,&H00FFFFFF,&H0000FFFF,&H00000000,&HC0000000,-1,0,0,0,100,100,0,0,3,5,0,{right_align},{right_l},{right_r},{margin_v},1
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """

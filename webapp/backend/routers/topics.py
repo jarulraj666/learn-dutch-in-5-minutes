@@ -1,0 +1,45 @@
+from fastapi import APIRouter
+from services import db as db_service
+
+router = APIRouter()
+
+
+@router.get("/topics")
+def list_topics(
+    level: str | None = None,
+    category: str | None = None,
+    status: str | None = None,
+    search: str | None = None,
+):
+    return db_service.list_topics(level=level, category=category, status=status, search=search)
+
+
+@router.get("/topics/{topic_id}")
+def get_topic(topic_id: str):
+    from fastapi import HTTPException
+    from services.artifact import get_topic_media
+
+    topic = db_service.get_topic(topic_id)
+    if not topic:
+        raise HTTPException(status_code=404, detail="Topic not found")
+
+    topic["media"] = get_topic_media(topic_id, topic.get("artifact_path"))
+    return topic
+
+
+@router.patch("/topics/{topic_id}/status")
+def reset_topic_status(topic_id: str, status: str = "pending"):
+    from fastapi import HTTPException
+
+    allowed = {"pending", "generated", "done"}
+    if status not in allowed:
+        raise HTTPException(status_code=400, detail=f"status must be one of {allowed}")
+    ok = db_service.update_topic_status(topic_id, status)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Topic not found")
+    return {"ok": True, "status": status}
+
+
+@router.get("/stats")
+def get_stats():
+    return db_service.get_stats()

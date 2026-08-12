@@ -111,11 +111,12 @@ def stage_image(
     level: str,
     category: str,
     output_root: str | Path,
-) -> tuple[str, list]:
+    seed_image_used: str = "",
+) -> tuple[str, list, str]:
     """Generate background image(s).
 
     Returns:
-        (primary_image_file_str, generated_image_files_list)
+        (primary_image_file_str, generated_image_files_list, seed_image_used)
     """
     from pipeline.generate.generate_visual_image import generate_image_from_artifact
     artifact_dict: dict = {
@@ -125,11 +126,13 @@ def stage_image(
         "image_prompts": image_prompts,
         "level": level,
         "category": category,
+        "seed_image_used": seed_image_used,
     }
     result = generate_image_from_artifact(artifact_dict, output_root=Path(output_root))
     primary = str(result) if result else ""
     all_files = artifact_dict.get("generated_image_files", [])
-    return primary, all_files
+    seed_used = artifact_dict.get("seed_image_used", "")
+    return primary, all_files, seed_used
 
 
 def stage_render(artifact_path: str | Path) -> Path:
@@ -167,3 +170,81 @@ def stage_qa_subtitles(
     ass_report = run_ass_qa(ass_file, expected_count=expected_count) if ass_file and Path(ass_file).exists() else None
     srt_report = run_srt_qa(srt_file, expected_count=expected_count) if srt_file and Path(srt_file).exists() else None
     return ass_report, srt_report
+
+
+def stage_generate_shorts_images(artifact: dict, artifact_path: str | Path) -> list[dict]:
+    """Generate native 9:16 portrait images for each scene's Short.
+
+    Returns a list of ``{scene, image_path}`` dicts.
+    """
+    from pipeline.publish.generate_shorts import generate_shorts_images
+    return generate_shorts_images(artifact, Path(artifact_path))
+
+
+def stage_generate_shorts(artifact: dict, artifact_path: str | Path) -> list[dict]:
+    """Generate vertical Short clips for every scene in the episode.
+
+    Returns a list of scene dicts (scene, start_sec, end_sec, video_file, …).
+    An empty list means no scenes could be rendered (check logs).
+    """
+    from pipeline.publish.generate_shorts import generate_scene_shorts
+    return generate_scene_shorts(artifact, Path(artifact_path))
+
+
+def stage_upload_short(
+    artifact: dict,
+    artifact_path: str | Path,
+    scene_short: dict,
+    full_video_id: str,
+) -> dict:
+    """Upload one rendered Short to YouTube.
+
+    Args:
+        artifact:       Full episode artifact dict.
+        artifact_path:  Path to the artifact JSON file.
+        scene_short:    One scene entry from ``artifact["shorts"]``.
+        full_video_id:  YouTube video ID of the already-uploaded full episode.
+
+    Returns:
+        Dict with ``short_video_id``, ``playlist_id``, ``thumbnail_uploaded``.
+    """
+    from pipeline.publish.upload_shorts import upload_short
+    return upload_short(artifact, Path(artifact_path), scene_short, full_video_id)
+
+
+def stage_upload_short_instagram(
+    artifact: dict,
+    artifact_path: str | Path,
+    scene_short: dict,
+) -> dict:
+    """Upload one rendered Short to Instagram as a Reel.
+
+    Args:
+        artifact:       Full episode artifact dict.
+        artifact_path:  Path to the artifact JSON file.
+        scene_short:    One scene entry from ``artifact["shorts"]``.
+
+    Returns:
+        Dict with ``reel_id`` and ``permalink``.
+    """
+    from pipeline.publish.upload_instagram import upload_short_instagram
+    return upload_short_instagram(artifact, Path(artifact_path), scene_short)
+
+
+def stage_upload_short_tiktok(
+    artifact: dict,
+    artifact_path: str | Path,
+    scene_short: dict,
+) -> dict:
+    """Upload one rendered Short to TikTok.
+
+    Args:
+        artifact:       Full episode artifact dict.
+        artifact_path:  Path to the artifact JSON file.
+        scene_short:    One scene entry from ``artifact["shorts"]``.
+
+    Returns:
+        Dict with ``publish_id``.
+    """
+    from pipeline.publish.upload_tiktok import upload_short_tiktok
+    return upload_short_tiktok(artifact, Path(artifact_path), scene_short)

@@ -23,6 +23,8 @@ from pipeline.publish.render_video import render_from_artifact
 from pipeline.publish.upload_youtube import build_upload_payload, upload_video
 from pipeline.stages import (
     normalize_level,
+    stage_generate_shorts,
+    stage_generate_shorts_images,
     stage_image,
     stage_metadata,
     stage_qa_audio,
@@ -32,6 +34,9 @@ from pipeline.stages import (
     stage_subtitles,
     stage_upload,
     stage_upload_captions,
+    stage_upload_short,
+    stage_upload_short_instagram,
+    stage_upload_short_tiktok,
     stage_voice,
 )
 from pipeline.utils import iter_dialogue_turns
@@ -139,6 +144,30 @@ def _save_script_exports(
         "script_json": str(json_path),
         "script_markdown": str(md_path),
     }
+
+
+def _select_seed_image() -> str:
+    """Pick a random seed image from visual_style.yaml and return its workspace-relative path.
+
+    Returns an empty string if no seed images are configured or found.
+    """
+    import random as _random
+    render_cfg = settings.load_yaml(settings.ROOT / "config/visual_style.yaml").get("render", {})
+    seed_rels = render_cfg.get("dialogue_seed_images") or (
+        [render_cfg["dialogue_seed_image"]] if render_cfg.get("dialogue_seed_image") else []
+    )
+    valid = [settings.ROOT / r for r in seed_rels if (settings.ROOT / r).exists()]
+    if not valid:
+        if seed_rels:
+            LOGGER.warning("seed_image: none of the configured paths exist: %s", seed_rels)
+        return ""
+    chosen = _random.choice(valid)
+    try:
+        rel = str(chosen.relative_to(settings.ROOT))
+    except ValueError:
+        rel = str(chosen)
+    LOGGER.info("seed_image.selected path=%s", rel)
+    return rel
 
 
 def _checkpoint_path(level: str, category: str, topic_id: str) -> Path:
@@ -309,10 +338,20 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
     artifact["playlist_description"] = playlist_description
     artifact["playlist_id"] = playlist_id
 
+    # Select (or restore) the seed image once for the entire episode so every
+    # stage — long-video image generation and shorts generation — uses identical
+    # character reference images.
+    if not artifact.get("seed_image_used"):
+        seed_rel = _select_seed_image()
+        if seed_rel:
+            artifact["seed_image_used"] = seed_rel
+
     def _write_artifact() -> None:
         artifact["storage"]["artifact_file"] = str(out_path)
-
         out_path.write_text(json.dumps(artifact, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    # Persist seed selection immediately so every downstream stage sees it.
+    _write_artifact()
 
     # --- Voice generation ---
     if "voice_generation" in completed_stages:
@@ -416,7 +455,7 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
         LOGGER.info("checkpoint.skip image_generation — %s", generated_image_file)
     else:
         with _stage("image_generation"):
-            generated_image_file, generated_image_files = stage_image(
+            generated_image_file, generated_image_files, seed_returned = stage_image(
                 topic_id=topic.topic_id,
                 topic_title=script.get("topic_title", topic.title_hint),
                 image_prompt=script.get("image_prompt", ""),
@@ -424,9 +463,13 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
                 level=level,
                 category=category,
                 output_root=out_dir,
+                seed_image_used=artifact.get("seed_image_used", ""),
             )
             if not generated_image_file:
                 raise RuntimeError("Image generation returned no file path.")
+            # Persist the seed that was actually used (may have been set for the first time here)
+            if seed_returned and not artifact.get("seed_image_used"):
+                artifact["seed_image_used"] = seed_returned
             LOGGER.info("\u2713 Image generated: %s (%d scene images)", generated_image_file, len(generated_image_files))
         cp["generated_image_file"] = generated_image_file
         cp["generated_image_files"] = generated_image_files
@@ -502,6 +545,91 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
                     LOGGER.info("topic.done id=%s", topic.topic_id)
                 except Exception as exc:
                     LOGGER.warning("\u26a0 YouTube upload failed (video saved locally): %s", exc)
+
+            # --- Step 9: Generate vertical images + Short clips ---
+            full_video_id: str = artifact.get("youtube", {}).get("video_id", "")
+            if full_video_id:
+                with _stage("generate_shorts_images"):
+                    try:
+                        shorts_images = stage_generate_shorts_images(artifact, out_path)
+                        artifact["shorts_images"] = shorts_images
+                        _write_artifact()
+                        LOGGER.info("\u2713 Shorts images generated: %d scenes", len(shorts_images))
+                    except Exception as exc:
+                        LOGGER.warning("\u26a0 Shorts image generation failed (non-fatal): %s", exc)
+
+                with _stage("generate_shorts"):
+                    try:
+                        shorts_list: list[dict] = stage_generate_shorts(artifact, out_path)
+                        artifact["shorts"] = shorts_list
+                        _write_artifact()
+                        LOGGER.info("\u2713 Shorts rendered: %d scene clips", len(shorts_list))
+                    except Exception as exc:
+                        LOGGER.warning("\u26a0 Shorts generation failed (non-fatal): %s", exc)
+
+                # --- Step 10: Upload Shorts ---
+                shorts_list = artifact.get("shorts", [])
+                if shorts_list:
+                    with _stage("upload_shorts"):
+                        for i, short in enumerate(shorts_list):
+                            try:
+                                short_result = stage_upload_short(
+                                    artifact, out_path, short, full_video_id
+                                )
+                                artifact["shorts"][i]["youtube"] = short_result
+                                _write_artifact()
+                                LOGGER.info(
+                                    "\u2713 Short uploaded scene=%d short_video_id=%s",
+                                    short["scene"],
+                                    short_result.get("short_video_id"),
+                                )
+                            except Exception as exc:
+                                LOGGER.warning(
+                                    "\u26a0 Short upload failed scene=%d (non-fatal): %s",
+                                    short.get("scene"), exc,
+                                )
+
+                    # --- Step 10b: Upload Shorts to Instagram ---
+                    if settings.UPLOAD_INSTAGRAM:
+                        with _stage("upload_shorts_instagram"):
+                            for i, short in enumerate(shorts_list):
+                                try:
+                                    ig_result = stage_upload_short_instagram(
+                                        artifact, out_path, short
+                                    )
+                                    artifact["shorts"][i]["instagram"] = ig_result
+                                    _write_artifact()
+                                    LOGGER.info(
+                                        "\u2713 Instagram Reel uploaded scene=%d reel_id=%s",
+                                        short["scene"],
+                                        ig_result.get("reel_id"),
+                                    )
+                                except Exception as exc:
+                                    LOGGER.warning(
+                                        "\u26a0 Instagram upload failed scene=%d (non-fatal): %s",
+                                        short.get("scene"), exc,
+                                    )
+
+                    # --- Step 10c: Upload Shorts to TikTok ---
+                    if settings.UPLOAD_TIKTOK:
+                        with _stage("upload_shorts_tiktok"):
+                            for i, short in enumerate(shorts_list):
+                                try:
+                                    tt_result = stage_upload_short_tiktok(
+                                        artifact, out_path, short
+                                    )
+                                    artifact["shorts"][i]["tiktok"] = tt_result
+                                    _write_artifact()
+                                    LOGGER.info(
+                                        "\u2713 TikTok Short uploaded scene=%d publish_id=%s",
+                                        short["scene"],
+                                        tt_result.get("publish_id"),
+                                    )
+                                except Exception as exc:
+                                    LOGGER.warning(
+                                        "\u26a0 TikTok upload failed scene=%d (non-fatal): %s",
+                                        short.get("scene"), exc,
+                                    )
         else:
             LOGGER.warning("\u26a0 Upload skipped — no rendered video found at: %s", stable_video_path)
 
@@ -845,20 +973,111 @@ def run_qa_subtitles(artifact_path: str) -> None:
         raise ValueError(f"❌ Subtitle QA failed with score {total_score:.1f}/100. Fix subtitle issues before proceeding.")
 
 
+def run_generate_shorts_images(artifact_path: str) -> None:
+    artifact = load_artifact(artifact_path)
+    print(f"\U0001f3af Generating vertical (9:16) Short images for: {artifact['title_slug']}")
+    results = stage_generate_shorts_images(artifact, artifact_path)
+    artifact["shorts_images"] = results
+    _save_artifact(artifact_path, artifact)
+    print(f"\u2705 Generated {len(results)} vertical scene image(s)")
+
+
+def run_generate_shorts(artifact_path: str) -> None:
+    artifact = load_artifact(artifact_path)
+    print(f"\U0001f3af Generating Shorts for: {artifact['title_slug']}")
+    shorts_list = stage_generate_shorts(artifact, artifact_path)
+    artifact["shorts"] = shorts_list
+    _save_artifact(artifact_path, artifact)
+    print(f"\u2705 Generated {len(shorts_list)} Short clip(s)")
+
+
+def run_upload_shorts(artifact_path: str) -> None:
+    artifact = load_artifact(artifact_path)
+    full_video_id: str = artifact.get("youtube", {}).get("video_id", "")
+    if not full_video_id:
+        raise ValueError("No YouTube video_id found in artifact. Upload the full video first.")
+    shorts_list: list[dict] = artifact.get("shorts", [])
+    if not shorts_list:
+        raise ValueError("No shorts found in artifact. Run 'Generate Shorts' first.")
+    print(f"\U0001f3af Uploading {len(shorts_list)} Short(s) for: {artifact['title_slug']}")
+    for i, short in enumerate(shorts_list):
+        try:
+            short_result = stage_upload_short(artifact, artifact_path, short, full_video_id)
+            artifact["shorts"][i]["youtube"] = short_result
+            _save_artifact(artifact_path, artifact)
+            print(f"  \u2705 Scene {short['scene']} uploaded: short_video_id={short_result.get('short_video_id')}")
+        except Exception as exc:
+            print(f"  \u26a0\ufe0f  Scene {short['scene']} upload failed: {exc}")
+    print("\u2705 Shorts upload complete")
+
+
+def run_upload_shorts_instagram(artifact_path: str) -> None:
+    artifact = load_artifact(artifact_path)
+    shorts_list: list[dict] = artifact.get("shorts", [])
+    if not shorts_list:
+        raise ValueError("No shorts found in artifact. Run 'Generate Shorts' first.")
+    pending = [
+        (i, s) for i, s in enumerate(shorts_list)
+        if not s.get("instagram", {}).get("reel_id")
+    ]
+    if not pending:
+        print("\u2705 All scenes already uploaded to Instagram — nothing to do.")
+        return
+    print(f"\U0001f4f8 Uploading {len(pending)} Reel(s) to Instagram (skipping {len(shorts_list) - len(pending)} already done) for: {artifact['title_slug']}")
+    for i, short in pending:
+        try:
+            ig_result = stage_upload_short_instagram(artifact, artifact_path, short)
+            artifact["shorts"][i]["instagram"] = ig_result
+            _save_artifact(artifact_path, artifact)
+            print(f"  \u2705 Scene {short['scene']} uploaded: reel_id={ig_result.get('reel_id')}")
+        except Exception as exc:
+            print(f"  \u26a0\ufe0f  Scene {short['scene']} Instagram upload failed: {exc}")
+    print("\u2705 Instagram Reels upload complete")
+
+
+def run_upload_shorts_tiktok(artifact_path: str) -> None:
+    artifact = load_artifact(artifact_path)
+    shorts_list: list[dict] = artifact.get("shorts", [])
+    if not shorts_list:
+        raise ValueError("No shorts found in artifact. Run 'Generate Shorts' first.")
+    pending = [
+        (i, s) for i, s in enumerate(shorts_list)
+        if not s.get("tiktok", {}).get("publish_id")
+    ]
+    if not pending:
+        print("\u2705 All scenes already uploaded to TikTok — nothing to do.")
+        return
+    print(f"\U0001f3b5 Uploading {len(pending)} Short(s) to TikTok (skipping {len(shorts_list) - len(pending)} already done) for: {artifact['title_slug']}")
+    for i, short in pending:
+        try:
+            tt_result = stage_upload_short_tiktok(artifact, artifact_path, short)
+            artifact["shorts"][i]["tiktok"] = tt_result
+            _save_artifact(artifact_path, artifact)
+            print(f"  \u2705 Scene {short['scene']} uploaded: publish_id={tt_result.get('publish_id')}")
+        except Exception as exc:
+            print(f"  \u26a0\ufe0f  Scene {short['scene']} TikTok upload failed: {exc}")
+    print("\u2705 TikTok Shorts upload complete")
+
+
 # ---------------------------------------------------------------------------
 # Interactive stage menu (used with --artifact)
 # ---------------------------------------------------------------------------
 
 _STAGES = [
-    ("Script",          run_script),
-    ("Image",           run_image),
-    ("Audio",           run_audio),
-    ("Subtitles",       run_subtitles),
-    ("Audio QA",        run_qa),
-    ("Subtitle QA",     run_qa_subtitles),
-    ("Render video",    run_render),
-    ("Upload YouTube",  run_upload),
-    ("Upload captions", run_captions),
+    ("Script",           run_script),
+    ("Image",            run_image),
+    ("Audio",            run_audio),
+    ("Subtitles",        run_subtitles),
+    ("Audio QA",         run_qa),
+    ("Subtitle QA",      run_qa_subtitles),
+    ("Render video",     run_render),
+    ("Upload YouTube",       run_upload),
+    ("Generate Short Images", run_generate_shorts_images),
+    ("Generate Shorts",      run_generate_shorts),
+    ("Upload Shorts",        run_upload_shorts),
+    ("Upload Shorts Instagram", run_upload_shorts_instagram),
+    ("Upload Shorts TikTok", run_upload_shorts_tiktok),
+    ("Upload captions",      run_captions),
 ]
 
 
@@ -1082,7 +1301,13 @@ Examples:
         return
 
     # Determine how many videos to generate (batch vs single)
-    # Priority: --count > --single > default behavior
+    # Priority: --topic-id (always single) > --count > --single > default behavior
+    if getattr(args, "topic_id", None):
+        # A specific topic was requested — run exactly once then exit.
+        out_path = run(language=args.language, level=args.level, category=args.category, upload=not args.no_upload, topic_id=args.topic_id)
+        print(f"\n✓ Pipeline completed. Artifact: {out_path}")
+        return
+
     video_count = None
     if args.count is not None:
         video_count = args.count

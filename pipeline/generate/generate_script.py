@@ -449,6 +449,13 @@ Output ONLY valid JSON with no text before or after:
             .replace("{speaker1_gender}", speaker1_gender)
             .replace("{speaker2_role}", speaker2_role)
             .replace("{speaker2_gender}", speaker2_gender)
+            # Orientation placeholders — always landscape during script generation
+            .replace("{frame_label}", "16:9")
+            .replace("{aspect_ratio}", "16:9 aspect ratio")
+            .replace("{char_position_1}", "left 35\u201340% of the frame")
+            .replace("{char_position_2}", "right 35\u201340% of the frame")
+            .replace("{char_center}", "center 20% \u2014 open space between them, no characters, no obstructions")
+            .replace("{subtitle_zone}", "")
         )
         LOGGER.debug("Loaded dialogue_image_prompt.md from %s", template_path)
     else:

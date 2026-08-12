@@ -84,8 +84,20 @@ def _get_youtube_client():
 
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
+            try:
+                creds.refresh(Request())
+            except Exception as exc:
+                err_str = str(exc).lower()
+                if "invalid_grant" in err_str or "token has been expired or revoked" in err_str:
+                    LOGGER.warning(
+                        "youtube.token_revoked — deleting stale token at %s and requesting re-auth",
+                        token_path,
+                    )
+                    token_path.unlink(missing_ok=True)
+                    creds = None
+                else:
+                    raise
+        if not creds or not creds.valid:
             flow = InstalledAppFlow.from_client_secrets_file(secrets_path, SCOPES)
             creds = flow.run_local_server(port=0)
         token_path.parent.mkdir(parents=True, exist_ok=True)

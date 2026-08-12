@@ -126,3 +126,32 @@ def get_pedagogy_for_level(level: str) -> dict[str, Any]:
     return merged
 PLAYLISTS_CONFIG = load_yaml(ROOT / "config/playlists.yaml")
 TOPIC_BACKLOG_CONFIG = load_yaml(ROOT / "config/topic_backlog.yaml")
+
+# ---------------------------------------------------------------------------
+# Social media upload toggles
+# ---------------------------------------------------------------------------
+# Set UPLOAD_INSTAGRAM=true / UPLOAD_TIKTOK=true in .env to enable uploads.
+UPLOAD_INSTAGRAM: bool = os.getenv("UPLOAD_INSTAGRAM", "false").lower() not in ("false", "0", "no")
+UPLOAD_TIKTOK: bool = os.getenv("UPLOAD_TIKTOK", "false").lower() not in ("false", "0", "no")
+
+# Instagram (Meta Graph API)
+# INSTAGRAM_ACCESS_TOKEN — long-lived user access token (60-day expiry)
+# INSTAGRAM_ACCOUNT_ID  — Instagram Professional account ID (numeric string)
+# GCS_BUCKET            — GCS bucket for temporary video hosting (required for Instagram)
+# INSTAGRAM_VIDEO_BASE_URL — alternative: public HTTP base URL serving output/
+# GCS_SIGNED_URL_EXPIRY_SECONDS — how long the GCS signed URL is valid (default: 3600)
+INSTAGRAM_ACCESS_TOKEN: str = os.getenv("INSTAGRAM_ACCESS_TOKEN", "")
+INSTAGRAM_ACCOUNT_ID: str = os.getenv("INSTAGRAM_ACCOUNT_ID", "")
+GCS_BUCKET: str = os.getenv("GCS_BUCKET", "")
+GCS_SIGNED_URL_EXPIRY_SECONDS: int = int(os.getenv("GCS_SIGNED_URL_EXPIRY_SECONDS", "3600"))
+INSTAGRAM_VIDEO_BASE_URL: str = os.getenv("INSTAGRAM_VIDEO_BASE_URL", "")
+
+# TikTok (Content Posting API v2)
+# TIKTOK_CLIENT_KEY     — OAuth2 app client key
+# TIKTOK_CLIENT_SECRET  — OAuth2 app client secret
+# TIKTOK_ACCESS_TOKEN   — user access token (24-hour expiry; auto-refreshed)
+# TIKTOK_REFRESH_TOKEN  — refresh token (365-day expiry)
+TIKTOK_CLIENT_KEY: str = os.getenv("TIKTOK_CLIENT_KEY", "")
+TIKTOK_CLIENT_SECRET: str = os.getenv("TIKTOK_CLIENT_SECRET", "")
+TIKTOK_ACCESS_TOKEN: str = os.getenv("TIKTOK_ACCESS_TOKEN", "")
+TIKTOK_REFRESH_TOKEN: str = os.getenv("TIKTOK_REFRESH_TOKEN", "")

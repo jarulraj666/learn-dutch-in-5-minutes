@@ -29,6 +29,7 @@ def _generate_multiple_images(
     output_root: Path,
     image_prompts: list[dict[str, str]],
     seed_image_path: Path | None = None,
+    aspect_ratio: str = "16:9",
 ) -> list[Path]:
     """Generate multiple scene images in parallel, all seeded from a reference image.
     
@@ -43,6 +44,7 @@ def _generate_multiple_images(
         output_root: Root directory for output files
         image_prompts: List of dicts with keys: scene, prompt, description
         seed_image_path: Path to reference image for character consistency
+        aspect_ratio: Gemini ImageConfig aspect ratio string, e.g. "16:9" or "9:16"
     
     Returns:
         List of paths to generated PNG image files (one per scene, in scene order)
@@ -80,8 +82,34 @@ def _generate_multiple_images(
             """Generate a single scene image; returns (scene_num, image_bytes)."""
             scene_num = prompt_item.get("scene", 0)
             image_prompt = prompt_item.get("prompt", "")
-            
+
             if seed_image_bytes:
+                if aspect_ratio == "9:16":
+                    placement = (
+                        "FULL-BLEED 9:16 PORTRAIT — every single pixel of the canvas must be "
+                        "covered by the scene background. NO white space, NO blank areas, NO empty "
+                        "borders, NO padding, NO margins anywhere in the image — not at the top, "
+                        "bottom, left, right, or any corner. The environment/background illustration "
+                        "must extend all the way to every edge and fill the entire canvas. "
+                        "Place both characters naturally within the frame with full bodies visible, "
+                        "facing each other. Background scenery fills every part of the frame "
+                        "behind and around the characters. "
+                        "The bottom portion of the image must show the actual floor, ground, or "
+                        "surface of the environment (e.g. floor tiles, carpet, pavement, grass) — "
+                        "NOT a flat colour, NOT a gradient, NOT a plain coloured block. It must be "
+                        "a detailed, textured part of the same scene that continues naturally from "
+                        "the rest of the image. "
+                        "STRICTLY FORBIDDEN: no text, no captions, no labels, no sentences, no "
+                        "dialogue bubbles, no speech bubbles, no subtitles, no watermarks, and "
+                        "absolutely no white rectangle, white box, white panel, or any solid-coloured "
+                        "block anywhere in the lower half or anywhere else in the image."
+                    )
+                else:
+                    placement = (
+                        "Place the male character in the left 35-40% of the frame and the female "
+                        "character in the right 35-40%, both facing inward toward the center, "
+                        "with the center 20% kept open."
+                    )
                 contents = [
                     genai_types.Part(
                         inline_data=genai_types.Blob(
@@ -91,25 +119,29 @@ def _generate_multiple_images(
                     ),
                     genai_types.Part(
                         text=(
-                            f"This reference image shows two adults — one male and one female — "
+                            f"This reference image shows two adults \u2014 one male and one female \u2014 "
                             f"who are the main characters in this Dutch language learning video. "
-                            f"Generate ONE single unified 16:9 scene (NOT a split panel, NOT a "
-                            f"side-by-side comparison, NOT a collage — one continuous illustration). "
+                            f"Generate ONE single unified {aspect_ratio} scene (NOT a split panel, NOT a "
+                            f"side-by-side comparison, NOT a collage \u2014 one continuous illustration). "
                             f"Using these EXACT SAME two characters (identical faces, hairstyles, "
-                            f"skin tones, and clothing for both), place the male character in the "
-                            f"left 35-40% of the frame and the female character in the right 35-40%, "
-                            f"both facing inward toward the center, with the center 20% kept open. "
+                            f"skin tones, and clothing for both), {placement} "
                             f"Scene to illustrate: {image_prompt}"
                         )
                     ),
                 ]
             else:
-                contents = f"Generate a 16:9 image: {image_prompt}"
-            
+                contents = f"Generate a {aspect_ratio} image: {image_prompt}"
+
             client = genai.Client(api_key=api_key)
             response = client.models.generate_content(
                 model="gemini-3.1-flash-lite-image",
                 contents=contents,
+                config=genai_types.GenerateContentConfig(
+                    response_modalities=["IMAGE"],
+                    image_config=genai_types.ImageConfig(
+                        aspect_ratio=aspect_ratio,
+                    ),
+                ),
             )
             if response.candidates:
                 for part in response.candidates[0].content.parts:
@@ -305,18 +337,41 @@ def load_artifact_from_database(topic_id: str) -> dict[str, Any]:
 def _enrich_dialogue_image_prompt(
     artifact: dict[str, Any],
     level: str,
+    portrait: bool = False,
 ) -> str:
     """Enrich image prompt for dialogue category using speaker/scenario metadata.
-    
-    Loads dialogue.md template and substitutes placeholders from artifact.
-    
-    Args:
-        artifact: Artifact dict containing scenario, speakers (list), and topic_title.
-        level: CEFR level (A1, A2, B1, B2).
-    
-    Returns:
-        Enriched image prompt string ready for Gemini image generation.
+
+    Loads the level-specific ``dialogue_image_prompt.md`` template, substitutes
+    all speaker/scenario placeholders, and fills in the orientation-specific
+    placeholders (``{frame_label}``, ``{aspect_ratio}``, ``{char_position_1}``,
+    ``{char_position_2}``, ``{char_center}``, ``{subtitle_zone}``) for either
+    landscape (16:9, default) or portrait (9:16, when *portrait* is True).
     """
+    _LANDSCAPE = {
+        "frame_label":    "16:9",
+        "aspect_ratio":   "16:9 aspect ratio",
+        "char_position_1": "left 35\u201340% of the frame",
+        "char_position_2": "right 35\u201340% of the frame",
+        "char_center":    "center 20% \u2014 open space between them, no characters, no obstructions",
+        "subtitle_zone":  "",
+    }
+    _PORTRAIT = {
+        "frame_label":    "9:16 vertical",
+        "aspect_ratio":   "9:16 aspect ratio, portrait orientation",
+        "char_position_1": "upper-left area",
+        "char_position_2": "upper-right area",
+        "char_center":    "characters fill the frame naturally with full bodies visible",
+        "subtitle_zone":  (
+            " The background environment must fill the ENTIRE frame from top edge to bottom edge"
+            " — no blank space, no white borders, no letterboxing, no empty areas at any edge."
+            " The scene background extends fully to all four corners of the frame."
+            " The bottom 20% of the frame must show only background scenery — no characters or people"
+            " in that strip, so subtitle text can be overlaid there."
+            " NO TEXT, NO CAPTIONS, NO LABELS, NO WATERMARKS anywhere in the image."
+        ),
+    }
+    orientation = _PORTRAIT if portrait else _LANDSCAPE
+
     # Load dialogue image prompt template (dedicated image prompt, not the script prompt)
     prompt_path = settings.ROOT / "prompts" / level / "dialogue_image_prompt.md"
     if not prompt_path.exists():
@@ -325,18 +380,18 @@ def _enrich_dialogue_image_prompt(
             prompt_path,
         )
         return artifact.get("image_prompt", "")
-    
+
     prompt_text = prompt_path.read_text(encoding="utf-8").strip()
-    
+
     # Extract speaker metadata from artifact
     speakers = artifact.get("speakers", [])
     scenario = artifact.get("scenario", "cafe")
-    
+
     speaker1_role = "Dutch teacher"
     speaker1_gender = "female"
     speaker2_role = "learner"
     speaker2_gender = "female"
-    
+
     if speakers and len(speakers) >= 2:
         speaker1 = speakers[0]
         speaker2 = speakers[1] if len(speakers) > 1 else {}
@@ -344,16 +399,20 @@ def _enrich_dialogue_image_prompt(
         speaker1_gender = speaker1.get("gender", speaker1_gender)
         speaker2_role = speaker2.get("role", speaker2_role)
         speaker2_gender = speaker2.get("gender", speaker2_gender)
-    
-    # Substitute placeholders
+
+    # Substitute content placeholders
     enriched = prompt_text.replace("{scenario}", scenario)
     enriched = enriched.replace("{speaker1_role}", speaker1_role)
     enriched = enriched.replace("{speaker2_role}", speaker2_role)
     enriched = enriched.replace("{speaker1_gender}", speaker1_gender)
     enriched = enriched.replace("{speaker2_gender}", speaker2_gender)
     enriched = enriched.replace("{topic_title}", artifact.get("topic_title", ""))
-    
-    LOGGER.debug("dialogue_image_prompt loaded from %s", prompt_path)
+
+    # Substitute orientation placeholders
+    for key, value in orientation.items():
+        enriched = enriched.replace(f"{{{key}}}", value)
+
+    LOGGER.debug("dialogue_image_prompt loaded from %s portrait=%s", prompt_path, portrait)
     return enriched
 
 
@@ -394,16 +453,32 @@ def generate_image_from_artifact(
         )
         
         try:
-            # Resolve seed image path from visual_style config
+            # Use seed already stored in artifact (selected once at pipeline start).
+            # Fall back to random pick only if absent.
+            import random as _random  # noqa: PLC0415
             render_cfg = settings.load_yaml(settings.ROOT / "config/visual_style.yaml").get("render", {})
-            seed_image_rel = render_cfg.get("dialogue_seed_image", "")
+            seed_image_rels = render_cfg.get("dialogue_seed_images") or ([render_cfg["dialogue_seed_image"]] if render_cfg.get("dialogue_seed_image") else [])
             seed_image_path: Path | None = None
-            if seed_image_rel:
-                candidate = settings.ROOT / seed_image_rel
+            prior_seed = artifact.get("seed_image_used", "")
+            if prior_seed:
+                candidate = settings.ROOT / prior_seed
                 if candidate.exists():
                     seed_image_path = candidate
+                    LOGGER.info("image_generation.seed_reused path=%s", seed_image_path)
                 else:
-                    LOGGER.warning("dialogue_seed_image not found: %s", candidate)
+                    LOGGER.warning("image_generation.seed_missing stored=%s — falling back to random", prior_seed)
+            if seed_image_path is None:
+                valid_seeds = [settings.ROOT / r for r in seed_image_rels if (settings.ROOT / r).exists()]
+                if valid_seeds:
+                    seed_image_path = _random.choice(valid_seeds)
+                    LOGGER.info("image_generation.seed_selected path=%s", seed_image_path)
+                    # Store chosen seed back into artifact
+                    try:
+                        artifact["seed_image_used"] = str(seed_image_path.relative_to(settings.ROOT))
+                    except ValueError:
+                        artifact["seed_image_used"] = str(seed_image_path)
+                elif seed_image_rels:
+                    LOGGER.warning("dialogue_seed_images: none of the configured paths exist: %s", seed_image_rels)
             
             image_files = _generate_multiple_images(
                 topic_id=topic_id,
