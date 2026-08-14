@@ -17,6 +17,27 @@ Generate a natural, realistic Dutch conversation between two speakers in a real-
 **Speaker1** — {speaker1_role}, {speaker1_gender} voice. Use a name appropriate for a {speaker1_gender} person.
 **Speaker2** — {speaker2_role}, {speaker2_gender} voice. Use a name appropriate for a {speaker2_gender} person.
 
+**CRITICAL — speaker assignment rules:**
+- Every single dialogue line must be attributed to the correct speaker based on their role.
+- Speaker1 is always the {speaker1_role}. Speaker2 is always the {speaker2_role}.
+- Never swap speakers mid-conversation. If Speaker2 is the customer, only the customer's lines are labeled Speaker2 — even when the topic shifts (e.g., asking for a map, asking about restaurants, asking about checkout). All customer questions stay as Speaker2. All staff/host answers stay as Speaker1.
+- Before outputting, verify: does the speaker label match who would logically say this line given their role? If not, correct it.
+
+**Common mistake to avoid — role swap mid-conversation:**
+If Speaker1={speaker1_role} and Speaker2={speaker2_role}, this is WRONG:
+```
+{"Speaker2": "Wilt u een bon?"}   ← vendor question labeled as customer — WRONG
+{"Speaker1": "Nee, dat hoeft niet."}  ← customer answer labeled as vendor — WRONG
+{"Speaker2": "Prima. Hier is uw tas."}  ← vendor line labeled as customer — WRONG
+```
+This is CORRECT:
+```
+{"Speaker1": "Wilt u een bon?"}   ← vendor asks → Speaker1 ✓
+{"Speaker2": "Nee, dat hoeft niet."}  ← customer answers → Speaker2 ✓
+{"Speaker1": "Prima. Hier is uw tas."}  ← vendor closes → Speaker1 ✓
+```
+The golden rule: ask yourself "who would say this in real life given their role?" before assigning the label.
+
 ## Scenario
 The conversation takes place in: **{scenario}**
 
@@ -52,11 +73,6 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
     {"Speaker2": "Goedemiddag, kan ik u helpen?"}
   ],
   "key_phrases": ["phrase1", "phrase2", "phrase3"],
-  "dialogue_en": [
-    // Plain English only — no TTS tags, no [slow], no [pause for 1 second]
-    {"Speaker1": "English translation of Speaker1 line"},
-    {"Speaker2": "English translation of Speaker2 line"}
-  ],
   "vocabulary": [{"nl": "dutch word", "en": "english translation"}],
   "grammar_notes": [{"title": "rule", "explanation": "...", "examples": ["ex1", "ex2"]}]
 }

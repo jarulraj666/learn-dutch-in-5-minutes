@@ -16,6 +16,12 @@ Generate a natural, realistic Dutch conversation between two speakers in a real-
 **Speaker1** — {speaker1_role}, {speaker1_gender} voice. Use a name appropriate for a {speaker1_gender} person.
 **Speaker2** — {speaker2_role}, {speaker2_gender} voice. Use a name appropriate for a {speaker2_gender} person.
 
+**CRITICAL — speaker assignment rules:**
+- Every single dialogue line must be attributed to the correct speaker based on their role.
+- Speaker1 is always the {speaker1_role}. Speaker2 is always the {speaker2_role}.
+- Never swap speakers mid-conversation. If Speaker2 is the customer, only the customer's lines are labeled Speaker2 — even when the topic shifts (e.g., asking for a map, asking about restaurants, asking about checkout). All customer questions stay as Speaker2. All staff/host answers stay as Speaker1.
+- Before outputting, verify: does the speaker label match who would logically say this line given their role? If not, correct it.
+
 ## Scenario
 The conversation takes place in: **{scenario}**
 
@@ -69,10 +75,6 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
     {"Speaker2": "[pause for 1 second] [medium slow] Goedemiddag, kan ik u helpen?"}
   ],
   "key_phrases": ["phrase1", "phrase2", "phrase3"],
-  "dialogue_en": [
-    {"Speaker1": "English translation of Speaker1 line"},
-    {"Speaker2": "English translation of Speaker2 line"}
-  ],
   "vocabulary": [{"nl": "dutch word", "en": "english translation"}],
   "quiz": [],
   "grammar_notes": [{"title": "rule", "explanation": "...", "examples": ["ex1", "ex2"]}]

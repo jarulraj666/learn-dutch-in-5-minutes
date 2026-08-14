@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, API_URL } from "@/lib/api";
 import type { PipelineJob } from "@/lib/types";
 
 const fetcher = (url: string) => apiFetch<PipelineJob>(url);
@@ -10,6 +10,7 @@ const fetcher = (url: string) => apiFetch<PipelineJob>(url);
 function RunPageInner() {
   const searchParams = useSearchParams();
   const initialJobId = searchParams.get("job");
+  const parallelJobId = searchParams.get("parallel"); // second parallel job
 
   // Form state
   const [level, setLevel] = useState("A1A2");
@@ -43,7 +44,7 @@ function RunPageInner() {
     setLogs([]);
     setStreaming(true);
 
-    const es = new EventSource(`/api/pipeline/logs/${jobId}`);
+    const es = new EventSource(`${API_URL}/api/pipeline/logs/${jobId}`);
     esRef.current = es;
 
     es.onmessage = (e) => {
@@ -173,10 +174,10 @@ function RunPageInner() {
           </div>
 
           <div>
-            <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Resume checkpoint path (optional)</label>
+            <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Resume from artifact (optional)</label>
             <input
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 font-mono text-xs"
-              placeholder="output/A1A2/dialogue/.checkpoint_topic.json"
+              placeholder="output/A1A2/dialogue/episode_topic_slug.json"
               value={resumeCheckpoint}
               onChange={(e) => setResumeCheckpoint(e.target.value)}
             />
@@ -217,12 +218,15 @@ function RunPageInner() {
         </div>
       </div>
 
-      {/* Log pane */}
+      {/* Log pane(s) */}
+      <div className={parallelJobId ? "grid grid-cols-2 gap-4" : ""}>
       {jobId && (
         <div className="bg-gray-950 border border-gray-800 rounded-xl overflow-hidden">
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-800">
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-300">Job {jobId}</span>
+              <span className="text-sm font-medium text-gray-300">
+                {parallelJobId ? "Job A — Render Video" : `Job ${jobId}`}
+              </span>
               {job && (
                 <span className={`text-xs font-medium ${statusColor[job.status as keyof typeof statusColor] ?? "text-gray-400"}`}>
                   {job.status}
@@ -250,6 +254,54 @@ function RunPageInner() {
           </div>
         </div>
       )}
+      {parallelJobId && <ParallelJobPane jobId={parallelJobId} label="Job B — Render Shorts" />}
+      </div>
+    </div>
+  );
+}
+
+function ParallelJobPane({ jobId, label }: { jobId: string; label: string }) {
+  const [logs, setLogs] = useState<string[]>([]);
+  const [streaming, setStreaming] = useState(true);
+  const logEndRef = useRef<HTMLDivElement>(null);
+  const { data: job } = useSWR(`/api/pipeline/jobs/${jobId}`, (url: string) =>
+    apiFetch<PipelineJob>(url), { refreshInterval: 3000 }
+  );
+  const statusColor: Record<string, string> = {
+    running: "text-blue-400", done: "text-green-400", failed: "text-red-400", aborted: "text-yellow-400",
+  };
+  useEffect(() => {
+    const es = new EventSource(`${API_URL}/api/pipeline/logs/${jobId}`);
+    es.onmessage = (e) => {
+      const line: string = e.data;
+      if (line.startsWith("__STATUS__")) { setStreaming(false); es.close(); return; }
+      setLogs((prev) => [...prev, line]);
+    };
+    es.onerror = () => { setStreaming(false); es.close(); };
+    return () => es.close();
+  }, [jobId]);
+  useEffect(() => { logEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [logs]);
+  return (
+    <div className="bg-gray-950 border border-gray-800 rounded-xl overflow-hidden">
+      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-800">
+        <span className="text-sm font-medium text-gray-300">{label}</span>
+        {job && (
+          <span className={`text-xs font-medium ${statusColor[job.status] ?? "text-gray-400"}`}>
+            {job.status}{job.exit_code !== null && ` (exit ${job.exit_code})`}
+          </span>
+        )}
+        {streaming && (
+          <span className="flex items-center gap-1 text-xs text-blue-400">
+            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" /> live
+          </span>
+        )}
+      </div>
+      <div className="h-96 overflow-y-auto p-4 space-y-0.5">
+        {logs.filter((l) => !l.startsWith("__STATUS__")).map((l, i) => (
+          <div key={i} className="log-line text-gray-300">{l}</div>
+        ))}
+        <div ref={logEndRef} />
+      </div>
     </div>
   );
 }

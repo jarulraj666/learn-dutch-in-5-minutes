@@ -248,3 +248,22 @@ def stage_upload_short_tiktok(
     """
     from pipeline.publish.upload_tiktok import upload_short_tiktok
     return upload_short_tiktok(artifact, Path(artifact_path), scene_short)
+
+
+def stage_upload_short_facebook(
+    artifact: dict,
+    artifact_path: str | Path,
+    scene_short: dict,
+) -> dict:
+    """Upload one rendered Short to a Facebook Page as a Reel.
+
+    Args:
+        artifact:       Full episode artifact dict.
+        artifact_path:  Path to the artifact JSON file.
+        scene_short:    One scene entry from ``artifact["shorts"]``.
+
+    Returns:
+        Dict with ``video_id`` and ``post_id``.
+    """
+    from pipeline.publish.upload_facebook import upload_short_facebook
+    return upload_short_facebook(artifact, Path(artifact_path), scene_short)

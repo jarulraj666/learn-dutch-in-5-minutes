@@ -1,30 +1,124 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import useSWR from "swr";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api";
+import { formatNL, nlInputToUtcIso } from "@/lib/timezone";
 import type { TopicDetail } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
   ExternalLink, Play, RotateCcw, FileText, Music, Video,
-  Image as ImageIcon, Subtitles, Instagram,
+  Image as ImageIcon, Subtitles, Instagram, Upload, Copy, ChevronDown, ChevronUp, RefreshCw,
 } from "lucide-react";
+import type { SceneImageInfo } from "@/lib/types";
 
 const fetcher = (url: string) => apiFetch<TopicDetail>(url);
 
+// ── Scene Image Card ────────────────────────────────────────────────────────
+function SceneImageCard({ scene, topicId, onUploaded }: { scene: SceneImageInfo; topicId: string; onUploaded: () => void }) {
+  const [showPrompt16, setShowPrompt16] = useState(false);
+  const [showPrompt9, setShowPrompt9] = useState(false);
+  const [uploading16, setUploading16] = useState(false);
+  const [uploading9, setUploading9] = useState(false);
+  const [bust16, setBust16] = useState(0);
+  const [bust9, setBust9] = useState(0);
+  const ref16 = useRef<HTMLInputElement>(null);
+  const ref9 = useRef<HTMLInputElement>(null);
+
+  const upload = async (file: File, format: "16x9" | "9x16") => {
+    const setter = format === "16x9" ? setUploading16 : setUploading9;
+    setter(true);
+    try {
+      const fd = new FormData();
+      fd.append("topic_id", topicId);
+      fd.append("scene_num", String(scene.scene));
+      fd.append("format", format);
+      fd.append("file", file);
+      await fetch("/api/media/upload-scene-image", { method: "POST", body: fd });
+      if (format === "16x9") setBust16(Date.now()); else setBust9(Date.now());
+      onUploaded();
+    } finally {
+      setter(false);
+    }
+  };
+
+  const ImagePanel = ({ path, format, cacheBust, uploading, inputRef, prompt, showPrompt, onTogglePrompt }: {
+    path: string | null; format: "16x9" | "9x16"; cacheBust: number; uploading: boolean;
+    inputRef: React.RefObject<HTMLInputElement>; prompt: string;
+    showPrompt: boolean; onTogglePrompt: () => void;
+  }) => (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-xs text-gray-500 font-medium">{format === "16x9" ? "16:9 Main" : "9:16 Shorts"}</span>
+      <div
+        className={`relative rounded-lg border-2 overflow-hidden cursor-pointer group ${path ? "border-gray-700" : "border-dashed border-gray-600 hover:border-sky-500"} ${format === "9x16" ? "aspect-[9/16] max-h-64" : "aspect-video"}`}
+        onClick={() => inputRef.current?.click()}
+        title="Click to upload image"
+      >
+        {path ? (
+          <img src={`/api/media/image?path=${encodeURIComponent(path)}${cacheBust ? `&v=${cacheBust}` : ""}`} alt={`Scene ${scene.scene} ${format}`} className={`w-full h-full ${format === "9x16" ? "object-contain" : "object-cover"}`} />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-800/50">
+            <Upload size={20} className="text-gray-500 group-hover:text-sky-400" />
+          </div>
+        )}
+        {uploading && <div className="absolute inset-0 bg-black/60 flex items-center justify-center"><span className="text-xs text-white">Uploading…</span></div>}
+        {path && <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Upload size={16} className="text-white" /></div>}
+      </div>
+      <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f, format); e.target.value = ""; }} />
+      <button onClick={onTogglePrompt} className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-200 transition-colors mt-0.5">
+        {showPrompt ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        {showPrompt ? "Hide prompt" : "Show prompt"}
+      </button>
+      {showPrompt && (
+        <div className="relative">
+          <pre className="text-xs text-gray-400 bg-gray-900/60 rounded-lg p-3 whitespace-pre-wrap break-words max-h-40 overflow-y-auto border border-gray-700/40">{prompt}</pre>
+          <button onClick={() => navigator.clipboard.writeText(prompt)} className="absolute top-2 right-2 p-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white" title="Copy prompt"><Copy size={12} /></button>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 space-y-3">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <span className="text-xs font-semibold text-sky-400 uppercase">Scene {scene.scene}</span>
+          <p className="text-sm text-gray-200 mt-0.5">{scene.description}</p>
+          {scene.trigger && <p className="text-xs text-gray-500 mt-0.5 italic">"{scene.trigger}"</p>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <ImagePanel path={scene.image_16x9} format="16x9" cacheBust={bust16} uploading={uploading16} inputRef={ref16}
+          prompt={scene.prompt} showPrompt={showPrompt16} onTogglePrompt={() => setShowPrompt16(v => !v)} />
+        <ImagePanel path={scene.image_9x16} format="9x16" cacheBust={bust9} uploading={uploading9} inputRef={ref9}
+          prompt={scene.prompt_9x16} showPrompt={showPrompt9} onTogglePrompt={() => setShowPrompt9(v => !v)} />
+      </div>
+    </div>
+  );
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 const STAGES = [
-  { n: 1, label: "Script" },
-  { n: 2, label: "Image" },
-  { n: 3, label: "Audio" },
-  { n: 4, label: "Subtitles" },
-  { n: 5, label: "Audio QA" },
-  { n: 6, label: "Subtitle QA" },
-  { n: 7, label: "Render" },
-  { n: 8, label: "Upload YouTube" },
-  { n: 9, label: "Upload Captions" },
+  { n: 1,  d: 1,  label: "Script" },
+  { n: 2,  d: 2,  label: "16:9 Image" },
+  { n: 9,  d: 3,  label: "9:16 Image" },
+  { n: 3,  d: 4,  label: "Audio" },
+  { n: 4,  d: 5,  label: "Subtitles" },
+  { n: 5,  d: 6,  label: "Audio QA" },
+  { n: 6,  d: 7,  label: "Subtitle QA" },
+  { n: 7,  d: 8,  label: "Render Video" },
+  { n: 10, d: 9,  label: "Render Shorts" },
+  { n: 8,  d: 10, label: "Upload YouTube" },
+  { n: 11, d: 11, label: "Upload Shorts (YT)" },
+  { n: 12, d: 12, label: "Upload Instagram" },
+  { n: 13, d: 13, label: "Upload TikTok" },
+  { n: 14, d: 14, label: "Upload Facebook" },
+  { n: 15, d: 15, label: "Upload Captions" },
 ];
 
-type TabKey = "overview" | "script" | "media" | "pipeline" | "youtube" | "instagram";
+type TabKey = "overview" | "script" | "media" | "pipeline" | "youtube" | "instagram" | "tiktok" | "facebook";
 
 export default function TopicDetailPage({ params }: { params: { id: string } }) {
   const { data: topic, mutate } = useSWR(`/api/topics/${params.id}`, fetcher, {
@@ -42,16 +136,58 @@ export default function TopicDetailPage({ params }: { params: { id: string } }) 
     });
 
   const runStages = useCallback(async () => {
-    if (!topic?.media.artifact || selectedStages.size === 0) return;
+    if (!topic || selectedStages.size === 0) return;
     setLaunching(true);
     try {
-      const job = await apiFetch<{ job_id: string }>("/api/pipeline/run-stages", {
-        method: "POST",
-        body: JSON.stringify({
-          artifact_path: topic.media.artifact,
-          stages: [...selectedStages].sort(),
-        }),
-      });
+      let job: { job_id: string };
+      if (!topic.media.artifact) {
+        // No artifact yet — bootstrap with script stage via full pipeline run
+        job = await apiFetch<{ job_id: string }>("/api/pipeline/run", {
+          method: "POST",
+          body: JSON.stringify({ topic_id: topic.id, script_only: true }),
+        });
+      } else {
+        // Numeric sort — JS default .sort() is lexicographic ("10" < "4")
+        const sorted = [...selectedStages].sort((a, b) => a - b);
+
+        // Stages 7 (Render Video) and 10 (Render Shorts) are independent of
+        // each other — both need subtitles (4) but not each other. Run them
+        // as two parallel jobs when both are selected.
+        const has7 = sorted.includes(7);
+        const has10 = sorted.includes(10);
+        if (has7 && has10) {
+          const prereqs = sorted.filter((n) => n !== 7 && n !== 10);
+          // Job A: prereqs + Render Video
+          // Job B: prereqs + Render Shorts (starts simultaneously)
+          const [jobA, jobB] = await Promise.all([
+            apiFetch<{ job_id: string }>("/api/pipeline/run-stages", {
+              method: "POST",
+              body: JSON.stringify({
+                artifact_path: topic.media.artifact,
+                stages: [...prereqs, 7],
+              }),
+            }),
+            apiFetch<{ job_id: string }>("/api/pipeline/run-stages", {
+              method: "POST",
+              body: JSON.stringify({
+                artifact_path: topic.media.artifact,
+                stages: [...prereqs, 10],
+              }),
+            }),
+          ]);
+          // Navigate to first job; second job runs concurrently in the background
+          window.location.href = `/run?job=${jobA.job_id}&parallel=${jobB.job_id}`;
+          return;
+        }
+
+        job = await apiFetch<{ job_id: string }>("/api/pipeline/run-stages", {
+          method: "POST",
+          body: JSON.stringify({
+            artifact_path: topic.media.artifact,
+            stages: sorted,
+          }),
+        });
+      }
       window.location.href = `/run?job=${job.job_id}`;
     } catch (err) {
       alert(String(err));
@@ -81,15 +217,41 @@ export default function TopicDetailPage({ params }: { params: { id: string } }) 
     mutate();
   }, [topic, mutate]);
 
+  const setStatus = useCallback(async (status: string) => {
+    if (!topic) return;
+    await apiFetch(`/api/topics/${topic.id}/status?status=${status}`, { method: "PATCH" });
+    mutate();
+  }, [topic, mutate]);
+
+  const [syncing, setSyncing] = useState(false);
+  const syncArtifact = useCallback(async () => {
+    if (!topic) return;
+    setSyncing(true);
+    try {
+      await apiFetch(`/api/topics/${topic.id}/sync-artifact`, { method: "POST" });
+      mutate();
+    } catch (err) {
+      alert(String(err));
+    } finally {
+      setSyncing(false);
+    }
+  }, [topic, mutate]);
+
   if (!topic) return <div className="text-gray-400 text-sm">Loading…</div>;
+
+  const ps = topic.media.platform_status;
+  const platformDot = (s: string) =>
+    s === "done" ? "🟢" : s === "partial" ? "🟡" : "";
 
   const TABS: { key: TabKey; label: string }[] = [
     { key: "overview", label: "Overview" },
     { key: "script", label: "Script" },
     { key: "media", label: "Media" },
     { key: "pipeline", label: "Pipeline" },
-    { key: "youtube", label: "YouTube" },
-    { key: "instagram", label: "Instagram" },
+    { key: "youtube", label: `YouTube${platformDot(ps.youtube_shorts) ? " " + platformDot(ps.youtube_shorts) : ""}` },
+    { key: "instagram", label: `Instagram ${platformDot(ps.instagram) || "⚪"}` },
+    { key: "tiktok", label: `TikTok ${platformDot(ps.tiktok) || "⚪"}` },
+    { key: "facebook", label: `Facebook ${platformDot(ps.facebook) || "⚪"}` },
   ];
 
   return (
@@ -109,6 +271,25 @@ export default function TopicDetailPage({ params }: { params: { id: string } }) 
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
+          <button
+            onClick={syncArtifact}
+            disabled={syncing}
+            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-sky-400 border border-gray-700 px-3 py-1.5 rounded-lg disabled:opacity-50"
+            title="Re-read artifact file from disk and sync to DB"
+          >
+            <RefreshCw size={14} className={syncing ? "animate-spin" : ""} /> Sync
+          </button>
+          <select
+            value={topic.status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="text-sm bg-gray-800 border border-gray-700 text-gray-300 px-2 py-1.5 rounded-lg cursor-pointer hover:border-gray-500"
+            title="Manually set topic status"
+          >
+            <option value="pending">pending</option>
+            <option value="generated">generated</option>
+            <option value="ready_to_publish">ready_to_publish</option>
+            <option value="done">done</option>
+          </select>
           <button
             onClick={resetStatus}
             className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-yellow-400 border border-gray-700 px-3 py-1.5 rounded-lg"
@@ -145,7 +326,7 @@ export default function TopicDetailPage({ params }: { params: { id: string } }) 
       {/* Tab content */}
       {tab === "overview" && <OverviewTab topic={topic} />}
       {tab === "script" && <ScriptTab topic={topic} />}
-      {tab === "media" && <MediaTab topic={topic} />}
+      {tab === "media" && <MediaTab topic={topic} mutate={mutate} />}
       {tab === "pipeline" && (
         <PipelineTab
           topic={topic}
@@ -157,6 +338,8 @@ export default function TopicDetailPage({ params }: { params: { id: string } }) 
       )}
       {tab === "youtube" && <YoutubeTab topic={topic} />}
       {tab === "instagram" && <InstagramTab topic={topic} mutate={mutate} />}
+      {tab === "tiktok" && <TikTokTab topic={topic} />}
+      {tab === "facebook" && <FacebookTab topic={topic} mutate={mutate} />}
     </div>
   );
 }
@@ -253,7 +436,7 @@ function ScriptTab({ topic }: { topic: TopicDetail }) {
   );
 }
 
-function MediaTab({ topic }: { topic: TopicDetail }) {
+function MediaTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }) {
   const m = topic.media;
   return (
     <div className="space-y-6">
@@ -269,20 +452,36 @@ function MediaTab({ topic }: { topic: TopicDetail }) {
       <section>
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2"><Video size={14} /> Video</h3>
         {m.video ? (
-          <video controls src={`/api/media/video?path=${encodeURIComponent(m.video)}`} className="w-full rounded-xl max-h-96" />
+          <video controls src={`/api/media/video?path=${encodeURIComponent(m.video)}`} className="w-full rounded-xl max-h-96">
+            {m.subtitles.srt_en && (
+              <track
+                kind="subtitles"
+                label="English"
+                srcLang="en"
+                src={`/api/media/subtitle-vtt?path=${encodeURIComponent(m.subtitles.srt_en)}`}
+                default
+              />
+            )}
+          </video>
         ) : <p className="text-gray-500 text-sm">No video rendered yet.</p>}
       </section>
 
-      {/* Images */}
+      {/* Scene Images */}
       <section>
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2"><ImageIcon size={14} /> Scene Images</h3>
-        {m.images.length > 0 ? (
+        {m.scene_images.length > 0 ? (
+          <div className="space-y-4">
+            {m.scene_images.map((scene) => (
+              <SceneImageCard key={scene.scene} scene={scene} topicId={topic.id} onUploaded={mutate} />
+            ))}
+          </div>
+        ) : m.images.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {m.images.map((img, i) => (
               <img key={i} src={`/api/media/image?path=${encodeURIComponent(img)}`} alt={`Scene ${i + 1}`} className="rounded-lg border border-gray-700 object-cover aspect-video" />
             ))}
           </div>
-        ) : <p className="text-gray-500 text-sm">No images generated yet.</p>}
+        ) : <p className="text-gray-500 text-sm">No images yet — run the Script stage to generate scene prompts.</p>}
       </section>
 
       {/* Subtitles */}
@@ -310,14 +509,26 @@ function MediaTab({ topic }: { topic: TopicDetail }) {
         </div>
       </section>
 
-      {/* Checkpoint warning */}
-      {m.checkpoint && (
-        <div className="bg-yellow-900/20 border border-yellow-700/30 rounded-lg px-4 py-3 text-sm text-yellow-300">
-          ⚠ Interrupted run checkpoint found: <code className="text-xs">{m.checkpoint}</code>
-          <br />
-          <Link href={`/run`} className="underline text-xs mt-1 block">Resume via Run Pipeline → Resume checkpoint</Link>
-        </div>
-      )}
+      {/* Short Clips / Reels */}
+      <section>
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2"><Video size={14} /> Shorts / Reels</h3>
+        {m.shorts.filter((s) => s.video_file).length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {m.shorts.filter((s) => s.video_file).map((s, i) => (
+              <div key={i} className="space-y-1">
+                <p className="text-xs text-gray-400">Scene {s.scene}{s.description ? ` — ${s.description}` : ""}</p>
+                <video
+                  controls
+                  src={`/api/media/video?path=${encodeURIComponent(s.video_file!)}`}
+                  className="w-full rounded-lg border border-gray-700 aspect-[9/16] object-contain bg-black"
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-sm">No shorts rendered yet — run stage 9 (Render Shorts).</p>
+        )}
+      </section>
     </div>
   );
 }
@@ -334,11 +545,18 @@ function PipelineTab({
   const m = topic.media;
   const stageStatus = (n: number) => {
     if (n === 1) return m.artifact ? "done" : "missing";
-    if (n === 2) return m.images.length > 0 ? "done" : "missing";
+    if (n === 2) return (m.images.length > 0 || m.scene_images.some((s) => s.image_16x9)) ? "done" : "missing";
     if (n === 3) return m.audio ? "done" : "missing";
     if (n === 4) return m.subtitles.ass ? "done" : "missing";
     if (n === 7) return m.video ? "done" : "missing";
     if (n === 8) return topic.youtube_video_id ? "done" : "missing";
+    if (n === 9) return m.scene_images.some((s) => s.image_9x16) ? "done" : "missing";
+    if (n === 10) return m.shorts.length > 0 ? "done" : "missing";
+    if (n === 11) return m.shorts.some((s: any) => s.youtube?.short_video_id) ? "done" : "missing";
+    if (n === 12) return m.shorts.some((s: any) => s.reel_id || s.instagram?.reel_id) ? "done" : "missing";
+    if (n === 13) return m.shorts.some((s: any) => s.tiktok?.publish_id) ? "done" : "missing";
+    if (n === 14) return m.shorts.some((s: any) => s.facebook?.post_id) ? "done" : "missing";
+    if (n === 15) return (topic as any).artifact_youtube_captions ? "done" : "missing";
     return "unknown";
   };
 
@@ -348,36 +566,38 @@ function PipelineTab({
       <div className="grid grid-cols-3 gap-3">
         {STAGES.map((s) => {
           const st = stageStatus(s.n);
+          const locked = !m.artifact && s.n !== 1;
           return (
             <button
               key={s.n}
-              onClick={() => toggleStage(s.n)}
+              onClick={() => !locked && toggleStage(s.n)}
+              disabled={locked}
               className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm transition ${
-                selectedStages.has(s.n)
+                locked
+                  ? "border-gray-800 bg-gray-900/20 text-gray-600 cursor-not-allowed"
+                  : selectedStages.has(s.n)
                   ? "border-sky-500 bg-sky-900/30 text-sky-200"
                   : "border-gray-700 bg-gray-800/30 text-gray-300 hover:border-gray-600"
               }`}
             >
-              <span className={`w-2 h-2 rounded-full ${st === "done" ? "bg-green-500" : "bg-gray-600"}`} />
-              {s.n}. {s.label}
+              <span className={`w-2 h-2 rounded-full ${st === "done" ? "bg-green-500" : st === "partial" ? "bg-yellow-400" : "bg-gray-600"}`} />
+              {s.d}. {s.label}
             </button>
           );
         })}
       </div>
-      {m.artifact && (
-        <div>
-          <button
-            onClick={runStages}
-            disabled={selectedStages.size === 0 || launching}
-            className="bg-sky-600 hover:bg-sky-500 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
-          >
-            {launching ? "Starting…" : `Run ${selectedStages.size} stage(s)`}
-          </button>
-        </div>
-      )}
       {!m.artifact && (
-        <p className="text-yellow-400 text-sm">No artifact found — run the full pipeline first.</p>
+        <p className="text-yellow-400 text-sm">No artifact yet — select Stage 1 (Script) to initialise this topic.</p>
       )}
+      <div>
+        <button
+          onClick={runStages}
+          disabled={selectedStages.size === 0 || launching || (!m.artifact && !selectedStages.has(1))}
+          className="bg-sky-600 hover:bg-sky-500 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
+        >
+          {launching ? "Starting…" : `Run ${selectedStages.size} stage(s)`}
+        </button>
+      </div>
     </div>
   );
 }
@@ -387,102 +607,512 @@ function YoutubeTab({ topic }: { topic: TopicDetail }) {
     return (
       <div className="text-gray-400 text-sm space-y-3">
         <p>This topic has not been uploaded to YouTube yet.</p>
-        <p>Use the Pipeline tab to run stage 8 (Upload YouTube).</p>
+        <p>Use the Pipeline tab to run stage 10 (Upload YouTube).</p>
       </div>
     );
   }
   const url = `https://youtube.com/watch?v=${topic.youtube_video_id}`;
+  const uploadedShorts = topic.media.shorts.filter((s) => s.youtube?.short_video_id);
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-red-400 hover:underline font-medium">
-          <ExternalLink size={14} /> Watch on YouTube
-        </a>
-        <span className="text-gray-500 text-xs font-mono">{topic.youtube_video_id}</span>
-      </div>
-      <div className="aspect-video max-w-2xl">
-        <iframe
-          src={`https://www.youtube.com/embed/${topic.youtube_video_id}`}
-          className="w-full h-full rounded-xl border border-gray-700"
-          allowFullScreen
-        />
-      </div>
-      <div className="text-sm text-gray-400 space-y-1">
-        <div>Playlist: {topic.playlist_name || "—"}</div>
-        <div>Scheduled: {topic.scheduled_at || "—"}</div>
-        <div>Published: {topic.published_at || "—"}</div>
-      </div>
+    <div className="space-y-6">
+      {/* Main video */}
+      <section>
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2"><ExternalLink size={14} /> Full Video</h3>
+        <div className="flex items-center gap-3 mb-3">
+          <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-red-400 hover:underline font-medium text-sm">
+            <ExternalLink size={14} /> Watch on YouTube
+          </a>
+          <span className="text-gray-500 text-xs font-mono">{topic.youtube_video_id}</span>
+        </div>
+        <div className="aspect-video max-w-2xl">
+          <iframe
+            src={`https://www.youtube.com/embed/${topic.youtube_video_id}`}
+            className="w-full h-full rounded-xl border border-gray-700"
+            allowFullScreen
+          />
+        </div>
+        <div className="text-sm text-gray-400 space-y-1 mt-3">
+          <div>Playlist: {topic.playlist_name || "—"}</div>
+          <div>Scheduled: {topic.scheduled_at || "—"}</div>
+          <div>Published: {topic.published_at || "—"}</div>
+        </div>
+      </section>
+
+      {/* YouTube Shorts */}
+      <section>
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">YouTube Shorts</h3>
+        {uploadedShorts.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {uploadedShorts.map((s, i) => {
+              const shortId = s.youtube!.short_video_id as string;
+              const shortUrl = `https://youtube.com/shorts/${shortId}`;
+              return (
+                <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-3 space-y-2">
+                  <p className="text-xs text-gray-400">Scene {s.scene}{s.description ? ` — ${s.description}` : ""}</p>
+                  <a href={shortUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-red-400 hover:underline text-xs">
+                    <ExternalLink size={11} /> Watch Short
+                  </a>
+                  <span className="block text-xs text-gray-600 font-mono">{shortId}</span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-sm">No Shorts uploaded yet — run stage 11 (Upload Shorts YT).</p>
+        )}
+      </section>
     </div>
   );
 }
 
 function InstagramTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }) {
   const shorts = topic.media.shorts;
-  const [publishing, setPublishing] = useState<string | null>(null);
+  const [busy, setBusy] = useState<Record<string, boolean>>({});
+  const [scheduleInputs, setScheduleInputs] = useState<Record<string, string>>({});
+  const [reelIdInputs, setReelIdInputs] = useState<Record<string, string>>({});
+  const [showMarkForm, setShowMarkForm] = useState<Record<string, boolean>>({});
 
-  const publishDraft = async (containerId: string) => {
+  const key = (s: (typeof shorts)[0]) => String(s.scene);
+
+  const uploadNow = async (scene: string | null) => {
+    setBusy((b) => ({ ...b, [String(scene)]: true }));
+    try {
+      await apiFetch(`/api/publish/instagram/${topic.id}/shorts/${scene}/upload`, { method: "POST" });
+      mutate();
+    } catch (err) { alert(String(err)); }
+    finally { setBusy((b) => ({ ...b, [String(scene)]: false })); }
+  };
+
+  const markUploaded = async (scene: string | null, reelId: string, permalink: string) => {
+    setBusy((b) => ({ ...b, [String(scene)]: true }));
+    try {
+      const params = new URLSearchParams();
+      if (reelId) params.set("reel_id", reelId);
+      if (permalink) params.set("permalink", permalink);
+      await apiFetch(`/api/publish/instagram/${topic.id}/shorts/${scene}/mark-uploaded?${params}`, { method: "POST" });
+      setShowMarkForm((p) => ({ ...p, [String(scene)]: false }));
+      mutate();
+    } catch (err) { alert(String(err)); }
+    finally { setBusy((b) => ({ ...b, [String(scene)]: false })); }
+  };
+
+  const publishDraft = async (scene: string | null, containerId: string) => {
     if (!confirm(`Publish draft container ${containerId}?`)) return;
-    setPublishing(containerId);
+    setBusy((b) => ({ ...b, [String(scene)]: true }));
     try {
       const r = await apiFetch<any>(
         `/api/publish/instagram/${topic.id}/publish-draft?container_id=${containerId}`,
-        { method: "POST" }
+        { method: "POST" },
       );
       if (r.error) throw new Error(r.error.message);
       mutate();
-    } catch (err) {
-      alert(String(err));
-    } finally {
-      setPublishing(null);
-    }
+    } catch (err) { alert(String(err)); }
+    finally { setBusy((b) => ({ ...b, [String(scene)]: false })); }
   };
+
+  const scheduleUpload = async (scene: string | null, dt: string) => {
+    setBusy((b) => ({ ...b, [String(scene)]: true }));
+    try {
+      await apiFetch(
+        `/api/publish/instagram/${topic.id}/shorts/${scene}/schedule?scheduled_at=${encodeURIComponent(dt)}`,
+        { method: "POST" },
+      );
+      mutate();
+    } catch (err) { alert(String(err)); }
+    finally { setBusy((b) => ({ ...b, [String(scene)]: false })); }
+  };
+
+  const clearSchedule = (scene: string | null) => scheduleUpload(scene, "");
 
   if (shorts.length === 0) {
     return (
       <div className="text-gray-400 text-sm space-y-3">
         <p>No Instagram Reels / Shorts found for this topic.</p>
-        <p>Run the pipeline with the Render stage to generate scene shorts first.</p>
+        <p>Run stage 9 (Render Shorts) to generate scene clips first.</p>
+      </div>
+    );
+  }
+
+  const ps = topic.media.platform_status.instagram;
+  const uploadedCount = shorts.filter(s => !!(s.reel_id || s.instagram?.reel_id)).length;
+
+  return (
+    <div className="space-y-4">
+      {/* Platform status banner */}
+      <div className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm border ${
+        ps === "done" ? "bg-green-900/30 border-green-700/40 text-green-300"
+        : ps === "partial" ? "bg-yellow-900/30 border-yellow-700/40 text-yellow-300"
+        : "bg-gray-800/50 border-gray-700/40 text-gray-400"
+      }`}>
+        <span>{ps === "done" ? "✓ All scenes uploaded to Instagram" : ps === "partial" ? "⚡ Partially uploaded" : "⚪ Not uploaded yet"}</span>
+        <span className="text-xs opacity-60">({uploadedCount}/{shorts.length} scenes)</span>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {shorts.map((s) => {
+        const k = key(s);
+        const uploaded = !!(s.reel_id || s.instagram?.reel_id);
+        const permalink = s.permalink || s.instagram?.permalink;
+        const scheduledAt = s.instagram_scheduled_at;
+        return (
+          <div key={k} className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-white">Scene {s.scene}</span>
+              <div className="flex items-center gap-1.5">
+                {uploaded
+                  ? <span className="text-xs bg-green-800/40 text-green-300 px-2 py-0.5 rounded border border-green-700/30">✓ Uploaded</span>
+                  : scheduledAt
+                  ? <span className="text-xs bg-purple-800/40 text-purple-300 px-2 py-0.5 rounded border border-purple-700/30">⏰ Scheduled</span>
+                  : <span className="text-xs bg-gray-800 text-gray-500 px-2 py-0.5 rounded border border-gray-700">Pending</span>
+                }
+                {s.draft && !uploaded && (
+                  <span className="text-xs bg-yellow-800/40 text-yellow-300 px-2 py-0.5 rounded border border-yellow-700/30">Draft</span>
+                )}
+              </div>
+            </div>
+
+            {s.description && <p className="text-xs text-gray-400">{s.description}</p>}
+
+            {/* Video preview */}
+            {s.video_file && (
+              <video
+                src={`/api/media/video?path=${encodeURIComponent(s.video_file)}`}
+                controls
+                className="w-full rounded-lg aspect-[9/16] object-contain bg-black max-h-56"
+              />
+            )}
+
+            {/* Upload actions */}
+            <div className="space-y-2">
+              {uploaded ? (
+                permalink ? (
+                  <a href={permalink} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-pink-400 hover:underline text-xs">
+                    <Instagram size={12} /> View Reel
+                  </a>
+                ) : (
+                  <span className="text-xs text-gray-400 flex items-center gap-1"><Instagram size={12} /> Reel ID: {s.reel_id || s.instagram?.reel_id}</span>
+                )
+              ) : (
+                <div className="flex gap-2 flex-wrap">
+                  {/* Upload Now */}
+                  <button
+                    onClick={() => uploadNow(s.scene)}
+                    disabled={busy[k]}
+                    className="text-xs bg-pink-700 hover:bg-pink-600 text-white px-3 py-1.5 rounded-lg disabled:opacity-50 flex items-center gap-1"
+                  >
+                    <Instagram size={11} /> {busy[k] ? "Uploading…" : "Upload Now"}
+                  </button>
+                  {/* Publish Draft */}
+                  {s.container_id && s.draft && (
+                    <button
+                      onClick={() => publishDraft(s.scene, s.container_id!)}
+                      disabled={busy[k]}
+                      className="text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg disabled:opacity-50"
+                    >
+                      {busy[k] ? "Publishing…" : "Publish Draft"}
+                    </button>
+                  )}
+                  {/* Mark as Uploaded manually */}
+                  <button
+                    onClick={() => setShowMarkForm((p) => ({ ...p, [k]: !p[k] }))}
+                    className="text-xs text-gray-400 hover:text-green-400 border border-gray-700 hover:border-green-700 px-2 py-1.5 rounded-lg"
+                  >
+                    ✓ Mark Uploaded
+                  </button>
+                </div>
+              )}
+              {/* Mark Uploaded form */}
+              {!uploaded && showMarkForm[k] && (
+                <div className="bg-gray-800/60 border border-gray-700 rounded-lg p-3 space-y-2">
+                  <p className="text-xs text-gray-400">Optionally enter the Reel ID and permalink from Instagram:</p>
+                  <input
+                    type="text"
+                    placeholder="Reel ID (optional)"
+                    value={reelIdInputs[`${k}_reel`] || ""}
+                    onChange={(e) => setReelIdInputs((p) => ({ ...p, [`${k}_reel`]: e.target.value }))}
+                    className="w-full text-xs bg-gray-900 border border-gray-700 rounded px-2 py-1 text-gray-200"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Permalink (optional)"
+                    value={reelIdInputs[`${k}_url`] || ""}
+                    onChange={(e) => setReelIdInputs((p) => ({ ...p, [`${k}_url`]: e.target.value }))}
+                    className="w-full text-xs bg-gray-900 border border-gray-700 rounded px-2 py-1 text-gray-200"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => markUploaded(s.scene, reelIdInputs[`${k}_reel`] || "", reelIdInputs[`${k}_url`] || "")}
+                      disabled={busy[k]}
+                      className="text-xs bg-green-700 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg disabled:opacity-50"
+                    >
+                      {busy[k] ? "Saving…" : "Confirm"}
+                    </button>
+                    <button
+                      onClick={() => setShowMarkForm((p) => ({ ...p, [k]: false }))}
+                      className="text-xs text-gray-500 hover:text-gray-300"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Scheduler */}
+              {!uploaded && (
+                <div className="pt-1 border-t border-gray-800 space-y-1.5">
+                  {scheduledAt ? (
+                    <div className="flex items-center gap-2 text-xs text-purple-300">
+                      <span>⏰ {formatNL(scheduledAt)} (NL)</span>
+                      <button
+                        onClick={() => clearSchedule(s.scene)}
+                        className="text-gray-500 hover:text-red-400 underline"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-500">NL time (Europe/Amsterdam)</p>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="datetime-local"
+                          value={scheduleInputs[k] || ""}
+                          onChange={(e) => setScheduleInputs((p) => ({ ...p, [k]: e.target.value }))}
+                          className="text-xs bg-gray-800 border border-gray-700 rounded px-2 py-1 text-gray-200 flex-1 min-w-0"
+                        />
+                        <button
+                          onClick={() => {
+                            if (scheduleInputs[k]) {
+                              scheduleUpload(s.scene, nlInputToUtcIso(scheduleInputs[k]));
+                            }
+                          }}
+                          disabled={!scheduleInputs[k] || busy[k]}
+                          className="text-xs bg-purple-700 hover:bg-purple-600 text-white px-2 py-1.5 rounded-lg disabled:opacity-40 whitespace-nowrap"
+                        >
+                          Schedule
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+      </div>
+    </div>
+  );
+}
+
+function TikTokTab({ topic }: { topic: TopicDetail }) {
+  const shorts = topic.media.shorts;
+  const ps = topic.media.platform_status.tiktok;
+
+  if (shorts.length === 0) {
+    return (
+      <div className="text-gray-400 text-sm space-y-3">
+        <p>No shorts rendered yet.</p>
+        <p>Use the Pipeline tab to run stage 9 (Render Shorts) first, then stage 13 (Upload TikTok).</p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {shorts.map((s, i) => (
-        <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
-          <div className="text-sm font-medium text-white">{s.scene || `Scene ${i + 1}`}</div>
-          {s.description && <div className="text-xs text-gray-400">{s.description}</div>}
+    <div className="space-y-4">
+      {/* Platform status banner */}
+      <div className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm border ${
+        ps === "done" ? "bg-green-900/30 border-green-700/40 text-green-300"
+        : ps === "partial" ? "bg-yellow-900/30 border-yellow-700/40 text-yellow-300"
+        : "bg-gray-800/50 border-gray-700/40 text-gray-400"
+      }`}>
+        <span>{ps === "done" ? "✓ All scenes uploaded to TikTok" : ps === "partial" ? "⚡ Partially uploaded" : "⚪ Not uploaded yet"}</span>
+        <span className="text-xs opacity-60">({shorts.filter(s => s.tiktok?.publish_id).length}/{shorts.length} scenes)</span>
+      </div>
 
-          {s.video_file && (
-            <video
-              src={`/api/media/video?path=${encodeURIComponent(s.video_file)}`}
-              controls
-              className="w-full rounded-lg max-h-64 bg-black"
-            />
-          )}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {shorts.map((s, i) => {
+          const publishId = s.tiktok?.publish_id as string | undefined;
+          const isUploaded = !!publishId;
+          return (
+            <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-white">Scene {s.scene}</p>
+                {isUploaded
+                  ? <span className="text-xs bg-green-800/40 text-green-300 px-2 py-0.5 rounded border border-green-700/30">✓ Uploaded</span>
+                  : <span className="text-xs bg-gray-800 text-gray-500 px-2 py-0.5 rounded border border-gray-700">Pending</span>
+                }
+              </div>
+              {s.description && <p className="text-xs text-gray-400">{s.description}</p>}
+              {s.video_file && (
+                <video
+                  src={`/api/media/video?path=${encodeURIComponent(s.video_file)}`}
+                  controls
+                  className="w-full rounded-lg aspect-[9/16] object-contain bg-black max-h-56"
+                />
+              )}
+              {isUploaded && (
+                <p className="text-xs text-gray-500 font-mono">Publish ID: {publishId}</p>
+              )}
+              {!isUploaded && (
+                <p className="text-xs text-gray-600">Run stage 13 to upload this scene.</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
-          <div className="flex items-center gap-2 flex-wrap">
-            {s.permalink ? (
-              <a href={s.permalink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-pink-400 hover:underline text-xs">
-                <Instagram size={12} /> View Reel
-              </a>
-            ) : s.container_id && s.draft ? (
-              <button
-                onClick={() => publishDraft(s.container_id!)}
-                disabled={publishing === s.container_id}
-                className="text-xs bg-pink-700 hover:bg-pink-600 text-white px-3 py-1.5 rounded-lg disabled:opacity-50"
-              >
-                {publishing === s.container_id ? "Publishing…" : "Publish Draft"}
-              </button>
-            ) : (
-              <span className="text-xs text-gray-500">Not uploaded yet</span>
-            )}
+function FacebookTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }) {
+  const shorts = topic.media.shorts;
+  const ps = topic.media.platform_status.facebook;
+  const [busy, setBusy] = useState<Record<string, boolean>>({});
+  const [scheduleInputs, setScheduleInputs] = useState<Record<string, string>>({});
+  const [showMarkForm, setShowMarkForm] = useState<Record<string, boolean>>({});
+  const [markInputs, setMarkInputs] = useState<Record<string, string>>({});
 
-            {s.reel_id && <span className="text-xs text-gray-500 font-mono">ID: {s.reel_id}</span>}
-            {s.draft && <span className="text-xs bg-yellow-800/40 text-yellow-300 px-2 py-0.5 rounded border border-yellow-700/30">Draft</span>}
-          </div>
-        </div>
-      ))}
+  const uploadNow = async (scene: string | null) => {
+    setBusy((b) => ({ ...b, [String(scene)]: true }));
+    try {
+      await apiFetch(`/api/publish/facebook/${topic.id}/shorts/${scene}/upload`, { method: "POST" });
+      mutate();
+    } catch (err) { alert(String(err)); }
+    finally { setBusy((b) => ({ ...b, [String(scene)]: false })); }
+  };
+
+  const scheduleUpload = async (scene: string | null, dt: string) => {
+    setBusy((b) => ({ ...b, [String(scene)]: true }));
+    try {
+      await apiFetch(
+        `/api/publish/facebook/${topic.id}/shorts/${scene}/schedule?scheduled_at=${encodeURIComponent(dt)}`,
+        { method: "POST" },
+      );
+      mutate();
+    } catch (err) { alert(String(err)); }
+    finally { setBusy((b) => ({ ...b, [String(scene)]: false })); }
+  };
+
+  const markUploaded = async (scene: string | null, postId: string) => {
+    setBusy((b) => ({ ...b, [String(scene)]: true }));
+    try {
+      const params = new URLSearchParams();
+      if (postId) params.set("post_id", postId);
+      await apiFetch(`/api/publish/facebook/${topic.id}/shorts/${scene}/mark-uploaded?${params}`, { method: "POST" });
+      setShowMarkForm((p) => ({ ...p, [String(scene)]: false }));
+      mutate();
+    } catch (err) { alert(String(err)); }
+    finally { setBusy((b) => ({ ...b, [String(scene)]: false })); }
+  };
+
+  if (shorts.length === 0) {
+    return (
+      <div className="text-gray-400 text-sm space-y-3">
+        <p>No shorts rendered yet. Run stage 9 (Render Shorts) first.</p>
+      </div>
+    );
+  }
+
+  const uploadedCount = shorts.filter(s => s.facebook?.post_id).length;
+
+  return (
+    <div className="space-y-4">
+      {/* Status banner */}
+      <div className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm border ${
+        ps === "done" ? "bg-green-900/30 border-green-700/40 text-green-300"
+        : ps === "partial" ? "bg-yellow-900/30 border-yellow-700/40 text-yellow-300"
+        : "bg-gray-800/50 border-gray-700/40 text-gray-400"
+      }`}>
+        <span>{ps === "done" ? "✓ All scenes uploaded to Facebook" : ps === "partial" ? "⚡ Partially uploaded" : "⚪ Not uploaded yet"}</span>
+        <span className="text-xs opacity-60">({uploadedCount}/{shorts.length} scenes)</span>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {shorts.map((s) => {
+          const k = String(s.scene);
+          const isUploaded = !!s.facebook?.post_id;
+          const scheduledAt = s.facebook_scheduled_at;
+          return (
+            <div key={k} className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-white">Scene {s.scene}</p>
+                {isUploaded
+                  ? <span className="text-xs bg-green-800/40 text-green-300 px-2 py-0.5 rounded border border-green-700/30">✓ Uploaded</span>
+                  : scheduledAt
+                  ? <span className="text-xs bg-purple-800/40 text-purple-300 px-2 py-0.5 rounded border border-purple-700/30">⏰ Scheduled</span>
+                  : <span className="text-xs bg-gray-800 text-gray-500 px-2 py-0.5 rounded border border-gray-700">Pending</span>
+                }
+              </div>
+              {s.description && <p className="text-xs text-gray-400">{s.description}</p>}
+              {s.video_file && (
+                <video src={`/api/media/video?path=${encodeURIComponent(s.video_file)}`} controls
+                  className="w-full rounded-lg aspect-[9/16] object-contain bg-black max-h-56" />
+              )}
+
+              {isUploaded ? (
+                <p className="text-xs text-gray-500 font-mono">Post ID: {s.facebook?.post_id}</p>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex gap-2 flex-wrap">
+                    <button onClick={() => uploadNow(s.scene)} disabled={busy[k]}
+                      className="text-xs bg-blue-700 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg disabled:opacity-50">
+                      {busy[k] ? "Uploading…" : "📘 Upload Now"}
+                    </button>
+                    <button onClick={() => setShowMarkForm((p) => ({ ...p, [k]: !p[k] }))}
+                      className="text-xs text-gray-400 hover:text-green-400 border border-gray-700 hover:border-green-700 px-2 py-1.5 rounded-lg">
+                      ✓ Mark Uploaded
+                    </button>
+                  </div>
+                  {showMarkForm[k] && (
+                    <div className="bg-gray-800/60 border border-gray-700 rounded-lg p-3 space-y-2">
+                      <input type="text" placeholder="Post ID (optional)"
+                        value={markInputs[k] || ""}
+                        onChange={(e) => setMarkInputs((p) => ({ ...p, [k]: e.target.value }))}
+                        className="w-full text-xs bg-gray-900 border border-gray-700 rounded px-2 py-1 text-gray-200" />
+                      <div className="flex gap-2">
+                        <button onClick={() => markUploaded(s.scene, markInputs[k] || "")} disabled={busy[k]}
+                          className="text-xs bg-green-700 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg disabled:opacity-50">
+                          {busy[k] ? "Saving…" : "Confirm"}
+                        </button>
+                        <button onClick={() => setShowMarkForm((p) => ({ ...p, [k]: false }))}
+                          className="text-xs text-gray-500 hover:text-gray-300">Cancel</button>
+                      </div>
+                    </div>
+                  )}
+                  {/* Scheduler */}
+                  <div className="pt-1 border-t border-gray-800 space-y-1.5">
+                    {scheduledAt ? (
+                      <div className="flex items-center gap-2 text-xs text-purple-300">
+                        <span>⏰ {formatNL(scheduledAt)} (NL)</span>
+                        <button onClick={() => scheduleUpload(s.scene, "")}
+                          className="text-gray-500 hover:text-red-400 underline">Clear</button>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <p className="text-xs text-gray-500">NL time (Europe/Amsterdam)</p>
+                        <div className="flex items-center gap-2">
+                          <input type="datetime-local" value={scheduleInputs[k] || ""}
+                            onChange={(e) => setScheduleInputs((p) => ({ ...p, [k]: e.target.value }))}
+                            className="text-xs bg-gray-800 border border-gray-700 rounded px-2 py-1 text-gray-200 flex-1 min-w-0" />
+                          <button
+                            onClick={() => { if (scheduleInputs[k]) scheduleUpload(s.scene, nlInputToUtcIso(scheduleInputs[k])); }}
+                            disabled={!scheduleInputs[k] || busy[k]}
+                            className="text-xs bg-purple-700 hover:bg-purple-600 text-white px-2 py-1.5 rounded-lg disabled:opacity-40 whitespace-nowrap">
+                            Schedule
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

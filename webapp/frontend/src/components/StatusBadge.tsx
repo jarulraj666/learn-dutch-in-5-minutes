@@ -4,6 +4,7 @@ import type { TopicStatus } from "@/lib/types";
 const MAP: Record<TopicStatus, string> = {
   pending: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30",
   generated: "bg-blue-500/20 text-blue-300 border border-blue-500/30",
+  ready_to_publish: "bg-purple-500/20 text-purple-300 border border-purple-500/30",
   done: "bg-green-500/20 text-green-300 border border-green-500/30",
 };
 

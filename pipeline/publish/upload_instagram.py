@@ -277,6 +277,9 @@ def upload_short_instagram(
         )
 
     video_file = Path(scene_short.get("video_file", ""))
+    if not video_file.is_absolute():
+        ROOT = Path(__file__).resolve().parent.parent.parent
+        video_file = ROOT / video_file
     if not video_file.exists():
         raise FileNotFoundError(f"Short video not found: {video_file}")
 

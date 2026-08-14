@@ -177,35 +177,149 @@ def generate_script(
     # Inject level and category into script so downstream stages can use them
     script.setdefault("level", effective_level)
     script.setdefault("category", category)
-    
+
     # The LLM generates image_prompt as part of the JSON response — use it directly.
     if not script.get("image_prompt"):
         LOGGER.warning("image_prompt missing from LLM response for topic_id=%s", topic.topic_id)
 
-    # Enrich dialogue scripts with speaker metadata and scenario
+    # --- Dialogue-only enrichment ---
     if category == "dialogue":
         speaker_metadata = _build_speaker_metadata(topic)
         if speaker_metadata:
-            script["speakers"] = speaker_metadata["speakers"]
+            speakers = speaker_metadata.get("speakers", [])
+            s1 = next((s for s in speakers if s["id"] == "Speaker1"), {})
+            s2 = next((s for s in speakers if s["id"] == "Speaker2"), {})
+
+            # Step 1: Fix speaker role swaps immediately after generation
+            try:
+                script["dialogue"] = _fix_speaker_roles(
+                    dialogue=script.get("dialogue", []),
+                    s1_role=s1.get("role", "speaker1"),
+                    s2_role=s2.get("role", "speaker2"),
+                )
+                turns = iter_dialogue_turns(script["dialogue"])
+                script["script_text"] = _build_script_text(turns)
+                LOGGER.info("speaker_fix: complete")
+            except Exception as exc:
+                LOGGER.warning("speaker_fix: failed (non-fatal): %s", exc)
+
+            # Step 2: Translate fixed Dutch dialogue to English
+            try:
+                dialogue_en = _translate_dialogue_to_english(script.get("dialogue", []))
+                if dialogue_en:
+                    script["dialogue_en"] = dialogue_en
+                    LOGGER.info("translation: %d lines generated", len(dialogue_en))
+            except Exception as exc:
+                LOGGER.warning("translation: failed (non-fatal): %s", exc)
+
+            # Step 3: Attach speaker metadata and scenario
+            script["speakers"] = speakers
             script.setdefault("scenario", speaker_metadata.get("scenario"))
-            
-            # Generate 5-6 scene-based image prompts for dialogue (new multi-image feature)
+
+            # Step 4: Generate per-scene image prompts
             try:
                 image_prompts = _generate_multiple_image_prompts(script, speaker_metadata, topic)
                 if image_prompts:
                     script["image_prompts"] = image_prompts
                     LOGGER.info(
-                        "Generated %d image prompts for dialogue scenes (multi-image feature)",
-                        len(image_prompts),
+                        "image_prompts: %d scenes generated", len(image_prompts),
                     )
             except Exception as e:
                 LOGGER.warning(
-                    "Failed to generate multiple image prompts for dialogue: %s. Falling back to single image.",
-                    str(e),
+                    "image_prompts: failed (non-fatal): %s. Falling back to single image.", str(e),
                 )
                 # image_prompt field remains available from LLM response for backward compatibility
 
     return script
+
+
+def _fix_speaker_roles(
+    dialogue: list[dict],
+    s1_role: str,
+    s2_role: str,
+) -> list[dict]:
+    """Ask the LLM to verify and correct any swapped speaker labels.
+
+    Sends only the raw dialogue lines and the role definitions — no other
+    content — so this is a fast, cheap call. Returns the corrected dialogue.
+    """
+    if not dialogue:
+        return dialogue
+
+    # Serialise to a compact numbered list for the prompt
+    lines_text = "\n".join(
+        f"{i+1}. {list(d.keys())[0]}: {list(d.values())[0]}"
+        for i, d in enumerate(dialogue)
+        if d
+    )
+
+    correction_prompt = (
+        f"You are auditing speaker labels in a Dutch dialogue script.\n\n"
+        f"ROLES:\n"
+        f"- Speaker1 = {s1_role}\n"
+        f"- Speaker2 = {s2_role}\n\n"
+        f"RULE: Every line must be labelled with the speaker whose ROLE fits what is being said. "
+        f"Speaker1 always says things a {s1_role} would say. "
+        f"Speaker2 always says things a {s2_role} would say. "
+        f"If you see a block where the labels are swapped, correct them.\n\n"
+        f"DIALOGUE:\n{lines_text}\n\n"
+        f"Return ONLY a JSON array of corrected dialogue objects, "
+        f'e.g. [{{"Speaker1": "..."}}. {{"Speaker2": "..."}}]. '
+        f"Do not add any explanation. Do not change the Dutch text itself — only fix wrong speaker labels."
+    )
+
+    try:
+        corrected = _generate_script_gemini(correction_prompt)
+        # The model may return {"dialogue": [...]} or just [...]
+        if isinstance(corrected, list):
+            return corrected
+        if isinstance(corrected, dict):
+            for key in ("dialogue", "lines", "result"):
+                if isinstance(corrected.get(key), list):
+                    return corrected[key]
+        LOGGER.warning("speaker_fix: unexpected response shape — keeping original")
+    except Exception as exc:
+        LOGGER.warning("speaker_fix: LLM call failed (%s) — keeping original", exc)
+
+    return dialogue
+
+
+def _translate_dialogue_to_english(dialogue: list[dict]) -> list[dict]:
+    """Translate a Dutch dialogue list to English in a dedicated LLM call.
+
+    Each input dict is {SpeakerX: "Dutch text"}.
+    Returns a matching list of {SpeakerX: "English text"} dicts.
+    """
+    if not dialogue:
+        return []
+
+    lines_text = "\n".join(
+        f"{i+1}. {list(d.keys())[0]}: {list(d.values())[0]}"
+        for i, d in enumerate(dialogue)
+        if d
+    )
+
+    prompt = (
+        "Translate the following Dutch dialogue to natural English. "
+        "Keep the same speaker labels (Speaker1, Speaker2) and the same number of lines. "
+        "Translate meaning naturally — do not translate word-for-word. "
+        "Return ONLY a JSON array matching the input structure, e.g. "
+        '[{"Speaker1": "..."}, {"Speaker2": "..."}]. '
+        "No explanation, no markdown, no extra text.\n\n"
+        f"DUTCH DIALOGUE:\n{lines_text}"
+    )
+
+    result = _generate_script_gemini(prompt)
+
+    if isinstance(result, list):
+        return result
+    if isinstance(result, dict):
+        for key in ("dialogue", "dialogue_en", "lines", "result", "translation"):
+            if isinstance(result.get(key), list):
+                return result[key]
+
+    LOGGER.warning("translate: unexpected response shape — returning empty")
+    return []
 
 
 def _is_rate_limited(exc: Exception) -> bool:

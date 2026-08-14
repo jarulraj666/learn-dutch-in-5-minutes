@@ -19,4 +19,5 @@ pip install -q -r "$BACKEND/requirements.txt"
 
 cd "$BACKEND"
 echo "Starting backend on http://localhost:8000"
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+echo "caffeinate active — laptop will stay awake while backend is running"
+caffeinate -s uvicorn main:app --host 0.0.0.0 --port 8000 --reload

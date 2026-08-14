@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Dutch in 5 Minutes | Professional Dutch Learning Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        nav a:hover {
+            opacity: 0.8;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6rem 2rem;
+            text-align: center;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            max-width: 600px;
+            opacity: 0.95;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 4rem 2rem;
+            background: #f8f9fa;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .feature-card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Courses Section */
+        .courses {
+            padding: 4rem 2rem;
+        }
+
+        .courses h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .course-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .course-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .course-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .course-header h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .level {
+            display: inline-block;
+            background: rgba(255,255,255,0.3);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .course-content {
+            padding: 1.5rem;
+        }
+
+        .course-content ul {
+            list-style: none;
+            margin-bottom: 1rem;
+        }
+
+        .course-content li {
+            padding: 0.5rem 0;
+            color: #666;
+            border-bottom: 1px solid #eee;
+        }
+
+        .course-content li:before {
+            content: "✓ ";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        /* Stats Section */
+        .stats {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .stat {
+            font-size: 2rem;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        /* About Section */
+        .about {
+            padding: 4rem 2rem;
+            background: #f8f9fa;
+        }
+
+        .about h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .about-content {
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.8;
+            color: #666;
+        }
+
+        .about-content p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+
+        /* Platforms Section */
+        .platforms {
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .platforms h3 {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            color: #333;
+        }
+
+        .platform-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .platform-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 50px;
+            text-decoration: none;
+            color: #667eea;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .platform-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Footer */
+        footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        footer p {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            nav ul {
+                gap: 1rem;
+            }
+
+            .features-grid, .courses-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav>
+            <a href="#" class="logo">🇳🇱 Learn Dutch</a>
+            <ul>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#courses">Courses</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Learn Dutch in 5 Minutes</h1>
+        <p>Master the Dutch language with bite-sized video lessons designed for busy learners. Real conversations. Real progress.</p>
+        <a href="#courses" class="cta-button">Start Learning Now</a>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2>Why Choose Us?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="icon">🎬</div>
+                    <h3>Short Video Lessons</h3>
+                    <p>Learn Dutch in bite-sized 5-minute lessons that fit perfectly into your busy schedule. No long, boring tutorials.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🗣️</div>
+                    <h3>Real Conversations</h3>
+                    <p>Practice with authentic dialogue scenarios. From ordering at a restaurant to shopping at markets – real-world Dutch.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">📚</div>
+                    <h3>Structured Curriculum</h3>
+                    <p>A1, A2, B1, B2 levels. Carefully designed progression from beginner to intermediate. Build strong foundations.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🎯</div>
+                    <h3>Targeted Topics</h3>
+                    <p>Focus on practical topics: greetings, shopping, dining, introductions, and more. Learn what matters.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">💬</div>
+                    <h3>Subtitles & Transcripts</h3>
+                    <p>Full English and Dutch subtitles. Follow along with transcripts to improve reading and listening together.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🎤</div>
+                    <h3>Native Speakers</h3>
+                    <p>Learn from native Dutch speakers with clear pronunciation. Authentic accent and natural speech patterns.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Courses Section -->
+    <section class="courses" id="courses">
+        <div class="container">
+            <h2>Our Course Levels</h2>
+            <div class="courses-grid">
+                <div class="course-card">
+                    <div class="course-header">
+                        <h3>Beginner</h3>
+                        <span class="level">A1-A2</span>
+                    </div>
+                    <div class="course-content">
+                        <ul>
+                            <li>Greetings & Introductions</li>
+                            <li>Basic Conversations</li>
+                            <li>Shopping & Ordering</li>
+                            <li>Numbers & Dates</li>
+                            <li>Common Phrases</li>
+                            <li>50+ Video Lessons</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="course-card">
+                    <div class="course-header">
+                        <h3>Intermediate</h3>
+                        <span class="level">B1-B2</span>
+                    </div>
+                    <div class="course-content">
+                        <ul>
+                            <li>Advanced Dialogues</li>
+                            <li>Grammar Deep Dives</li>
+                            <li>Business Dutch</li>
+                            <li>Complex Conversations</li>
+                            <li>Cultural Context</li>
+                            <li>75+ Video Lessons</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="course-card">
+                    <div class="course-header">
+                        <h3>All Platforms</h3>
+                        <span class="level">Multi-Channel</span>
+                    </div>
+                    <div class="course-content">
+                        <ul>
+                            <li>YouTube Videos</li>
+                            <li>Instagram Reels</li>
+                            <li>Facebook Videos</li>
+                            <li>TikTok Shorts</li>
+                            <li>Downloadable Transcripts</li>
+                            <li>Free Access Everywhere</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat">
+                    <span class="stat-number">10K+</span>
+                    <span>Active Learners</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">150+</span>
+                    <span>Video Lessons</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">4 CEFR</span>
+                    <span>Proficiency Levels</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">100%</span>
+                    <span>Free Content</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about" id="about">
+        <div class="container">
+            <h2>About Our Platform</h2>
+            <div class="about-content">
+                <p>
+                    <strong>Learn Dutch in 5 Minutes</strong> is a revolutionary language learning platform designed specifically for busy professionals, students, and travel enthusiasts who want to learn Dutch without spending hours on traditional language courses.
+                </p>
+                <p>
+                    We believe that quality language education doesn't require lengthy textbooks or boring grammar exercises. Instead, we use authentic video dialogues, real-world scenarios, and native speakers to teach you Dutch the way it's actually spoken.
+                </p>
+                <p>
+                    Every lesson is crafted to teach you practical, immediately useful Dutch. Whether you're planning to visit Amsterdam, expand your career prospects, or simply explore Dutch culture – we have lessons tailored for you.
+                </p>
+                <p>
+                    <strong>Join thousands of learners today</strong> and start speaking Dutch confidently in just minutes a day.
+                </p>
+            </div>
+
+            <div class="platforms">
+                <h3>Watch Our Lessons On</h3>
+                <div class="platform-links">
+                    <a href="https://youtube.com/playlist?list=PLebqqzDn6i8U" class="platform-btn">▶ YouTube</a>
+                    <a href="https://instagram.com/learndutchin5minutes" class="platform-btn">📸 Instagram</a>
+                    <a href="https://facebook.com/learndutchin5minutes" class="platform-btn">📘 Facebook</a>
+                    <a href="https://tiktok.com/@learndutchin5minutes" class="platform-btn">🎵 TikTok</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <p>&copy; 2024 Learn Dutch in 5 Minutes. All rights reserved.</p>
+        <p>📧 Contact: <strong>info@learndutchin5minutes.nl</strong></p>
+        <p>Made with ❤️ for Dutch language learners worldwide.</p>
+    </footer>
+</body>
+</html>

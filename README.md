@@ -74,8 +74,15 @@ caffeinate -s python -m pipeline.core.db --init
 
 **Reset a topic to pending (re-run it):**
 ```bash
-sqlite3 db/content.db "UPDATE topics SET status = 'pending' WHERE id = 'your_topic_id';"
+sqlite3 db/content.db "UPDATE topics SET status = 'pending' WHERE id = 'hotel_checkin';"
 ```
+
+**Delete all local files for an episode (audio, subtitles, images, video, shorts, scripts) and reset topic to pending:**
+```bash
+python -m pipeline.run_pipeline --cleanup output/A1A2/dialogue/episode_<topic_id>_<title_slug>.json
+```
+
+> This does **not** delete anything from YouTube. It only removes local output files and resets the DB status to `pending` so the episode can be regenerated from scratch.
 
 **View all topics and their statuses:**
 ```bash
@@ -220,6 +227,12 @@ A local web app for managing topics, triggering the pipeline, previewing media, 
 ```bash
 ./webapp/scripts/start_frontend.sh
 # → http://localhost:3000
+```
+
+**Stop the servers:**
+```bash
+lsof -ti :8000 | xargs kill -9
+lsof -ti :3000 | xargs kill -9
 ```
 
 Open **http://localhost:3000** in your browser.

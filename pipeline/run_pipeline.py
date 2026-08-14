@@ -17,7 +17,10 @@ from pipeline.core.select_topic import choose_next_topic
 from pipeline.core.store_content import (
     create_title_slug,
     ensure_output_dir,
+    save_episode_artifact,
     store_canonical_script,
+    store_publish_job,
+    update_publish_job_artifacts,
 )
 from pipeline.publish.render_video import render_from_artifact
 from pipeline.publish.upload_youtube import build_upload_payload, upload_video
@@ -170,51 +173,47 @@ def _select_seed_image() -> str:
     return rel
 
 
-def _checkpoint_path(level: str, category: str, topic_id: str) -> Path:
-    from pipeline.core.store_content import ensure_output_dir
-    out_dir = ensure_output_dir(level, category)
-    return out_dir / f".checkpoint_{topic_id}.json"
 
-
-def _save_checkpoint(path: Path, data: dict) -> None:
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-    LOGGER.debug("checkpoint.saved %s", path)
-
-
-def _load_checkpoint(path: Path) -> dict:
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def run(language: str, level: str, category: str | None = None, upload: bool = True, resume_checkpoint: Path | None = None, topic_id: str | None = None) -> Path:
+def run(language: str, level: str, category: str | None = None, upload: bool = True, resume_artifact: Path | None = None, topic_id: str | None = None) -> Path:
     run_start = time.perf_counter()
     LOGGER.info(
         "=== PIPELINE START language=%s level=%s category=%s topic_id=%s resume=%s ===",
-        language, level, category or "auto", topic_id or "auto", resume_checkpoint or "none",
+        language, level, category or "auto", topic_id or "auto", resume_artifact or "none",
     )
 
-    # --- Load checkpoint if resuming ---
-    cp: dict = {}
-    if resume_checkpoint and resume_checkpoint.exists():
-        cp = _load_checkpoint(resume_checkpoint)
-        level = cp.get("level", level)
-        category = cp.get("category", category)
-        LOGGER.info("checkpoint.loaded topic=%s completed_stages=%s", cp.get("topic_id"), cp.get("completed_stages", []))
+    # --- Load existing artifact for resume ---
+    _resume: dict = {}
+    if resume_artifact and resume_artifact.exists():
+        _resume = json.loads(resume_artifact.read_text(encoding="utf-8"))
+        level = normalize_level(_resume.get("level", level))
+        category = _resume.get("category", category)
+        topic_id = _resume.get("topic_id", topic_id)
+        LOGGER.info("artifact.loaded topic=%s for resume", _resume.get("topic_id"))
 
     with _stage("db_init"):
         init_db()
         seed_topics_from_config()
         LOGGER.info("✓ Database initialized")
 
-    completed_stages: list[str] = cp.get("completed_stages", [])
-
     # --- Topic selection ---
-    if "topic_selection" in completed_stages:
+    if _resume.get("topic_id"):
         from pipeline.core.select_topic import TopicChoice
-        td = cp["topic"]
-        topic = TopicChoice(**td)
+        t = _resume.get("topic", {})
+        topic = TopicChoice(
+            topic_id=_resume["topic_id"],
+            track=t.get("track", ""),
+            title_hint=t.get("title_hint", _resume.get("title_slug", "")),
+            level=normalize_level(_resume["level"]),
+            category=_resume["category"],
+            scenario=t.get("scenario"),
+            speaker1_role=t.get("speaker1_role"),
+            speaker2_role=t.get("speaker2_role"),
+            speaker1_gender=t.get("speaker1_gender"),
+            speaker2_gender=t.get("speaker2_gender"),
+        )
         level = normalize_level(topic.level)
         category = topic.category
-        LOGGER.info("checkpoint.skip topic_selection — using saved topic: %s", topic.topic_id)
+        LOGGER.info("artifact.skip topic_selection — using saved topic: %s", topic.topic_id)
     else:
         with _stage("topic_selection"):
             if topic_id:
@@ -244,33 +243,23 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
                 "✓ Topic selected: %s | level=%s category=%s track=%s",
                 topic.title_hint, topic.level, topic.category, topic.track,
             )
-        cp.update({"level": level, "category": category, "topic_id": topic.topic_id,
-                   "topic": topic.__dict__, "language": language})
-        completed_stages.append("topic_selection")
-        cp["completed_stages"] = completed_stages
-        chk = _checkpoint_path(level, category, topic.topic_id)
-        _save_checkpoint(chk, cp)
 
     # --- Script generation ---
-    if "script_generation" in completed_stages:
-        script = cp["script"]
-        LOGGER.info("checkpoint.skip script_generation")
+    if _resume.get("script"):
+        script = _resume["script"]
+        LOGGER.info("artifact.skip script_generation")
     else:
         with _stage("script_generation"):
             script = stage_script(topic, language=language, level=level)
             LOGGER.info("✓ Script generated: %d dialogue lines", len(script.get("dialogue", [])))
-        cp["script"] = script
-        completed_stages.append("script_generation")
-        cp["completed_stages"] = completed_stages
-        _save_checkpoint(_checkpoint_path(level, category, topic.topic_id), cp)
 
     # --- Metadata generation ---
-    if "metadata_generation" in completed_stages:
-        playlist_name = cp["playlist_name"]
-        playlist_description = cp["playlist_description"]
-        playlist_id = cp.get("playlist_id", "")
-        metadata = cp["metadata"]
-        LOGGER.info("checkpoint.skip metadata_generation")
+    if _resume.get("metadata"):
+        playlist_name = _resume.get("playlist", "")
+        playlist_description = _resume.get("playlist_description", "")
+        playlist_id = _resume.get("playlist_id", "")
+        metadata = _resume["metadata"]
+        LOGGER.info("artifact.skip metadata_generation")
     else:
         with _stage("metadata_generation"):
             playlist_name, playlist_description, playlist_id, metadata = stage_metadata(
@@ -279,17 +268,6 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
                 level=level,
             )
             LOGGER.info("✓ Metadata: title=%s | playlist=%s", metadata.get("title", ""), playlist_name)
-        cp.update(
-            {
-                "playlist_name": playlist_name,
-                "playlist_description": playlist_description,
-                "playlist_id": playlist_id,
-                "metadata": metadata,
-            }
-        )
-        completed_stages.append("metadata_generation")
-        cp["completed_stages"] = completed_stages
-        _save_checkpoint(_checkpoint_path(level, category, topic.topic_id), cp)
 
     # Prepare hierarchical output directory structure: output/{level}/{category}/{type}/episode_{topic_id}_{title_slug}/
     title_slug = create_title_slug(topic.title_hint)
@@ -300,8 +278,6 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
     ensure_output_dir(level, category, "subtitles")
     out_path = out_dir / f"episode_{topic.topic_id}_{title_slug}.json"
     LOGGER.info("output.dirs.ready level=%s category=%s slug=%s base=%s", level, category, title_slug, out_dir)
-
-    chk_path = _checkpoint_path(level, category, topic.topic_id)
 
     # --- Artifact: load existing or create initial version ---
     # Written after every stage so it always reflects the latest state.
@@ -354,9 +330,10 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
     _write_artifact()
 
     # --- Voice generation ---
-    if "voice_generation" in completed_stages:
-        voice_plan = cp["voice_plan"]
-        LOGGER.info("checkpoint.skip voice_generation — audio: %s", voice_plan.get("dialogue_audio"))
+    _existing_audio = artifact.get("audio_file") or (artifact.get("voice") or {}).get("dialogue_audio", "")
+    if _existing_audio and Path(_existing_audio).exists():
+        voice_plan = artifact.get("voice", {})
+        LOGGER.info("artifact.skip voice_generation — audio: %s", _existing_audio)
     else:
         with _stage("voice_generation"):
             voice_plan = stage_voice(
@@ -364,17 +341,12 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
                 topic_id=topic.topic_id, title_slug=title_slug,
             )
             LOGGER.info("\u2713 Voice generated: %s", voice_plan.get("dialogue_audio", ""))
-        cp["voice_plan"] = voice_plan
-        completed_stages.append("voice_generation")
-        cp["completed_stages"] = completed_stages
-        _save_checkpoint(chk_path, cp)
-
-    artifact.update({
-        "audio_file": voice_plan.get("dialogue_audio", ""),
-        "audio_file_raw": voice_plan.get("dialogue_audio_raw", voice_plan.get("dialogue_audio", "")),
-        "voice": voice_plan,
-    })
-    _write_artifact()
+        artifact.update({
+            "audio_file": voice_plan.get("dialogue_audio", ""),
+            "audio_file_raw": voice_plan.get("dialogue_audio_raw", voice_plan.get("dialogue_audio", "")),
+            "voice": voice_plan,
+        })
+        _write_artifact()
 
     # --- Audio QA (blocks upload if score < 100%) ---
     _qa_passed: bool = True
@@ -398,9 +370,10 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
             LOGGER.warning("qa_audio.error — QA check failed (non-blocking)", exc_info=True)
 
     # --- Subtitle generation ---
-    if "subtitle_generation" in completed_stages:
-        subtitle_plan = cp["subtitle_plan"]
-        LOGGER.info("checkpoint.skip subtitle_generation")
+    _existing_karaoke = artifact.get("karaoke_file") or (artifact.get("subtitles") or {}).get("karaoke_file", "")
+    if _existing_karaoke and Path(_existing_karaoke).exists():
+        subtitle_plan = artifact.get("subtitles", {})
+        LOGGER.info("artifact.skip subtitle_generation")
     else:
         with _stage("subtitle_generation"):
             dialogue_audio_path = voice_plan.get("dialogue_audio")
@@ -412,16 +385,11 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
                 script_dialogue=script.get("dialogue"), dialogue_en=script.get("dialogue_en"),
             )
             LOGGER.info("\u2713 Subtitles generated: %s", subtitle_plan.get("srt_file", ""))
-        cp["subtitle_plan"] = subtitle_plan
-        completed_stages.append("subtitle_generation")
-        cp["completed_stages"] = completed_stages
-        _save_checkpoint(chk_path, cp)
-
-    artifact.update({
-        "karaoke_file": subtitle_plan.get("karaoke_file", ""),
-        "subtitles": subtitle_plan,
-    })
-    _write_artifact()
+        artifact.update({
+            "karaoke_file": subtitle_plan.get("karaoke_file", ""),
+            "subtitles": subtitle_plan,
+        })
+        _write_artifact()
 
     # --- Subtitle QA (non-blocking) ---
     if settings.QA_SUBTITLE_CHECK:
@@ -449,10 +417,11 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
             LOGGER.warning("qa_subtitles.error — subtitle QA failed (non-blocking)", exc_info=True)
 
     # --- Image generation ---
-    if "image_generation" in completed_stages:
-        generated_image_file = cp["generated_image_file"]
-        generated_image_files = cp.get("generated_image_files", [])
-        LOGGER.info("checkpoint.skip image_generation — %s", generated_image_file)
+    _existing_imgs = artifact.get("generated_image_files") or []
+    if _existing_imgs and Path(_existing_imgs[0]).exists():
+        generated_image_file = artifact.get("generated_image_file", _existing_imgs[0])
+        generated_image_files = _existing_imgs
+        LOGGER.info("artifact.skip image_generation — %d images", len(generated_image_files))
     else:
         with _stage("image_generation"):
             generated_image_file, generated_image_files, seed_returned = stage_image(
@@ -467,21 +436,14 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
             )
             if not generated_image_file:
                 raise RuntimeError("Image generation returned no file path.")
-            # Persist the seed that was actually used (may have been set for the first time here)
             if seed_returned and not artifact.get("seed_image_used"):
                 artifact["seed_image_used"] = seed_returned
             LOGGER.info("\u2713 Image generated: %s (%d scene images)", generated_image_file, len(generated_image_files))
-        cp["generated_image_file"] = generated_image_file
-        cp["generated_image_files"] = generated_image_files
-        completed_stages.append("image_generation")
-        cp["completed_stages"] = completed_stages
-        _save_checkpoint(chk_path, cp)
-
-    artifact.update({
-        "generated_image_file": generated_image_file or "",
-        "generated_image_files": generated_image_files or [],
-    })
-    _write_artifact()
+        artifact.update({
+            "generated_image_file": generated_image_file or "",
+            "generated_image_files": generated_image_files or [],
+        })
+        _write_artifact()
 
     with _stage("db_store_script"):
         canonical_script_id = store_canonical_script(
@@ -636,12 +598,6 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
     LOGGER.info("pipeline.done episode=%s elapsed_sec=%.2f artifact=%s",
                 canonical_script_id, time.perf_counter() - run_start, out_path)
 
-    # Clean up checkpoint on successful completion
-    chk_path = _checkpoint_path(level, category, topic.topic_id)
-    if chk_path.exists():
-        chk_path.unlink()
-        LOGGER.info("checkpoint.cleared %s", chk_path)
-
     return out_path
 
 
@@ -663,10 +619,102 @@ def load_artifact(artifact_path: str) -> dict:
     return artifact
 
 
+def _check_and_mark_ready_to_publish(artifact: dict) -> None:
+    """If both main video and at least one short video exist, mark topic ready_to_publish."""
+    topic_id = artifact.get("topic_id")
+    if not topic_id:
+        return
+    has_video = bool(artifact.get("video_file") and Path(artifact["video_file"]).exists())
+    shorts = artifact.get("shorts") or []
+    has_shorts = any(s.get("video_file") and Path(s["video_file"]).exists() for s in shorts)
+    if has_video and has_shorts:
+        try:
+            from pipeline.core.db import mark_topic_ready_to_publish
+            mark_topic_ready_to_publish(topic_id)
+            print(f"✅ Status → ready_to_publish (video + shorts ready)")
+        except Exception as exc:
+            print(f"⚠️  Could not update status: {exc}")
+
+
+def _check_and_mark_done(artifact: dict) -> None:
+    """Mark topic 'done' only when ALL active upload platforms are complete.
+
+    Rules:
+    - YouTube main video must be uploaded (youtube.video_id present).
+    - For each platform that has *any* upload, ALL shorts must be uploaded
+      to that platform (partial uploads keep status at ready_to_publish).
+    - If no shorts exist, done = YouTube main uploaded.
+    """
+    topic_id = artifact.get("topic_id")
+    if not topic_id:
+        return
+
+    # YouTube main video is required
+    if not (artifact.get("youtube") or {}).get("video_id"):
+        return
+
+    shorts = artifact.get("shorts") or []
+    if shorts:
+        def _ig_done(s: dict) -> bool:
+            return bool(s.get("reel_id") or (s.get("instagram") or {}).get("reel_id"))
+
+        def _tt_done(s: dict) -> bool:
+            return bool((s.get("tiktok") or {}).get("publish_id"))
+
+        def _yt_done(s: dict) -> bool:
+            return bool((s.get("youtube") or {}).get("short_video_id"))
+
+        def _fb_done(s: dict) -> bool:
+            return bool((s.get("facebook") or {}).get("post_id"))
+
+        # Detect which platforms have at least one upload
+        any_ig = any(_ig_done(s) for s in shorts)
+        any_tt = any(_tt_done(s) for s in shorts)
+        any_yt = any(_yt_done(s) for s in shorts)
+        any_fb = any(_fb_done(s) for s in shorts)
+
+        # All uploads on each active platform must be complete
+        if any_ig and not all(_ig_done(s) for s in shorts):
+            return
+        if any_tt and not all(_tt_done(s) for s in shorts):
+            return
+        if any_yt and not all(_yt_done(s) for s in shorts):
+            return
+        if any_fb and not all(_fb_done(s) for s in shorts):
+            return
+
+    try:
+        from pipeline.core.db import mark_topic_done
+        mark_topic_done(topic_id)
+        print("\u2705 Status \u2192 done (all platform uploads complete)")
+    except Exception as exc:
+        print(f"\u26a0\ufe0f  Could not update status to done: {exc}")
+
+
 def _save_artifact(artifact_path: str, artifact: dict) -> None:
     Path(artifact_path).write_text(
         json.dumps(artifact, indent=2, ensure_ascii=False), encoding="utf-8"
     )
+    # Keep publish_jobs.artifact_json in sync so the webapp media tab
+    # always reflects the latest stage output without needing a full pipeline run.
+    try:
+        from pipeline.core.store_content import save_episode_artifact
+        from pipeline.core.db import get_connection
+        canonical_script_id = artifact.get("canonical_script_id")
+        if canonical_script_id:
+            with get_connection() as conn:
+                row = conn.execute(
+                    "SELECT id FROM publish_jobs WHERE canonical_script_id = ? ORDER BY id DESC LIMIT 1",
+                    [canonical_script_id],
+                ).fetchone()
+            if row:
+                save_episode_artifact(
+                    publish_job_id=row["id"],
+                    artifact_json=artifact,
+                    artifact_file_path=artifact_path,
+                )
+    except Exception:
+        pass  # Non-fatal — disk write already succeeded
 
 
 def _normalize(artifact: dict) -> None:
@@ -716,6 +764,96 @@ def _topic_from_artifact(artifact: dict):
 # Stage runners — thin wrappers: load artifact → call stage → save artifact
 # ---------------------------------------------------------------------------
 
+def _cleanup_artifact(artifact_path: str) -> None:
+    """Delete all local files and directories associated with an artifact."""
+    import shutil
+    path = Path(artifact_path)
+    if not path.exists():
+        print(f"⚠️  Artifact not found: {artifact_path}")
+        return
+
+    artifact = json.loads(path.read_text(encoding="utf-8"))
+    topic_id = artifact.get("topic_id", "")
+    title_slug = artifact.get("title_slug", "")
+    level = artifact.get("level", "")
+    category = artifact.get("category", "")
+
+    deleted: list[str] = []
+    skipped: list[str] = []
+
+    def _remove(p: Path) -> None:
+        if not p.exists():
+            return
+        if p.is_dir():
+            shutil.rmtree(p)
+        else:
+            p.unlink()
+        deleted.append(str(p))
+
+    root = settings.ROOT
+
+    # Artifact JSON and any render manifests next to it
+    for f in path.parent.glob(f"episode_{topic_id}_{title_slug}*.json"):
+        _remove(f)
+
+    # Audio directory
+    audio_dir = artifact.get("voice", {}).get("audio_dir") or \
+                str(root / "output" / level / category / "audio" / f"episode_{topic_id}_{title_slug}")
+    _remove(root / audio_dir if not Path(audio_dir).is_absolute() else Path(audio_dir))
+
+    # Subtitles directory
+    subs_dir = root / "output" / level / category / "subtitles" / f"episode_{topic_id}_{title_slug}"
+    _remove(subs_dir)
+
+    # Visuals directories (may be named differently due to topic_title)
+    visuals_root = root / "output" / level / category / "visuals"
+    if visuals_root.exists():
+        for d in visuals_root.iterdir():
+            if d.is_dir() and d.name.startswith(f"episode_{topic_id}"):
+                _remove(d)
+
+    # Videos directory
+    videos_dir = root / "output" / level / category / "videos" / f"episode_{topic_id}_{title_slug}"
+    _remove(videos_dir)
+
+    # Shorts directory
+    shorts_dir = root / "output" / level / category / "shorts" / f"episode_{topic_id}_{title_slug}"
+    _remove(shorts_dir)
+
+    # Script exports
+    script_exports = (artifact.get("storage") or {}).get("script_exports", {})
+    for key in ("script_json", "script_markdown"):
+        p = script_exports.get(key, "")
+        if p:
+            _remove(root / p if not Path(p).is_absolute() else Path(p))
+
+    # Archived video
+    archived = (artifact.get("storage") or {}).get("archived_video_file", "")
+    if archived:
+        _remove(Path(archived))
+
+    # DB: reset topic to pending so it can be re-run
+    if topic_id:
+        try:
+            from pipeline.core.db import init_db
+            init_db()
+            import sqlite3
+            db_path = root / "db" / "content.db"
+            conn = sqlite3.connect(str(db_path))
+            conn.execute("UPDATE topics SET status = 'pending' WHERE id = ?", [topic_id])
+            conn.commit()
+            conn.close()
+            print(f"  ↩️  Topic '{topic_id}' reset to pending in DB")
+        except Exception as e:
+            print(f"  ⚠️  DB reset failed (non-fatal): {e}")
+
+    print(f"✅ Cleaned up {len(deleted)} item(s):")
+    for d in deleted:
+        print(f"   🗑  {d}")
+    if skipped:
+        print(f"⚠️  {len(skipped)} item(s) not found (already missing).")
+
+
 def run_script(artifact_path: str) -> None:
     artifact = load_artifact(artifact_path)
     print(f"🎯 Re-generating script for: {artifact['title_slug']}")
@@ -724,7 +862,53 @@ def run_script(artifact_path: str) -> None:
     artifact["script"] = script
     artifact["topic_title"] = script.get("topic_title", artifact.get("topic_title"))
     artifact["image_prompt"] = script.get("image_prompt", "")
+
+    # Persist updated script to the DB so the webapp Script tab reflects it
+    from pipeline.core.store_content import (
+        save_episode_artifact,
+        store_canonical_script,
+        store_publish_job,
+        update_publish_job_artifacts,
+    )
+    from pipeline.core.schedule_publish import next_publish_slot
+
+    canonical_script_id = store_canonical_script(
+        topic_id=artifact["topic_id"],
+        language="nl",
+        title=artifact.get("metadata", {}).get("title") or artifact.get("title_slug", ""),
+        script=script,
+    )
+    artifact["canonical_script_id"] = canonical_script_id
+
+    # Re-use existing publish_job if it exists for this canonical_script_id,
+    # otherwise create a new stub so artifact_path is tracked.
+    from pipeline.core.db import get_connection
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT id FROM publish_jobs WHERE canonical_script_id = ? ORDER BY id DESC LIMIT 1",
+            [canonical_script_id],
+        ).fetchone()
+    if row:
+        publish_job_id = row["id"]
+    else:
+        publish_job_id = store_publish_job(
+            canonical_script_id=canonical_script_id,
+            playlist_track=artifact.get("topic", {}).get("track", artifact.get("topic_id", "")),
+            scheduled_at_iso=next_publish_slot().isoformat(),
+            playlist_name=artifact.get("playlist"),
+        )
+        update_publish_job_artifacts(
+            publish_job_id=publish_job_id,
+            artifact_path=artifact_path,
+            video_file_path="",
+        )
+
     _save_artifact(artifact_path, artifact)
+    save_episode_artifact(
+        publish_job_id=publish_job_id,
+        artifact_json=artifact,
+        artifact_file_path=artifact_path,
+    )
     print("✅ Script regenerated")
 
 
@@ -753,6 +937,23 @@ def run_subtitles(artifact_path: str, audio_path: Optional[str] = None) -> None:
     if not audio_path or not Path(audio_path).exists():
         raise FileNotFoundError(f"Audio file not found: {audio_path}")
     print(f"🎯 Re-generating subtitles for: {artifact['title_slug']}")
+
+    # Wipe the subtitle directory so stale .orig.srt and old ASS/SRT files
+    # don't interfere with timing on re-renders.
+    import shutil
+    from pipeline import settings as _settings
+    subtitle_dir = (
+        _settings.ROOT
+        / "output"
+        / artifact["level"]
+        / artifact["category"]
+        / "subtitles"
+        / f"episode_{artifact['topic_id']}_{artifact['title_slug']}"
+    )
+    if subtitle_dir.exists():
+        shutil.rmtree(subtitle_dir)
+        print(f"🗑  Cleared subtitle dir: {subtitle_dir.name}")
+
     subtitle_plan = stage_subtitles(
         audio_path=audio_path,
         output_root=Path(artifact_path).parent,
@@ -773,9 +974,9 @@ def run_image(artifact_path: str) -> None:
     artifact = load_artifact(artifact_path)
     print(f"🎯 Re-generating image for: {artifact['title_slug']}")
     script = artifact.get("script", {})
-    primary, all_files = stage_image(
+    primary, all_files, seed_used = stage_image(
         topic_id=artifact["topic_id"],
-        topic_title=artifact.get("topic_title", ""),
+        topic_title=artifact.get("topic_title") or artifact.get("script", {}).get("topic_title", ""),
         image_prompt=script.get("image_prompt") or artifact.get("image_prompt", ""),
         image_prompts=script.get("image_prompts") or artifact.get("image_prompts", []),
         level=artifact["level"],
@@ -784,6 +985,8 @@ def run_image(artifact_path: str) -> None:
     )
     artifact["generated_image_file"] = primary
     artifact["generated_image_files"] = all_files
+    if seed_used:
+        artifact["seed_image_used"] = seed_used
     _save_artifact(artifact_path, artifact)
     print(f"✅ Image regenerated ({len(all_files) or 1} image(s))")
 
@@ -791,13 +994,33 @@ def run_image(artifact_path: str) -> None:
 def run_render(artifact_path: str) -> str:
     artifact = load_artifact(artifact_path)
     print(f"🎯 Re-rendering video for: {artifact['title_slug']}")
+
+    # Staleness check: block render if audio is newer than the ASS subtitle file.
+    # Mismatched timestamps cause subtitles to race ahead of the audio.
+    audio_file = artifact.get("audio_file") or artifact.get("audio_file_raw", "")
+    ass_file = artifact.get("karaoke_file") or (artifact.get("srt_files") or {}).get("ass_karaoke", "")
+    if audio_file and ass_file:
+        audio_path = Path(audio_file) if Path(audio_file).is_absolute() else settings.ROOT / audio_file
+        ass_path = Path(ass_file) if Path(ass_file).is_absolute() else settings.ROOT / ass_file
+        if audio_path.exists() and ass_path.exists():
+            audio_mtime = audio_path.stat().st_mtime
+            ass_mtime = ass_path.stat().st_mtime
+            if audio_mtime > ass_mtime:
+                raise RuntimeError(
+                    "Audio file is newer than the subtitle file — subtitles will be out of sync.\n"
+                    "   Run stage 4 (Subtitles) before stage 7 (Render) to fix this."
+                )
+
     manifest_path = stage_render(artifact_path)
     # Load and save manifest to artifact
     render_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     artifact["render"] = render_manifest
-    _save_artifact(artifact_path, artifact)
     video_file = render_manifest.get("planned_video_file", "")
+    if video_file:
+        artifact["video_file"] = video_file
+    _save_artifact(artifact_path, artifact)
     print(f"✅ Video re-rendered: {video_file}")
+    _check_and_mark_ready_to_publish(artifact)
     return str(video_file)
 
 
@@ -811,12 +1034,23 @@ def run_upload(artifact_path: str, video_path: Optional[str] = None) -> None:
     result = stage_upload(artifact_path, video_path)
     artifact["youtube"] = result
     _save_artifact(artifact_path, artifact)
-    # Mark topic done in DB now that upload succeeded
+    # Write youtube_video_id to publish_jobs; status -> ready_to_publish until all platforms done
     _topic_id = artifact.get("topic_id")
+    _video_id = result.get("video_id")
     if _topic_id:
-        from pipeline.core.db import mark_topic_done
-        mark_topic_done(_topic_id)
-    print(f"✅ Uploaded: video_id={result.get('video_id')}")
+        from pipeline.core.db import mark_topic_ready_to_publish, get_connection
+        mark_topic_ready_to_publish(_topic_id)
+        if _video_id:
+            canonical_script_id = artifact.get("canonical_script_id")
+            if canonical_script_id:
+                with get_connection() as conn:
+                    conn.execute(
+                        "UPDATE publish_jobs SET youtube_video_id = ? "
+                        "WHERE id = (SELECT id FROM publish_jobs WHERE canonical_script_id = ? ORDER BY id DESC LIMIT 1)",
+                        [_video_id, canonical_script_id],
+                    )
+    print(f"✅ Uploaded: video_id={_video_id}")
+    _check_and_mark_done(artifact)
 
 
 def run_captions(artifact_path: str, video_id: Optional[str] = None) -> None:
@@ -973,6 +1207,187 @@ def run_qa_subtitles(artifact_path: str) -> None:
         raise ValueError(f"❌ Subtitle QA failed with score {total_score:.1f}/100. Fix subtitle issues before proceeding.")
 
 
+def run_export_image_prompts(artifact_path: str) -> None:
+    """Export formatted image prompts for all scenes to a text file.
+    Use these prompts in the Gemini web app (aistudio.google.com) to generate
+    images manually by uploading the seed image + pasting the prompt text.
+    """
+    artifact = load_artifact(artifact_path)
+    script = artifact.get("script", {})
+    image_prompts = script.get("image_prompts", [])
+    seed_image = artifact.get("seed_image_used", "")
+    title_slug = artifact.get("title_slug", artifact.get("topic_id", "episode"))
+
+    if not image_prompts:
+        print("⚠️  No image_prompts found in artifact — run Script stage first.")
+        return
+
+    common_instructions = (
+        "OUTPUT REQUIREMENT: ONE single continuous 16:9 image. "
+        "NEVER split into panels, NEVER tile, NEVER repeat, NEVER show the scene twice. One frame only.\n"
+        "ABSOLUTELY NO TEXT, NO WORDS, NO LABELS, NO SIGNS, NO CAPTIONS, "
+        "NO WRITING OF ANY KIND anywhere in the generated image. "
+        "Any props that would normally have writing must appear blank or decorative only."
+    )
+
+    out_path = Path(artifact_path).parent / f"image_prompts_{title_slug}.txt"
+    lines: list[str] = []
+    lines.append(f"IMAGE PROMPTS — {title_slug}")
+    lines.append("=" * 70)
+    lines.append("")
+    if seed_image:
+        lines.append(f"📎 Upload this reference image in the Gemini web app:")
+        lines.append(f"   {settings.ROOT / seed_image}")
+    lines.append("")
+    lines.append("Instructions: For each scene, upload the seed image above + paste the prompt below.")
+    lines.append("Web app: https://aistudio.google.com  (use gemini-3.1-flash-image or similar)")
+    lines.append("")
+
+    for p in image_prompts:
+        scene_n = p.get("scene", "?")
+        description = p.get("description", "")
+        trigger = p.get("trigger_sentence", "")
+        scene_prompt = p.get("prompt", "")
+
+        # Extract the compact scene-specific parts from the full prompt
+        # (environment, scene focus, visual emphasis) if present
+        env_line = ""
+        focus_line = ""
+        emphasis_line = ""
+        for segment in scene_prompt.split(". "):
+            s = segment.strip()
+            if s.startswith("Environment:"):
+                env_line = s
+            elif s.startswith("Scene focus:"):
+                focus_line = s
+            elif s.startswith("Visual emphasis:"):
+                emphasis_line = s
+
+        lines.append("-" * 70)
+        lines.append(f"SCENE {scene_n}: {description}")
+        if trigger:
+            lines.append(f"Trigger: \"{trigger}\"")
+        lines.append("")
+        lines.append("--- PROMPT (copy everything below this line) ---")
+        lines.append("")
+        # Build a focused prompt: scenario context first, then style/character constraints
+        scenario_context = (
+            f"SCENE SITUATION: {description}\n"
+            f"The dialogue trigger is: \"{trigger}\"\n"
+        )
+        if env_line:
+            scenario_context += f"{env_line}.\n"
+        if focus_line:
+            scenario_context += f"{focus_line}.\n"
+        if emphasis_line:
+            scenario_context += f"{emphasis_line}.\n"
+
+        prompt_text = (
+            f"{scenario_context}\n"
+            f"Reference image 1: the two main characters — keep faces, hairstyles, "
+            f"skin tones, and clothing IDENTICAL. "
+            f"IGNORE the characters' poses, gestures, and any objects they are holding — "
+            f"do NOT reproduce them. IGNORE any text visible in the reference image.\n"
+            f"{common_instructions}\n"
+            f"Art style: {scene_prompt.split('Environment:')[0].strip() if 'Environment:' in scene_prompt else ''}"
+        )
+        lines.append(prompt_text)
+        lines.append("")
+
+    # ── SHORTS (9:16 PORTRAIT) PROMPTS ──────────────────────────────────────
+    generated_16_9 = artifact.get("generated_image_files", [])
+    scene_to_16_9: dict[int, str] = {}
+    import re as _re
+    for img_rel in generated_16_9:
+        m = _re.search(r"scene(\d+)", Path(img_rel).name, _re.IGNORECASE)
+        if m:
+            scene_to_16_9[int(m.group(1))] = str(settings.ROOT / img_rel) if not Path(img_rel).is_absolute() else img_rel
+
+    lines.append("")
+    lines.append("=" * 70)
+    lines.append("SHORTS — 9:16 PORTRAIT PROMPTS")
+    lines.append("=" * 70)
+    lines.append("")
+    lines.append("Instructions: For each scene, upload BOTH reference images + paste the prompt.")
+    lines.append("  Reference image 1: seed image (character reference) — path listed above")
+    lines.append("  Reference image 2: the corresponding 16:9 scene image (style reference)")
+    lines.append("")
+
+    portrait_placement = (
+        "FULL-BLEED 9:16 PORTRAIT — every pixel covered by scene background. "
+        "NO white space, NO blank areas, NO borders anywhere. "
+        "Place both characters naturally within the frame with full bodies visible, "
+        "facing each other. "
+        "The bottom portion must show the actual floor/ground surface — "
+        "NOT a flat colour or gradient."
+    )
+    common_instructions_9_16 = (
+        "OUTPUT REQUIREMENT: ONE single continuous 9:16 portrait image. "
+        "NEVER split into panels, NEVER tile, NEVER repeat. One frame only.\n"
+        "ABSOLUTELY NO TEXT, NO WORDS, NO LABELS, NO SIGNS, NO CAPTIONS, "
+        "NO WRITING OF ANY KIND anywhere in the image."
+    )
+
+    for p in image_prompts:
+        scene_n = p.get("scene", "?")
+        description = p.get("description", "")
+        trigger = p.get("trigger_sentence", "")
+        scene_prompt = p.get("prompt", "")
+
+        env_line = focus_line = emphasis_line = ""
+        for segment in scene_prompt.split(". "):
+            s = segment.strip()
+            if s.startswith("Environment:"):
+                env_line = s
+            elif s.startswith("Scene focus:"):
+                focus_line = s
+            elif s.startswith("Visual emphasis:"):
+                emphasis_line = s
+
+        ref2_path = scene_to_16_9.get(scene_n, "")
+
+        lines.append("-" * 70)
+        lines.append(f"SCENE {scene_n} (9:16): {description}")
+        if trigger:
+            lines.append(f"Trigger: \"{trigger}\"")
+        if ref2_path:
+            lines.append(f"📎 Reference image 2 (16:9 scene): {ref2_path}")
+        lines.append("")
+        lines.append("--- PROMPT ---")
+        lines.append("")
+
+        scenario_context_9_16 = f"SCENE SITUATION: {description}\n"
+        if env_line:
+            scenario_context_9_16 += f"{env_line}.\n"
+        if focus_line:
+            scenario_context_9_16 += f"{focus_line}.\n"
+        if emphasis_line:
+            scenario_context_9_16 += f"{emphasis_line}.\n"
+
+        art_style_base = scene_prompt.split("Environment:")[0].strip() if "Environment:" in scene_prompt else ""
+        # Replace aspect ratio references
+        art_style_9_16 = art_style_base.replace("16:9", "9:16").replace("16:9 aspect ratio", "9:16 aspect ratio, portrait orientation")
+
+        prompt_9_16 = (
+            f"{scenario_context_9_16}\n"
+            f"Reference image 1: the two main characters — keep faces, hairstyles, "
+            f"skin tones, and clothing IDENTICAL. "
+            f"IGNORE poses, gestures, and held objects from reference images — do NOT reproduce them. "
+            f"IGNORE any text visible in reference images.\n"
+            f"Reference image 2 is a style reference — match its lighting, colour palette, and art style. "
+            f"DO NOT copy, tile, or repeat it. Generate a completely new 9:16 image.\n"
+            f"{common_instructions_9_16}\n"
+            f"{portrait_placement}\n"
+            f"Art style: {art_style_9_16}"
+        )
+        lines.append(prompt_9_16)
+        lines.append("")
+
+    out_path.write_text("\n".join(lines), encoding="utf-8")
+    print(f"✅ Prompts exported to: {out_path}")
+    print(f"   {len(image_prompts)} × 16:9 scenes + {len(image_prompts)} × 9:16 shorts")
+
+
 def run_generate_shorts_images(artifact_path: str) -> None:
     artifact = load_artifact(artifact_path)
     print(f"\U0001f3af Generating vertical (9:16) Short images for: {artifact['title_slug']}")
@@ -989,6 +1404,7 @@ def run_generate_shorts(artifact_path: str) -> None:
     artifact["shorts"] = shorts_list
     _save_artifact(artifact_path, artifact)
     print(f"\u2705 Generated {len(shorts_list)} Short clip(s)")
+    _check_and_mark_ready_to_publish(artifact)
 
 
 def run_upload_shorts(artifact_path: str) -> None:
@@ -1009,6 +1425,7 @@ def run_upload_shorts(artifact_path: str) -> None:
         except Exception as exc:
             print(f"  \u26a0\ufe0f  Scene {short['scene']} upload failed: {exc}")
     print("\u2705 Shorts upload complete")
+    _check_and_mark_done(artifact)
 
 
 def run_upload_shorts_instagram(artifact_path: str) -> None:
@@ -1033,6 +1450,7 @@ def run_upload_shorts_instagram(artifact_path: str) -> None:
         except Exception as exc:
             print(f"  \u26a0\ufe0f  Scene {short['scene']} Instagram upload failed: {exc}")
     print("\u2705 Instagram Reels upload complete")
+    _check_and_mark_done(artifact)
 
 
 def run_upload_shorts_tiktok(artifact_path: str) -> None:
@@ -1057,6 +1475,33 @@ def run_upload_shorts_tiktok(artifact_path: str) -> None:
         except Exception as exc:
             print(f"  \u26a0\ufe0f  Scene {short['scene']} TikTok upload failed: {exc}")
     print("\u2705 TikTok Shorts upload complete")
+    _check_and_mark_done(artifact)
+
+
+def run_upload_shorts_facebook(artifact_path: str) -> None:
+    from pipeline.stages import stage_upload_short_facebook
+    artifact = load_artifact(artifact_path)
+    shorts_list: list[dict] = artifact.get("shorts", [])
+    if not shorts_list:
+        raise ValueError("No shorts found in artifact. Run 'Generate Shorts' first.")
+    pending = [
+        (i, s) for i, s in enumerate(shorts_list)
+        if not s.get("facebook", {}).get("post_id")
+    ]
+    if not pending:
+        print("\u2705 All scenes already uploaded to Facebook \u2014 nothing to do.")
+        return
+    print(f"\U0001f4d8 Uploading {len(pending)} Reel(s) to Facebook for: {artifact['title_slug']}")
+    for i, short in pending:
+        try:
+            fb_result = stage_upload_short_facebook(artifact, artifact_path, short)
+            artifact["shorts"][i]["facebook"] = fb_result
+            _save_artifact(artifact_path, artifact)
+            print(f"  \u2705 Scene {short['scene']} uploaded: post_id={fb_result.get('post_id')}")
+        except Exception as exc:
+            print(f"  \u26a0\ufe0f  Scene {short['scene']} Facebook upload failed: {exc}")
+    print("\u2705 Facebook Reels upload complete")
+    _check_and_mark_done(artifact)
 
 
 # ---------------------------------------------------------------------------
@@ -1077,12 +1522,18 @@ _STAGES = [
     ("Upload Shorts",        run_upload_shorts),
     ("Upload Shorts Instagram", run_upload_shorts_instagram),
     ("Upload Shorts TikTok", run_upload_shorts_tiktok),
+    ("Upload Shorts Facebook", run_upload_shorts_facebook),
     ("Upload captions",      run_captions),
+    ("Export image prompts", run_export_image_prompts),
 ]
 
 
 def _parse_selection(raw: str, max_n: int) -> list[int]:
-    """Parse a stage selection string like '1 3 7' or '2,4' into 0-based indices."""
+    """Parse a stage selection string like '1 3 7' or '2,4' into 0-based indices.
+
+    Always returns indices sorted in ascending order so stages run in the
+    canonical pipeline sequence regardless of input order.
+    """
     tokens = re.split(r"[\s,]+", raw.strip())
     indices = []
     for tok in tokens:
@@ -1097,7 +1548,7 @@ def _parse_selection(raw: str, max_n: int) -> list[int]:
             print(f"  ⚠  {n} is out of range — ignored")
             continue
         indices.append(n - 1)   # convert to 0-based
-    return indices
+    return sorted(set(indices))  # deduplicate and sort
 
 
 def interactive_menu(artifact_path: str) -> None:
@@ -1177,6 +1628,8 @@ Examples:
     parser.add_argument("--topic-id", metavar="TOPIC_ID", help="Run pipeline for a specific topic ID instead of auto-selecting the next pending topic")
     parser.add_argument("--script-only", action="store_true", help="Generate only the script and create/update artifact (skip all other stages)")
     parser.add_argument("--resume", metavar="CHECKPOINT", help="Resume from a checkpoint file (output/{level}/{category}/.checkpoint_{topic_id}.json)")
+    parser.add_argument("--cleanup", metavar="ARTIFACT", help="Delete all local files and directories associated with an artifact (audio, subtitles, images, video, shorts, scripts). Does not affect YouTube uploads.")
+    parser.add_argument("--stages", metavar="STAGES", help="Comma-separated list of stage numbers to run non-interactively when used with --artifact (e.g. --stages 3,4,7)")
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -1184,10 +1637,27 @@ Examples:
         format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
     )
 
+    # ── CLEANUP MODE: delete all local files for an artifact ─────────────────
+    if args.cleanup:
+        _cleanup_artifact(args.cleanup)
+        return
+
     # ── ARTIFACT MODE: interactive stage re-run on existing episode ──────────
     if args.artifact:
         try:
-            interactive_menu(args.artifact)
+            if args.stages:
+                # Non-interactive: run specified stages directly
+                selected = _parse_selection(args.stages, len(_STAGES))
+                if not selected:
+                    print("✗ No valid stages in --stages", file=sys.stderr)
+                    sys.exit(1)
+                artifact_data = load_artifact(args.artifact)
+                for idx in selected:
+                    name, fn = _STAGES[idx]
+                    print(f"\n▶  Running: {name}")
+                    fn(args.artifact)
+            else:
+                interactive_menu(args.artifact)
         except Exception as e:
             LOGGER.exception("artifact_mode.failed")
             print(f"\u274c Error: {e}", file=sys.stderr)
@@ -1274,7 +1744,36 @@ Examples:
                 }
             )
             _save_artifact(str(out_path), artifact)
-            
+
+            # Persist script to DB so the webapp can display it
+            canonical_script_id = store_canonical_script(
+                topic_id=args.topic_id,
+                language="nl",
+                title=metadata["title"],
+                script=script,
+            )
+            artifact["canonical_script_id"] = canonical_script_id
+
+            # Create a publish_job stub so artifact_path is tracked in the DB
+            from pipeline.core.schedule_publish import next_publish_slot
+            publish_job_id = store_publish_job(
+                canonical_script_id=canonical_script_id,
+                playlist_track=topic.track,
+                scheduled_at_iso=next_publish_slot().isoformat(),
+                playlist_name=playlist_name,
+            )
+            update_publish_job_artifacts(
+                publish_job_id=publish_job_id,
+                artifact_path=str(out_path),
+                video_file_path="",
+            )
+            save_episode_artifact(
+                publish_job_id=publish_job_id,
+                artifact_json=artifact,
+                artifact_file_path=str(out_path),
+            )
+
+            _save_artifact(str(out_path), artifact)
             print(f"\u2713 Script-only complete. Artifact: {out_path}")
             return
         except Exception as e:

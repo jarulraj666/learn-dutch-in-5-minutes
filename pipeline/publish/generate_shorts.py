@@ -628,25 +628,48 @@ def generate_shorts_images(artifact: dict, artifact_path: Path) -> list[dict]:
         elif seed_image_rels:
             LOGGER.warning("generate_shorts_images: none of the configured seed images exist: %s — generating without seed", seed_image_rels)
 
-    # _generate_multiple_images saves to output_root/visuals/episode_{topic_id}_{topic_title}/
-    # We pass shorts_base as output_root so images land in shorts/.../visuals/...
+    # Build per-scene background seeds from the corresponding 16:9 main video images.
+    # Scene N (9:16) will use scene N (16:9) as its background reference so the
+    # colour palette, lighting, and decor are identical across both formats.
+    scene_bg_seeds: dict[int, bytes] = {}
+    main_images = artifact.get("generated_image_files", [])
+    if main_images:
+        for img_rel in main_images:
+            img_path = workspace / img_rel if not Path(img_rel).is_absolute() else Path(img_rel)
+            if not img_path.exists():
+                continue
+            # Parse scene number from filename: episode_{topic_id}_scene{N}.png
+            import re as _re
+            m = _re.search(r"scene(\d+)\.png$", img_path.name, _re.IGNORECASE)
+            if m:
+                scene_num = int(m.group(1))
+                scene_bg_seeds[scene_num] = img_path.read_bytes()
+                LOGGER.info("generate_shorts_images: loaded 16:9 bg seed scene=%d path=%s", scene_num, img_path)
+        if not scene_bg_seeds:
+            LOGGER.warning("generate_shorts_images: no 16:9 scene images found for bg seeds")
+
+    # Pass output_dir=images_dir so _generate_multiple_images writes directly there,
+    # skipping the intermediate visuals/episode_.../ subdirectory.
     # Pass aspect_ratio="9:16" so Gemini generates native portrait images directly.
     generated = _generate_multiple_images(
         topic_id=topic_id,
         topic_title=topic_title,
         output_root=shorts_base,
+        output_dir=images_dir,
         image_prompts=vertical_prompts,
         seed_image_path=seed_image_path,
         aspect_ratio="9:16",
+        scene_background_seeds=scene_bg_seeds or None,
     )
 
-    # Save images to the flat images_dir with predictable names.
+    # Rename to predictable scene_N_vertical.png names in the same images_dir.
     results: list[dict] = []
     for i, (prompt_info, src_path) in enumerate(zip(image_prompts, generated)):
         scene_n = prompt_info.get("scene", i + 1)
         dest = images_dir / f"scene_{scene_n}_vertical.png"
-        img = Image.open(src_path)
-        img.save(dest, format="PNG")
+        if src_path != dest:
+            src_path.rename(dest)
+        img = Image.open(dest)
         rel = str(dest.relative_to(workspace))
         results.append({"scene": scene_n, "image_path": rel})
         LOGGER.info("generate_shorts_images: scene=%d saved %s (%dx%d)", scene_n, dest, img.width, img.height)

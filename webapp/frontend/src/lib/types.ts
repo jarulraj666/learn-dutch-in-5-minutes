@@ -1,4 +1,4 @@
-export type TopicStatus = "pending" | "generated" | "done";
+export type TopicStatus = "pending" | "generated" | "ready_to_publish" | "done";
 
 export interface Topic {
   id: string;
@@ -29,14 +29,33 @@ export interface TopicDetail extends Topic {
   media: MediaInfo;
 }
 
+export type PlatformUploadStatus = "pending" | "partial" | "done";
+
 export interface MediaInfo {
   artifact: string | null;
   audio: string | null;
   video: string | null;
   images: string[];
+  scene_images: SceneImageInfo[];
   subtitles: { ass: string | null; srt_nl: string | null; srt_en: string | null };
   shorts: ShortInfo[];
+  platform_status: {
+    instagram: PlatformUploadStatus;
+    tiktok: PlatformUploadStatus;
+    youtube_shorts: PlatformUploadStatus;
+    facebook: PlatformUploadStatus;
+  };
   checkpoint: string | null;
+}
+
+export interface SceneImageInfo {
+  scene: number;
+  description: string;
+  trigger: string;
+  prompt: string;
+  prompt_9x16: string;
+  image_16x9: string | null;
+  image_9x16: string | null;
 }
 
 export interface ShortInfo {
@@ -47,6 +66,12 @@ export interface ShortInfo {
   container_id: string | null;
   permalink: string | null;
   draft: boolean;
+  instagram_scheduled_at: string | null;
+  facebook_scheduled_at: string | null;
+  youtube: { short_video_id?: string; [key: string]: unknown } | null;
+  tiktok: { publish_id?: string; [key: string]: unknown } | null;
+  instagram: { reel_id?: string; permalink?: string; [key: string]: unknown } | null;
+  facebook: { post_id?: string; video_id?: string; manually_marked?: boolean; [key: string]: unknown } | null;
 }
 
 export interface Stats {

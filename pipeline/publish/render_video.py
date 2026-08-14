@@ -13,6 +13,16 @@ from pipeline.utils import command_exists
 
 LOGGER = logging.getLogger(__name__)
 
+# English subtitle style for long video — matches the shorts English style from generate_shorts.py:
+# Roboto 50pt, white text, italic, soft-red outline & back (&H003333CC = BGR 51,51,204)
+_EN_SUBTITLE_FORCE_STYLE = (
+    "FontName=Roboto,FontSize=50,"
+    "PrimaryColour=&H00FFFFFF,SecondaryColour=&H00FFFFFF,"
+    "OutlineColour=&H003333CC,BackColour=&H003333CC,"
+    "Bold=0,Italic=1,Alignment=2,MarginV=60,BorderStyle=3,Outline=4,Shadow=0"
+)
+
+
 def _clamp_playback_speed(speed: float) -> float:
     if speed < 0.5:
         return 0.5
@@ -189,6 +199,7 @@ def _build_video_with_multi_images(
     burn_subtitles: bool,
     image_paths: list[Path],
     playback_speed: float,
+    en_srt_path: Path | None = None,
 ) -> tuple[bool, str]:
     """Build video from multiple images with fade transitions between them.
     
@@ -334,6 +345,9 @@ def _build_video_with_multi_images(
             formatted_ass_path = _format_subtitle_filter_path(ass_path)
             ass_filter = f"ass='{formatted_ass_path}'"
             vf_chain += f",{ass_filter}"
+        if en_srt_path and en_srt_path.exists():
+            formatted_en_path = _format_subtitle_filter_path(en_srt_path)
+            vf_chain += f",subtitles='{formatted_en_path}':force_style='{_EN_SUBTITLE_FORCE_STYLE}'"
         
         af_chain = _atempo_chain(playback_speed)
         
@@ -566,6 +580,7 @@ def _build_video_with_timed_images(
     image_data: list[dict],  # List of {image_path, trigger_sentence}
     playback_speed: float,
     nl_srt_path: Path | None = None,
+    en_srt_path: Path | None = None,
 ) -> tuple[bool, str]:
     """Render video with images timed by matching trigger sentences to subtitle timing.
 
@@ -747,6 +762,9 @@ def _build_video_with_timed_images(
             formatted_ass_path = _format_subtitle_filter_path(ass_path)
             ass_filter = f"ass='{formatted_ass_path}'"
             vf_chain += f",{ass_filter}"
+        if en_srt_path and en_srt_path.exists():
+            formatted_en_path = _format_subtitle_filter_path(en_srt_path)
+            vf_chain += f",subtitles='{formatted_en_path}':force_style='{_EN_SUBTITLE_FORCE_STYLE}'"
         
         if abs(playback_speed - 1.0) > 1e-6:
             vf_chain += f",setpts=PTS/{playback_speed:.6f}"
@@ -800,6 +818,7 @@ def _build_video_with_karaoke(
     burn_subtitles: bool,
     image_path: Path,
     playback_speed: float,
+    en_srt_path: Path | None = None,
 ) -> tuple[bool, str]:
     if not audio_path.exists():
         return False, f"Missing audio file: {audio_path}"
@@ -835,6 +854,9 @@ def _build_video_with_karaoke(
         formatted_ass_path = _format_subtitle_filter_path(ass_path)
         ass_filter = f"ass='{formatted_ass_path}'"
         vf_chain += f",{ass_filter}"
+    if en_srt_path and en_srt_path.exists():
+        formatted_en_path = _format_subtitle_filter_path(en_srt_path)
+        vf_chain += f",subtitles='{formatted_en_path}':force_style='{_EN_SUBTITLE_FORCE_STYLE}'"
 
     cmd = [
         "ffmpeg",
@@ -1016,15 +1038,31 @@ def render_from_artifact(artifact_path: Path) -> Path:
 
     ass_path_for_render = ass_path
 
-    # Dutch SRT for trigger sentence timing lookup (preferred over ASS parsing)
-    _nl_srt_raw = (data.get("subtitles") or {}).get("nl") or (data.get("srt_files") or {}).get("nl")
+    # Dutch SRT for trigger sentence timing lookup.
+    # Check all locations the pipeline may write it to.
+    _subs = data.get("subtitles") or {}
+    _nl_srt_raw = (
+        _subs.get("srt_nl")                              # run_subtitles / run_pipeline key
+        or (_subs.get("srt_files") or {}).get("nl")      # nested srt_files dict
+        or _subs.get("nl")                               # legacy key
+        or (data.get("srt_files") or {}).get("nl")       # old top-level key
+    )
     nl_srt_path: Path | None = None
     if _nl_srt_raw:
         _p = Path(_nl_srt_raw).resolve()
         if not _p.exists():
             _p = (settings.ROOT / _nl_srt_raw).resolve()
         if _p.exists():
-            nl_srt_path = _p
+            # Prefer .orig.srt (pre-speed-transform) so re-renders use raw audio timestamps.
+            # After the first render, _transform_srt_timestamps rewrites the SRT with
+            # intro-offset + speed-adjusted times. Using the transformed file for trigger
+            # matching shifts every scene start time forward, causing images to appear late.
+            _orig = _p.with_suffix(".orig.srt")
+            nl_srt_path = _orig if _orig.exists() else _p
+
+    # English SRT — resolved later after render_cfg is loaded
+    _en_srt_raw = _subs.get("srt_en") or (_subs.get("srt_files") or {}).get("en")
+    en_srt_path: Path | None = None
 
     ffmpeg_available = command_exists("ffmpeg")
     subtitles_filter_available = _supports_ass_filter() if ffmpeg_available else False
@@ -1102,6 +1140,17 @@ def render_from_artifact(artifact_path: Path) -> Path:
     configured_speed = _clamp_playback_speed(float(raw_speed))
     playback_speed = 1.0  # Speed is always applied as a final pass after rendering
 
+    # English SRT — burned into the video when burn_english_subtitles = true
+    if bool(render_cfg.get("burn_english_subtitles", False)) and _en_srt_raw:
+        _p = Path(_en_srt_raw).resolve()
+        if not _p.exists():
+            _p = (settings.ROOT / _en_srt_raw).resolve()
+        _orig = _p.with_suffix(".orig.srt")
+        if _orig.exists():
+            en_srt_path = _orig
+        elif _p.exists():
+            en_srt_path = _p
+
     ass_path_for_render = ass_path
     scaled_ass_tmp: Path | None = None
     LOGGER.info("ass.burned_in — timestamps transform not needed (frames move with speed pass)")
@@ -1134,6 +1183,7 @@ def render_from_artifact(artifact_path: Path) -> Path:
             image_data=image_data,
             playback_speed=playback_speed,
             nl_srt_path=nl_srt_path,
+            en_srt_path=en_srt_path,
         )
     elif use_multi_image:
         # Use equal-time distribution
@@ -1145,6 +1195,7 @@ def render_from_artifact(artifact_path: Path) -> Path:
             burn_subtitles=subtitles_filter_available,
             image_paths=image_paths,
             playback_speed=playback_speed,
+            en_srt_path=en_srt_path,
         )
     else:
         # Single-image rendering
@@ -1156,6 +1207,7 @@ def render_from_artifact(artifact_path: Path) -> Path:
             burn_subtitles=subtitles_filter_available,
             image_path=image_path,
             playback_speed=playback_speed,
+            en_srt_path=en_srt_path,
         )
     
     subtitle_burned_in = assembled and subtitles_filter_available

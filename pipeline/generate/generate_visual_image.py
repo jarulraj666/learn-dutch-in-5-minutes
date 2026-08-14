@@ -30,6 +30,8 @@ def _generate_multiple_images(
     image_prompts: list[dict[str, str]],
     seed_image_path: Path | None = None,
     aspect_ratio: str = "16:9",
+    output_dir: Path | None = None,
+    scene_background_seeds: dict[int, bytes] | None = None,
 ) -> list[Path]:
     """Generate multiple scene images in parallel, all seeded from a reference image.
     
@@ -78,7 +80,11 @@ def _generate_multiple_images(
         if not settings.GEMINI_IMAGE_CREATION_API_KEYS:
             raise ValueError("No Gemini image API keys configured")
         
-        def _generate_one_scene(prompt_item: dict, api_key: str) -> tuple[int, bytes]:
+        def _generate_one_scene(
+            prompt_item: dict,
+            api_key: str,
+            background_seed_bytes: bytes | None = None,
+        ) -> tuple[int, bytes]:
             """Generate a single scene image; returns (scene_num, image_bytes)."""
             scene_num = prompt_item.get("scene", 0)
             image_prompt = prompt_item.get("prompt", "")
@@ -110,31 +116,66 @@ def _generate_multiple_images(
                         "character in the right 35-40%, both facing inward toward the center, "
                         "with the center 20% kept open."
                     )
-                contents = [
+
+                parts: list = [
                     genai_types.Part(
                         inline_data=genai_types.Blob(
                             data=seed_image_bytes,
                             mime_type="image/png",
                         )
                     ),
+                ]
+
+                if background_seed_bytes:
+                    parts.append(
+                        genai_types.Part(
+                            inline_data=genai_types.Blob(
+                                data=background_seed_bytes,
+                                mime_type="image/png",
+                            )
+                        )
+                    )
+                    bg_instruction = (
+                        "Reference image 2 is a style reference only — use it to match the "
+                        "lighting style, colour palette, art style, and prop/object design. "
+                        "The scene content and character action and background should be generated fresh based on "
+                        "the scene description below. "
+                        "CRITICAL: DO NOT copy, tile, repeat, split, or stack this reference image. "
+                        "DO NOT show two panels or two versions of the scene. "
+                        "Create ONE completely new, original single-frame {aspect_ratio} image.\n"
+                    ).replace("{aspect_ratio}", aspect_ratio)
+                else:
+                    bg_instruction = ""
+
+                parts.append(
                     genai_types.Part(
                         text=(
-                            f"This reference image shows two adults \u2014 one male and one female \u2014 "
-                            f"who are the main characters in this Dutch language learning video. "
-                            f"Generate ONE single unified {aspect_ratio} scene (NOT a split panel, NOT a "
-                            f"side-by-side comparison, NOT a collage \u2014 one continuous illustration). "
-                            f"Using these EXACT SAME two characters (identical faces, hairstyles, "
-                            f"skin tones, and clothing for both), {placement} "
+                            f"Reference image 1: the two main characters — keep faces, hairstyles, "
+                            f"skin tones. "
+                            f"IGNORE the characters' poses, gestures, and any objects they are holding "
+                            f"in the reference images — do NOT reproduce them. "
+                            f"IGNORE any text, words, labels, or signs visible in reference images — "
+                            f"do NOT reproduce them.\n"
+                            f"{bg_instruction}"
+                            f"OUTPUT REQUIREMENT: ONE single continuous {aspect_ratio} image. "
+                            f"NEVER split into panels, NEVER tile, NEVER repeat, "
+                            f"NEVER show the scene twice. One frame only.\n"
+                            f"ABSOLUTELY NO TEXT, NO WORDS, NO LABELS, NO SIGNS, NO CAPTIONS, "
+                            f"NO WRITING OF ANY KIND anywhere in the generated image. "
+                            f"Any props that would normally have writing (menus, signs, nameplates, "
+                            f"cards, screens) must appear as blank or decorative only.\n"
+                            f"Using these EXACT SAME two characters, {placement} "
                             f"Scene to illustrate: {image_prompt}"
                         )
-                    ),
-                ]
+                    )
+                )
+                contents = parts
             else:
                 contents = f"Generate a {aspect_ratio} image: {image_prompt}"
 
             client = genai.Client(api_key=api_key)
             response = client.models.generate_content(
-                model="gemini-3.1-flash-lite-image",
+                model="gemini-3.1-flash-image",
                 contents=contents,
                 config=genai_types.GenerateContentConfig(
                     response_modalities=["IMAGE"],
@@ -153,27 +194,71 @@ def _generate_multiple_images(
         available_keys = list(settings.GEMINI_IMAGE_KEY_ROTATOR.available_keys())
         if not available_keys:
             raise ValueError("No available Gemini image API keys")
-        
-        keyed_prompts = [
-            (prompt_item, available_keys[i % len(available_keys)])
-            for i, prompt_item in enumerate(image_prompts)
-        ]
-        
-        # Fire all scene requests in parallel
+
         scene_results: dict[int, bytes] = {}
-        with concurrent.futures.ThreadPoolExecutor(max_workers=len(image_prompts)) as executor:
-            futures = {
-                executor.submit(_generate_one_scene, prompt_item, api_key): prompt_item.get("scene", i)
-                for i, (prompt_item, api_key) in enumerate(keyed_prompts)
-            }
-            for future in concurrent.futures.as_completed(futures):
-                try:
-                    scene_num, image_bytes = future.result()
-                    scene_results[scene_num] = image_bytes
-                    LOGGER.info("image_generation.scene_done scene=%d", scene_num)
-                except Exception as exc:
-                    original_scene = futures[future]
-                    raise RuntimeError(f"Scene {original_scene} generation failed: {exc}") from exc
+
+        # If per-scene background seeds are provided, all scenes run fully in parallel.
+        if scene_background_seeds:
+            LOGGER.info(
+                "image_generation.per_scene_bg_seeds scenes=%s — all scenes parallel",
+                sorted(scene_background_seeds.keys()),
+            )
+            keyed_all = [
+                (prompt_item, available_keys[i % len(available_keys)])
+                for i, prompt_item in enumerate(image_prompts)
+            ]
+            with concurrent.futures.ThreadPoolExecutor(max_workers=len(image_prompts)) as executor:
+                futures = {
+                    executor.submit(
+                        _generate_one_scene,
+                        prompt_item,
+                        api_key,
+                        scene_background_seeds.get(prompt_item.get("scene", 0)) if scene_background_seeds else None,
+                    ): prompt_item.get("scene", i)
+                    for i, (prompt_item, api_key) in enumerate(keyed_all)
+                }
+                for future in concurrent.futures.as_completed(futures):
+                    try:
+                        scene_num, image_bytes = future.result()
+                        scene_results[scene_num] = image_bytes
+                        LOGGER.info("image_generation.scene_done scene=%d", scene_num)
+                    except Exception as exc:
+                        original_scene = futures[future]
+                        raise RuntimeError(f"Scene {original_scene} generation failed: {exc}") from exc
+        else:
+            # Step 1: Generate scene 1 first (blocking) to establish the background reference.
+            # All remaining scenes receive scene 1's output as a second seed image so Gemini
+            # preserves the colour palette, lighting, and environment across the episode.
+            LOGGER.info("image_generation.scene1_start — generating background reference")
+            first_scene_num, first_scene_bytes = _generate_one_scene(
+                image_prompts[0], available_keys[0]
+            )
+            scene_results[first_scene_num] = first_scene_bytes
+            LOGGER.info("image_generation.scene1_done scene=%d — using as background seed", first_scene_num)
+            _background_seed = first_scene_bytes
+
+            # Step 2: Generate remaining scenes in parallel, each seeded with scene 1 as background.
+            remaining = image_prompts[1:]
+            if remaining:
+                keyed_remaining = [
+                    (prompt_item, available_keys[i % len(available_keys)])
+                    for i, prompt_item in enumerate(remaining, start=1)
+                ]
+                with concurrent.futures.ThreadPoolExecutor(max_workers=len(remaining)) as executor:
+                    futures = {
+                        executor.submit(
+                            _generate_one_scene, prompt_item, api_key, _background_seed
+                        ): prompt_item.get("scene", i)
+                        for i, (prompt_item, api_key) in enumerate(keyed_remaining)
+                    }
+                    for future in concurrent.futures.as_completed(futures):
+                        try:
+                            scene_num, image_bytes = future.result()
+                            scene_results[scene_num] = image_bytes
+                            LOGGER.info("image_generation.scene_done scene=%d", scene_num)
+                        except Exception as exc:
+                            original_scene = futures[future]
+                            raise RuntimeError(f"Scene {original_scene} generation failed: {exc}") from exc
         
         # Save images in original scene order
         image_files = []
@@ -246,6 +331,7 @@ def generate_topic_image(
 
     try:
         from google import genai
+        from google.genai import types as genai_types
 
         if not settings.GEMINI_IMAGE_CREATION_API_KEYS:
             raise ValueError("No Gemini image API keys configured. Set GEMINI_IMAGE_CREATION_API_KEYS in .env")
@@ -255,7 +341,7 @@ def generate_topic_image(
             try:
                 client = genai.Client(api_key=api_key)
                 response = client.models.generate_content(
-                    model="gemini-3.1-flash-lite-image",
+                    model="gemini-3.1-flash-image",
                     contents=f"Generate a 16:9 image: {image_prompt}",
                 )
                 if response.candidates:
@@ -263,6 +349,7 @@ def generate_topic_image(
                         if hasattr(part, "inline_data") and part.inline_data:
                             image_bytes = part.inline_data.data
                             break
+
                 if image_bytes:
                     LOGGER.info("image_generation.success")
                     break
@@ -434,7 +521,7 @@ def generate_image_from_artifact(
         Path to primary generated image file (for backward compatibility)
     """
     topic_id = artifact.get("topic_id", "unknown")
-    topic_title = artifact.get("topic_title", "Untitled")
+    topic_title = artifact.get("topic_title") or artifact.get("script", {}).get("topic_title", "Untitled")
     level = artifact.get("level", "A1A2")
     category = artifact.get("category", "dialogue")
     image_prompts = artifact.get("image_prompts") or artifact.get("script", {}).get("image_prompts", [])

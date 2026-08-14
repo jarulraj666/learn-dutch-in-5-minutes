@@ -109,6 +109,20 @@ def mark_topic_generated(topic_id: str) -> None:
         )
 
 
+def mark_topic_ready_to_publish(topic_id: str) -> None:
+    """Mark a topic as ready_to_publish (main video + shorts rendered)."""
+    from pipeline.utils import now_utc_iso
+    with get_connection() as conn:
+        conn.execute(
+            """
+            UPDATE topics
+            SET status = 'ready_to_publish', last_used_at = ?
+            WHERE id = ?
+            """,
+            (now_utc_iso(), topic_id),
+        )
+
+
 def mark_topic_done(topic_id: str) -> None:
     """Mark a topic as done after successful YouTube upload."""
     from pipeline.utils import now_utc_iso

@@ -95,10 +95,9 @@ async def start_pipeline(
     cmd: list[str] = [PYTHON, "-m", "pipeline.run_pipeline"]
 
     if artifact_path and stages:
-        # Non-interactive: pass stages via --stages flag (we'll add this support)
         cmd += ["--artifact", artifact_path, "--stages", ",".join(map(str, stages))]
     elif resume_checkpoint:
-        cmd += ["--resume", resume_checkpoint]
+        cmd += ["--resume", resume_checkpoint]  # now accepts artifact path
     else:
         if topic_id:
             cmd += ["--topic-id", topic_id]

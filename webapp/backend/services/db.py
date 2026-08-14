@@ -94,10 +94,10 @@ def get_topic(topic_id: str) -> dict | None:
             pj.youtube_video_id,
             pj.scheduled_at,
             pj.artifact_path,
-            pj.video_file_path,
+            pj.artifact_json,
             pj.artifact_file_path,
+            pj.video_file_path,
             pj.status AS publish_status,
-            pj.published_at,
             pj.status_detail,
             pj.playlist_name
         FROM topics t
@@ -118,6 +118,43 @@ def get_topic(topic_id: str) -> dict | None:
         except Exception:
             result["script"] = None
     return result
+
+
+def get_artifact_json(topic_id: str) -> str | None:
+    """Return the raw artifact_json blob for a topic's latest publish job, or None."""
+    sql = """
+        SELECT pj.artifact_json
+        FROM topics t
+        LEFT JOIN canonical_scripts cs ON cs.topic_id = t.id
+            AND cs.id = (SELECT MAX(id) FROM canonical_scripts WHERE topic_id = t.id)
+        LEFT JOIN publish_jobs pj ON pj.canonical_script_id = cs.id
+            AND pj.id = (SELECT MAX(id) FROM publish_jobs WHERE canonical_script_id = cs.id)
+        WHERE t.id = ?
+    """
+    with get_connection() as conn:
+        row = conn.execute(sql, [topic_id]).fetchone()
+    if row:
+        return row["artifact_json"]
+    return None
+
+
+def update_publish_job_artifact_json(topic_id: str, artifact: dict) -> bool:
+    """Overwrite artifact_json on the latest publish_job for a topic."""
+    sql = """
+        UPDATE publish_jobs
+        SET artifact_json = ?
+        WHERE id = (
+            SELECT pj.id
+            FROM canonical_scripts cs
+            JOIN publish_jobs pj ON pj.canonical_script_id = cs.id
+            WHERE cs.topic_id = ?
+            ORDER BY pj.id DESC
+            LIMIT 1
+        )
+    """
+    with get_connection() as conn:
+        cur = conn.execute(sql, [json.dumps(artifact, ensure_ascii=False), topic_id])
+        return cur.rowcount > 0
 
 
 def update_topic_status(topic_id: str, status: str) -> bool:

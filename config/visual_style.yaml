@@ -11,11 +11,11 @@ render:
   # One is chosen at random per episode to maintain consistent character appearance
   # across all scenes while allowing variation between episodes.
   dialogue_seed_images:
-    - assets/static_images/seed_image.png
-    - assets/static_images/seed_image_2.png
-    - assets/static_images/seed_image_3.png
-    - assets/static_images/seed_image_4.png
-    - assets/static_images/seed_image_5.png
+    - assets/static_images/seed_image_1.png
+    - assets/static_images/seed_image_2.jpeg
+    - assets/static_images/seed_image_3.jpeg
+    - assets/static_images/seed_image_4.jpeg
+    - assets/static_images/seed_image_5.jpeg
   # Playback speed per category (<1.0 = slower, >1.0 = faster)
   playback_speed:
     dialogue: 0.90
@@ -40,3 +40,7 @@ render:
     margin_r: 100                  # Right margin
     margin_v: 350                  # Vertical margin (bottom)
     alignment: 2                 # ASS alignment (8 = top-center, 2 = bottom-center)
+  # Burn English translation subtitles into the long video.
+  # false = English only available as a soft track in the webapp player.
+  # true  = English text is permanently baked into the video frames.
+  burn_english_subtitles: false
