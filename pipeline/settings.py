@@ -130,9 +130,10 @@ TOPIC_BACKLOG_CONFIG = load_yaml(ROOT / "config/topic_backlog.yaml")
 # ---------------------------------------------------------------------------
 # Social media upload toggles
 # ---------------------------------------------------------------------------
-# Set UPLOAD_INSTAGRAM=true / UPLOAD_TIKTOK=true in .env to enable uploads.
+# Set UPLOAD_INSTAGRAM=true / UPLOAD_TIKTOK=true / UPLOAD_FACEBOOK=true in .env to enable uploads.
 UPLOAD_INSTAGRAM: bool = os.getenv("UPLOAD_INSTAGRAM", "false").lower() not in ("false", "0", "no")
 UPLOAD_TIKTOK: bool = os.getenv("UPLOAD_TIKTOK", "false").lower() not in ("false", "0", "no")
+UPLOAD_FACEBOOK: bool = os.getenv("UPLOAD_FACEBOOK", "false").lower() not in ("false", "0", "no")
 
 # Instagram (Meta Graph API)
 # INSTAGRAM_ACCESS_TOKEN — long-lived user access token (60-day expiry)
@@ -155,3 +156,9 @@ TIKTOK_CLIENT_KEY: str = os.getenv("TIKTOK_CLIENT_KEY", "")
 TIKTOK_CLIENT_SECRET: str = os.getenv("TIKTOK_CLIENT_SECRET", "")
 TIKTOK_ACCESS_TOKEN: str = os.getenv("TIKTOK_ACCESS_TOKEN", "")
 TIKTOK_REFRESH_TOKEN: str = os.getenv("TIKTOK_REFRESH_TOKEN", "")
+
+# Facebook (Meta Graph API — Page Access Token)
+# FACEBOOK_PAGE_ID           — numeric Page ID
+# FACEBOOK_PAGE_ACCESS_TOKEN — Page access token with pages_manage_posts permission
+FACEBOOK_PAGE_ID: str = os.getenv("FACEBOOK_PAGE_ID", "")
+FACEBOOK_PAGE_ACCESS_TOKEN: str = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN", "")

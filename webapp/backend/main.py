@@ -39,13 +39,12 @@ LOGGER = logging.getLogger(__name__)
 
 async def _instagram_scheduler_loop() -> None:
     """Every 60 s: find shorts with instagram_scheduled_at <= now and upload them."""
-    from services.artifact import find_artifact, load_artifact
+    from services.artifact import load_artifact_from_db
     from services.db import get_connection, update_publish_job_artifact_json
 
     while True:
         try:
             now = datetime.now(timezone.utc)
-            # Scan all artifacts in publish_jobs that have artifact_json
             with get_connection() as conn:
                 rows = conn.execute(
                     "SELECT t.id AS topic_id, pj.artifact_json "
@@ -68,10 +67,8 @@ async def _instagram_scheduler_loop() -> None:
                 changed = False
                 for i, short in enumerate(shorts):
                     sched = short.get("instagram_scheduled_at")
-                    if not sched:
+                    if not sched or short.get("instagram", {}).get("reel_id"):
                         continue
-                    if short.get("instagram", {}).get("reel_id"):
-                        continue  # already uploaded
                     try:
                         sched_dt = datetime.fromisoformat(sched)
                         if sched_dt.tzinfo is None:
@@ -81,26 +78,15 @@ async def _instagram_scheduler_loop() -> None:
                     if sched_dt > now:
                         continue
 
-                    # Due — upload now
-                    artifact_file = find_artifact(topic_id)
-                    if not artifact_file:
-                        continue
-                    disk_artifact = load_artifact(artifact_file)
-                    if not disk_artifact:
-                        continue
-
                     LOGGER.info("instagram.scheduler uploading topic=%s scene=%s", topic_id, short.get("scene"))
                     try:
                         from pipeline.stages import stage_upload_short_instagram
-                        ig_result = stage_upload_short_instagram(disk_artifact, str(artifact_file), short)
-                        disk_artifact["shorts"][i]["instagram"] = ig_result
-                        disk_artifact["shorts"][i]["reel_id"] = ig_result.get("reel_id")
-                        disk_artifact["shorts"][i]["permalink"] = ig_result.get("permalink")
-                        disk_artifact["shorts"][i]["instagram_scheduled_at"] = None
-                        artifact_file.write_text(
-                            json.dumps(disk_artifact, indent=2, ensure_ascii=False), encoding="utf-8"
-                        )
-                        update_publish_job_artifact_json(topic_id, disk_artifact)
+                        ig_result = stage_upload_short_instagram(artifact, short)
+                        artifact["shorts"][i]["instagram"] = ig_result
+                        artifact["shorts"][i]["reel_id"] = ig_result.get("reel_id")
+                        artifact["shorts"][i]["permalink"] = ig_result.get("permalink")
+                        artifact["shorts"][i]["instagram_scheduled_at"] = None
+                        update_publish_job_artifact_json(topic_id, artifact)
                         LOGGER.info("instagram.scheduler done topic=%s scene=%s reel_id=%s",
                                     topic_id, short.get("scene"), ig_result.get("reel_id"))
                         changed = True
@@ -115,7 +101,6 @@ async def _instagram_scheduler_loop() -> None:
 
 async def _facebook_scheduler_loop() -> None:
     """Every 60 s: find shorts with facebook_scheduled_at <= now and upload them."""
-    from services.artifact import find_artifact, load_artifact
     from services.db import get_connection, update_publish_job_artifact_json
 
     while True:
@@ -152,23 +137,13 @@ async def _facebook_scheduler_loop() -> None:
                     if sched_dt > now:
                         continue
 
-                    artifact_file = find_artifact(topic_id)
-                    if not artifact_file:
-                        continue
-                    disk_artifact = load_artifact(artifact_file)
-                    if not disk_artifact:
-                        continue
-
                     LOGGER.info("facebook.scheduler uploading topic=%s scene=%s", topic_id, short.get("scene"))
                     try:
                         from pipeline.stages import stage_upload_short_facebook
-                        fb_result = stage_upload_short_facebook(disk_artifact, str(artifact_file), short)
-                        disk_artifact["shorts"][i]["facebook"] = fb_result
-                        disk_artifact["shorts"][i]["facebook_scheduled_at"] = None
-                        artifact_file.write_text(
-                            json.dumps(disk_artifact, indent=2, ensure_ascii=False), encoding="utf-8"
-                        )
-                        update_publish_job_artifact_json(topic_id, disk_artifact)
+                        fb_result = stage_upload_short_facebook(artifact, short)
+                        artifact["shorts"][i]["facebook"] = fb_result
+                        artifact["shorts"][i]["facebook_scheduled_at"] = None
+                        update_publish_job_artifact_json(topic_id, artifact)
                         LOGGER.info("facebook.scheduler done topic=%s scene=%s post_id=%s",
                                     topic_id, short.get("scene"), fb_result.get("post_id"))
                     except Exception as exc:
@@ -180,13 +155,74 @@ async def _facebook_scheduler_loop() -> None:
         await asyncio.sleep(60)
 
 
+async def _tiktok_scheduler_loop() -> None:
+    """Every 60 s: find shorts with tiktok_scheduled_at <= now and upload them."""
+    import os
+    from services.db import get_connection, update_publish_job_artifact_json
+
+    while True:
+        try:
+            if os.getenv("UPLOAD_TIKTOK", "true").lower() not in ("1", "true", "yes"):
+                await asyncio.sleep(60)
+                continue
+            now = datetime.now(timezone.utc)
+            with get_connection() as conn:
+                rows = conn.execute(
+                    "SELECT t.id AS topic_id, pj.artifact_json "
+                    "FROM topics t "
+                    "JOIN canonical_scripts cs ON cs.topic_id = t.id "
+                    "  AND cs.id = (SELECT MAX(id) FROM canonical_scripts WHERE topic_id = t.id) "
+                    "JOIN publish_jobs pj ON pj.canonical_script_id = cs.id "
+                    "  AND pj.id = (SELECT MAX(id) FROM publish_jobs WHERE canonical_script_id = cs.id) "
+                    "WHERE pj.artifact_json IS NOT NULL"
+                ).fetchall()
+
+            for row in rows:
+                topic_id = row["topic_id"]
+                try:
+                    artifact = json.loads(row["artifact_json"])
+                except Exception:
+                    continue
+
+                for i, short in enumerate(artifact.get("shorts") or []):
+                    sched = short.get("tiktok_scheduled_at")
+                    if not sched or short.get("tiktok", {}).get("publish_id"):
+                        continue
+                    try:
+                        sched_dt = datetime.fromisoformat(sched)
+                        if sched_dt.tzinfo is None:
+                            sched_dt = sched_dt.replace(tzinfo=timezone.utc)
+                    except ValueError:
+                        continue
+                    if sched_dt > now:
+                        continue
+
+                    LOGGER.info("tiktok.scheduler uploading topic=%s scene=%s", topic_id, short.get("scene"))
+                    try:
+                        from pipeline.stages import stage_upload_short_tiktok
+                        tt_result = stage_upload_short_tiktok(artifact, short)
+                        artifact["shorts"][i]["tiktok"] = tt_result
+                        artifact["shorts"][i]["tiktok_scheduled_at"] = None
+                        update_publish_job_artifact_json(topic_id, artifact)
+                        LOGGER.info("tiktok.scheduler done topic=%s scene=%s publish_id=%s",
+                                    topic_id, short.get("scene"), tt_result.get("publish_id"))
+                    except Exception as exc:
+                        LOGGER.warning("tiktok.scheduler failed topic=%s scene=%s err=%s",
+                                       topic_id, short.get("scene"), exc)
+        except Exception as exc:
+            LOGGER.warning("tiktok.scheduler loop error: %s", exc)
+
+        await asyncio.sleep(60)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     tasks = [
         asyncio.create_task(_instagram_scheduler_loop()),
         asyncio.create_task(_facebook_scheduler_loop()),
+        asyncio.create_task(_tiktok_scheduler_loop()),
     ]
-    LOGGER.info("instagram.scheduler + facebook.scheduler started")
+    LOGGER.info("instagram.scheduler + facebook.scheduler + tiktok.scheduler started")
     yield
     for t in tasks:
         t.cancel()

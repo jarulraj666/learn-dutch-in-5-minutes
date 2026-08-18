@@ -252,22 +252,16 @@ def _poll_container(container_id: str, token: str) -> None:
 
 def upload_short_instagram(
     artifact: dict,
-    artifact_path: Path,
     scene_short: dict,
 ) -> dict:
     """Upload one Short clip to Instagram as a Reel.
 
     Args:
-        artifact:       Full episode artifact dict.
-        artifact_path:  Path to the artifact JSON (unused here, kept for API symmetry).
-        scene_short:    One entry from ``artifact["shorts"]``.
+        artifact:    Full episode artifact dict.
+        scene_short: One entry from ``artifact["shorts"]``.
 
     Returns:
         Dict with ``reel_id`` and ``permalink``.
-
-    Raises:
-        RuntimeError:   If credentials are missing, the API returns an error, or
-                        the media container times out.
     """
     access_token = os.getenv("INSTAGRAM_ACCESS_TOKEN", "")
     account_id = os.getenv("INSTAGRAM_ACCOUNT_ID", "")

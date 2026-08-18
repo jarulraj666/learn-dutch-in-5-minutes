@@ -5,7 +5,6 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from pipeline import settings
 from pipeline.core.db import get_connection, init_db, seed_topics_from_config
 from pipeline.core.store_content import update_publish_job_status
 from pipeline.publish.upload_youtube import build_upload_payload, upload_video
@@ -58,44 +57,14 @@ def _due_jobs(include_future: bool = False, job_id: int | None = None) -> list[d
 
 
 def _load_artifact(row: dict) -> dict | None:
-    """Load artifact from database JSON string or file fallback.
-    
-    Args:
-        row: Database row with artifact_json and artifact_file_path
-    
-    Returns:
-        Artifact dict or None if cannot be loaded
-    """
-    # Try loading from database JSON first
-    if row.get("artifact_json"):
-        try:
-            if isinstance(row["artifact_json"], str):
-                return json.loads(row["artifact_json"])
-            else:
-                return row["artifact_json"]
-        except (json.JSONDecodeError, TypeError):
-            pass
-    
-    # Fallback: load from file
-    if row.get("artifact_file_path"):
-        artifact_path = Path(row["artifact_file_path"])
-        if artifact_path.exists():
-            try:
-                return json.loads(artifact_path.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, IOError):
-                pass
-    
-    return None
-
-
-def _artifact_path(row: dict) -> Path:
-    """Get artifact file path from database or construct fallback."""
-    if row.get("artifact_file_path"):
-        return Path(row["artifact_file_path"])
-    out_dir = settings.OUTPUT_DIR
-    if not out_dir.is_absolute():
-        out_dir = settings.ROOT / out_dir
-    return out_dir / f"episode_{row['canonical_script_id']}.json"
+    """Load artifact from DB JSON blob. Returns None if missing."""
+    raw = row.get("artifact_json")
+    if not raw:
+        return None
+    try:
+        return json.loads(raw) if isinstance(raw, str) else raw
+    except (json.JSONDecodeError, TypeError):
+        return None
 
 
 def _video_path(row: dict, artifact: dict | None) -> Path | None:
@@ -141,17 +110,15 @@ def process_pending(dry_run: bool = True, include_future: bool = False, job_id: 
             results.append({"job_id": job_id, "status": "upload_failed", "reason": "artifact_load_failed"})
             continue
         
-        artifact_path = _artifact_path(job)
         video_path = _video_path(job, artifact)
 
         if dry_run:
-            payload = build_upload_payload(artifact_path)
+            payload = build_upload_payload(artifact)
             update_publish_job_status(job_id, "upload_dry_run", "Dry run completed")
             results.append(
                 {
                     "job_id": job_id,
                     "status": "upload_dry_run",
-                    "artifact": str(artifact_path),
                     "video": str(video_path) if video_path else "",
                     "payload_title": payload.get("snippet", {}).get("title", ""),
                 }
@@ -164,7 +131,7 @@ def process_pending(dry_run: bool = True, include_future: bool = False, job_id: 
             continue
 
         try:
-            uploaded = upload_video(artifact_path, video_path)
+            uploaded = upload_video(artifact, video_path)
             update_publish_job_status(
                 job_id,
                 "uploaded",

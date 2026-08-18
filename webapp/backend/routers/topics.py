@@ -56,24 +56,6 @@ def reset_topic_status(topic_id: str, status: str = "pending"):
     return {"ok": True, "status": status}
 
 
-@router.post("/topics/{topic_id}/sync-artifact")
-def sync_artifact(topic_id: str):
-    """Re-read the artifact JSON from disk and update publish_jobs.artifact_json."""
-    from fastapi import HTTPException
-    from services.artifact import find_artifact, load_artifact
-
-    artifact_file = find_artifact(topic_id)
-    if not artifact_file:
-        raise HTTPException(status_code=404, detail=f"No artifact file found for topic {topic_id}")
-
-    artifact = load_artifact(artifact_file)
-    if not artifact:
-        raise HTTPException(status_code=500, detail="Could not load artifact from disk")
-
-    ok = db_service.update_publish_job_artifact_json(topic_id, artifact)
-    return {"ok": True, "synced": ok, "artifact_path": str(artifact_file)}
-
-
 @router.get("/stats")
 def get_stats():
     return db_service.get_stats()

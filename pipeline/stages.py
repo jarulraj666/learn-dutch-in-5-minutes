@@ -38,7 +38,7 @@ def stage_script(topic: "TopicChoice", language: str, level: str) -> dict:
     return generate_script(topic, language=language, level=level)
 
 
-def stage_metadata(script: dict, category: str, level: str) -> tuple[str, str, str, dict]:
+def stage_metadata(script: dict, category: str, level: str, topic_id: str = "") -> tuple[str, str, str, dict]:
     """Generate YouTube metadata.
 
     Returns:
@@ -55,7 +55,7 @@ def stage_metadata(script: dict, category: str, level: str) -> tuple[str, str, s
     playlist_description = playlist.get("description", "") if isinstance(playlist, dict) else ""
     playlist_id = playlist.get("id", "") if isinstance(playlist, dict) else ""
 
-    metadata = generate_metadata(script, playlist_track=category, level=level, category=category)
+    metadata = generate_metadata(script, playlist_track=category, level=level, category=category, topic_id=topic_id)
     return playlist_name, playlist_description, playlist_id, metadata
 
 
@@ -135,19 +135,19 @@ def stage_image(
     return primary, all_files, seed_used
 
 
-def stage_render(artifact_path: str | Path) -> Path:
-    """Render video from artifact. Returns path to rendered MP4."""
+def stage_render(artifact: dict) -> Path:
+    """Render video from artifact dict. Returns path to rendered MP4."""
     from pipeline.publish.render_video import render_from_artifact
-    return render_from_artifact(Path(artifact_path))
+    return render_from_artifact(artifact)
 
 
-def stage_upload(artifact_path: str | Path, video_path: str | Path) -> dict:
+def stage_upload(artifact: dict, video_path: str | Path) -> dict:
     """Upload to YouTube. Returns the youtube result dict."""
     from pipeline.publish.upload_youtube import upload_video
-    return upload_video(Path(artifact_path), Path(video_path))
+    return upload_video(artifact, Path(video_path))
 
 
-def stage_upload_captions(artifact_path: str | Path, video_id: str, srt_path: str | Path) -> dict | None:
+def stage_upload_captions(artifact_path: str | Path | None, video_id: str, srt_path: str | Path) -> dict | None:
     """Upload English SRT captions. Returns the caption result or None."""
     from pipeline.publish.upload_youtube import upload_captions, _get_youtube_client
     youtube = _get_youtube_client()
@@ -172,98 +172,50 @@ def stage_qa_subtitles(
     return ass_report, srt_report
 
 
-def stage_generate_shorts_images(artifact: dict, artifact_path: str | Path) -> list[dict]:
-    """Generate native 9:16 portrait images for each scene's Short.
-
-    Returns a list of ``{scene, image_path}`` dicts.
-    """
+def stage_generate_shorts_images(artifact: dict) -> list[dict]:
+    """Generate native 9:16 portrait images for each scene's Short."""
     from pipeline.publish.generate_shorts import generate_shorts_images
-    return generate_shorts_images(artifact, Path(artifact_path))
+    return generate_shorts_images(artifact)
 
 
-def stage_generate_shorts(artifact: dict, artifact_path: str | Path) -> list[dict]:
-    """Generate vertical Short clips for every scene in the episode.
-
-    Returns a list of scene dicts (scene, start_sec, end_sec, video_file, …).
-    An empty list means no scenes could be rendered (check logs).
-    """
+def stage_generate_shorts(artifact: dict) -> list[dict]:
+    """Generate vertical Short clips for every scene in the episode."""
     from pipeline.publish.generate_shorts import generate_scene_shorts
-    return generate_scene_shorts(artifact, Path(artifact_path))
+    return generate_scene_shorts(artifact)
 
 
 def stage_upload_short(
     artifact: dict,
-    artifact_path: str | Path,
     scene_short: dict,
     full_video_id: str,
 ) -> dict:
-    """Upload one rendered Short to YouTube.
-
-    Args:
-        artifact:       Full episode artifact dict.
-        artifact_path:  Path to the artifact JSON file.
-        scene_short:    One scene entry from ``artifact["shorts"]``.
-        full_video_id:  YouTube video ID of the already-uploaded full episode.
-
-    Returns:
-        Dict with ``short_video_id``, ``playlist_id``, ``thumbnail_uploaded``.
-    """
+    """Upload one rendered Short to YouTube."""
     from pipeline.publish.upload_shorts import upload_short
-    return upload_short(artifact, Path(artifact_path), scene_short, full_video_id)
+    return upload_short(artifact, scene_short, full_video_id)
 
 
 def stage_upload_short_instagram(
     artifact: dict,
-    artifact_path: str | Path,
     scene_short: dict,
 ) -> dict:
-    """Upload one rendered Short to Instagram as a Reel.
-
-    Args:
-        artifact:       Full episode artifact dict.
-        artifact_path:  Path to the artifact JSON file.
-        scene_short:    One scene entry from ``artifact["shorts"]``.
-
-    Returns:
-        Dict with ``reel_id`` and ``permalink``.
-    """
+    """Upload one rendered Short to Instagram as a Reel."""
     from pipeline.publish.upload_instagram import upload_short_instagram
-    return upload_short_instagram(artifact, Path(artifact_path), scene_short)
+    return upload_short_instagram(artifact, scene_short)
 
 
 def stage_upload_short_tiktok(
     artifact: dict,
-    artifact_path: str | Path,
     scene_short: dict,
 ) -> dict:
-    """Upload one rendered Short to TikTok.
-
-    Args:
-        artifact:       Full episode artifact dict.
-        artifact_path:  Path to the artifact JSON file.
-        scene_short:    One scene entry from ``artifact["shorts"]``.
-
-    Returns:
-        Dict with ``publish_id``.
-    """
+    """Upload one rendered Short to TikTok."""
     from pipeline.publish.upload_tiktok import upload_short_tiktok
-    return upload_short_tiktok(artifact, Path(artifact_path), scene_short)
+    return upload_short_tiktok(artifact, scene_short)
 
 
 def stage_upload_short_facebook(
     artifact: dict,
-    artifact_path: str | Path,
     scene_short: dict,
 ) -> dict:
-    """Upload one rendered Short to a Facebook Page as a Reel.
-
-    Args:
-        artifact:       Full episode artifact dict.
-        artifact_path:  Path to the artifact JSON file.
-        scene_short:    One scene entry from ``artifact["shorts"]``.
-
-    Returns:
-        Dict with ``video_id`` and ``post_id``.
-    """
+    """Upload one rendered Short to a Facebook Page as a Reel."""
     from pipeline.publish.upload_facebook import upload_short_facebook
-    return upload_short_facebook(artifact, Path(artifact_path), scene_short)
+    return upload_short_facebook(artifact, scene_short)

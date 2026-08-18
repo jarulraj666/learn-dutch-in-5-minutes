@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS topics (
   status TEXT NOT NULL DEFAULT 'pending',
   order_index INTEGER NOT NULL DEFAULT 0,
   last_used_at TEXT,
-  use_count INTEGER NOT NULL DEFAULT 0
+  use_count INTEGER NOT NULL DEFAULT 0,
+  youtube_title TEXT   -- canonical numbered YouTube title, e.g. "🇳🇱 Dutch Grammar #1: ..."
 );
 
 CREATE TABLE IF NOT EXISTS canonical_scripts (

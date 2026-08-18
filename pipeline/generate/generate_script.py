@@ -14,8 +14,19 @@ LOGGER = logging.getLogger(__name__)
 
 
 def _extract_json(text: str) -> dict[str, Any]:
-    # Extract JSON object from text
-    match = re.search(r"\{[\s\S]*\}", text)
+    # Try parsing the raw text directly first (handles both {} objects and [] arrays)
+    try:
+        result = json.loads(text.strip())
+        if isinstance(result, dict):
+            return result
+        if isinstance(result, list):
+            # Model returned a bare array — wrap it so callers get a dict
+            return {"dialogue": result}
+    except json.JSONDecodeError:
+        pass
+
+    # Extract JSON object or array from text
+    match = re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", text)
     if not match:
         raise ValueError("No JSON object found in model output")
 
@@ -24,7 +35,11 @@ def _extract_json(text: str) -> dict[str, Any]:
 
     # Try parsing as-is first
     try:
-        return json.loads(json_text)
+        result = json.loads(json_text)
+        if isinstance(result, dict):
+            return result
+        if isinstance(result, list):
+            return {"dialogue": result}
     except json.JSONDecodeError as e:
         first_error = e
         LOGGER.debug("First parse attempt failed: %s", str(e))
@@ -42,7 +57,8 @@ def _extract_json(text: str) -> dict[str, Any]:
     cleaned = re.sub(r",(\s*[}\]])", r"\1", cleaned)
 
     try:
-        return json.loads(cleaned)
+        _r = json.loads(cleaned)
+        return {"dialogue": _r} if isinstance(_r, list) else _r
     except json.JSONDecodeError:
         pass
 
@@ -55,7 +71,8 @@ def _extract_json(text: str) -> dict[str, Any]:
     )
 
     try:
-        return json.loads(cleaned)
+        _r = json.loads(cleaned)
+        return {"dialogue": _r} if isinstance(_r, list) else _r
     except json.JSONDecodeError:
         pass
 
@@ -97,7 +114,10 @@ def _extract_json(text: str) -> dict[str, Any]:
     if last_valid_pos > 0 and brace_depth == 0:
         truncated = cleaned[: last_valid_pos + 1]
         try:
-            return json.loads(truncated)
+            result = json.loads(truncated)
+            if isinstance(result, list):
+                return {"dialogue": result}
+            return result
         except json.JSONDecodeError:
             pass
 
@@ -555,6 +575,52 @@ Output ONLY valid JSON with no text before or after:
     template_path = settings.ROOT / f"prompts/{level}/dialogue_image_prompt.md"
     if template_path.exists():
         template_text = template_path.read_text(encoding="utf-8").strip()
+
+        # Resolve {scene_composition} and {scene_background} based on scenario type
+        _phone_call_keywords = frozenset([
+            "phone", "call", "calling", "telephone", "bellen", "telefoon",
+            "telefoongesprek", "phone_call", "mobiel", "mobile",
+        ])
+        _haystack = f"{scenario} {topic.topic_id} {topic.title_hint}".lower()
+        is_phone_call = any(kw in _haystack for kw in _phone_call_keywords)
+
+        if is_phone_call:
+            s1_env = script.get("image_prompt", "") or f"indoor environment of a {speaker1_role}"
+            s2_env = f"a typical home or workplace setting for a {speaker2_role} receiving a call"
+            scene_composition = (
+                f"SPLIT-SCREEN PHONE CALL — two separate locations side by side. "
+                f"Left half: {speaker1_gender} character ({speaker1_role}) in {s1_env}, "
+                f"holding a phone to their ear, body angled toward center. "
+                f"Right half: {speaker2_gender} character ({speaker2_role}) in {s2_env}, "
+                f"holding a phone to their ear, body angled toward center. "
+                f"A thin, clean vertical dividing line separates the two halves."
+            )
+            scene_background = (
+                f"Left background: {s1_env} — rich, detailed, fills the left half fully. "
+                f"Right background: {s2_env} — rich, detailed, fills the right half fully. "
+                f"Each half is a distinct, coherent environment in focus."
+            )
+        else:
+            scene_composition = (
+                "ONE SINGLE CONTINUOUS SCENE — do NOT split the image into panels, "
+                "sections, columns, or side-by-side halves. "
+                "The entire 16:9 frame is ONE unified illustration."
+            )
+            scene_background = (
+                f"Full background: the {scenario} environment fills 100% of the frame "
+                f"as a single cohesive space — rich, detailed, and in focus. "
+                f"NO DIVIDING LINES, NO BORDERS, NO SPLIT PANELS."
+            )
+
+        if is_phone_call:
+            char_pos_1 = "centered in their own left half"
+            char_pos_2 = "centered in their own right half"
+            char_center = "thin vertical dividing line separating the two halves — do NOT place any character at the center divider"
+        else:
+            char_pos_1 = "left 35\u201340% of the frame"
+            char_pos_2 = "right 35\u201340% of the frame"
+            char_center = "center 20% \u2014 open space between them, no characters, no obstructions"
+
         base_prompt = (
             template_text
             .replace("{scenario}", scenario)
@@ -563,21 +629,24 @@ Output ONLY valid JSON with no text before or after:
             .replace("{speaker1_gender}", speaker1_gender)
             .replace("{speaker2_role}", speaker2_role)
             .replace("{speaker2_gender}", speaker2_gender)
-            # Orientation placeholders — always landscape during script generation
+            .replace("{scene_composition}", scene_composition)
+            .replace("{scene_background}", scene_background)
+            # Orientation placeholders
             .replace("{frame_label}", "16:9")
             .replace("{aspect_ratio}", "16:9 aspect ratio")
-            .replace("{char_position_1}", "left 35\u201340% of the frame")
-            .replace("{char_position_2}", "right 35\u201340% of the frame")
-            .replace("{char_center}", "center 20% \u2014 open space between them, no characters, no obstructions")
+            .replace("{char_position_1}", char_pos_1)
+            .replace("{char_position_2}", char_pos_2)
+            .replace("{char_center}", char_center)
             .replace("{subtitle_zone}", "")
         )
-        LOGGER.debug("Loaded dialogue_image_prompt.md from %s", template_path)
+        LOGGER.debug("Loaded dialogue_image_prompt.md from %s phone_call=%s", template_path, is_phone_call)
     else:
         LOGGER.warning("dialogue_image_prompt.md not found at %s; using script image_prompt", template_path)
         base_prompt = script.get("image_prompt", "")
     
     # Merge in the LLM's scene description (specific environment details from Stage 1)
-    scene_description_from_script = script.get("image_prompt", "")
+    # For phone calls the per-half environments are already in scene_composition — skip.
+    scene_description_from_script = "" if is_phone_call else script.get("image_prompt", "")
     
     # Build scene-specific prompts keyed to trigger sentences
     image_prompts = []

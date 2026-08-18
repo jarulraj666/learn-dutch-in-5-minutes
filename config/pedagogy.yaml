@@ -9,3 +9,6 @@ speech:
       # Fill these with ElevenLabs voice IDs before enabling TTS_PROVIDER=elevenlabs
       female: "yO6w2xlECAQRFP6pX7Hw"
       male: "fLc0xzaCWvgABhwDGnZI"
+
+      # secondary male xdzjnRtJ19GiZY2bpv4i
+      # secondary female: 94W4cf0CMSgymY1uoRiX

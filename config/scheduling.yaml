@@ -1,5 +1,6 @@
-publish:
-  cadence_days: 2
-  preferred_hour_24: 18
-  preferred_minute: 0
-  timezone: Europe/Amsterdam
+# Scheduling is handled manually via the webapp (Episodes → Schedule).
+# Automatic cadence has been removed — new episodes start as "unscheduled"
+# and must be scheduled by a human before any upload runs.
+#
+# Only the timezone is kept here so the webapp can display local times correctly.
+timezone: Europe/Amsterdam

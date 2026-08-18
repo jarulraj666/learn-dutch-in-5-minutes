@@ -118,7 +118,7 @@ const STAGES = [
   { n: 15, d: 15, label: "Upload Captions" },
 ];
 
-type TabKey = "overview" | "script" | "media" | "pipeline" | "youtube" | "instagram" | "tiktok" | "facebook";
+type TabKey = "overview" | "script" | "media" | "pipeline" | "youtube" | "reels" | "instagram" | "tiktok" | "facebook";
 
 export default function TopicDetailPage({ params }: { params: { id: string } }) {
   const { data: topic, mutate } = useSWR(`/api/topics/${params.id}`, fetcher, {
@@ -151,27 +151,48 @@ export default function TopicDetailPage({ params }: { params: { id: string } }) 
         const sorted = [...selectedStages].sort((a, b) => a - b);
 
         // Stages 7 (Render Video) and 10 (Render Shorts) are independent of
-        // each other — both need subtitles (4) but not each other. Run them
-        // as two parallel jobs when both are selected.
+        // each other — both need subtitles (4) but not each other.
+        // When both renders are selected: run subtitles first (if selected),
+        // wait for completion, then fire the two renders simultaneously.
         const has7 = sorted.includes(7);
         const has10 = sorted.includes(10);
         if (has7 && has10) {
           const prereqs = sorted.filter((n) => n !== 7 && n !== 10);
-          // Job A: prereqs + Render Video
-          // Job B: prereqs + Render Shorts (starts simultaneously)
+
+          if (prereqs.length > 0) {
+            // Step 1: run prereqs (e.g. subtitles) to completion
+            const prereqJob = await apiFetch<{ job_id: string }>("/api/pipeline/run-stages", {
+              method: "POST",
+              body: JSON.stringify({
+                topic_id: topic.id,
+                stages: prereqs,
+              }),
+            });
+
+            // Poll until the prereq job finishes
+            await (async () => {
+              while (true) {
+                await new Promise((r) => setTimeout(r, 3000));
+                const info = await apiFetch<{ status: string }>(`/api/pipeline/jobs/${prereqJob.job_id}`);
+                if (info.status === "done" || info.status === "error") break;
+              }
+            })();
+          }
+
+          // Step 2: launch render video + render shorts simultaneously
           const [jobA, jobB] = await Promise.all([
             apiFetch<{ job_id: string }>("/api/pipeline/run-stages", {
               method: "POST",
               body: JSON.stringify({
-                artifact_path: topic.media.artifact,
+                topic_id: topic.id,
                 stages: [...prereqs, 7],
               }),
             }),
             apiFetch<{ job_id: string }>("/api/pipeline/run-stages", {
               method: "POST",
               body: JSON.stringify({
-                artifact_path: topic.media.artifact,
-                stages: [...prereqs, 10],
+                topic_id: topic.id,
+                stages: [10],
               }),
             }),
           ]);
@@ -183,7 +204,7 @@ export default function TopicDetailPage({ params }: { params: { id: string } }) 
         job = await apiFetch<{ job_id: string }>("/api/pipeline/run-stages", {
           method: "POST",
           body: JSON.stringify({
-            artifact_path: topic.media.artifact,
+            topic_id: topic.id,
             stages: sorted,
           }),
         });
@@ -223,20 +244,6 @@ export default function TopicDetailPage({ params }: { params: { id: string } }) 
     mutate();
   }, [topic, mutate]);
 
-  const [syncing, setSyncing] = useState(false);
-  const syncArtifact = useCallback(async () => {
-    if (!topic) return;
-    setSyncing(true);
-    try {
-      await apiFetch(`/api/topics/${topic.id}/sync-artifact`, { method: "POST" });
-      mutate();
-    } catch (err) {
-      alert(String(err));
-    } finally {
-      setSyncing(false);
-    }
-  }, [topic, mutate]);
-
   if (!topic) return <div className="text-gray-400 text-sm">Loading…</div>;
 
   const ps = topic.media.platform_status;
@@ -249,6 +256,7 @@ export default function TopicDetailPage({ params }: { params: { id: string } }) 
     { key: "media", label: "Media" },
     { key: "pipeline", label: "Pipeline" },
     { key: "youtube", label: `YouTube${platformDot(ps.youtube_shorts) ? " " + platformDot(ps.youtube_shorts) : ""}` },
+    { key: "reels", label: "Reels Schedule" },
     { key: "instagram", label: `Instagram ${platformDot(ps.instagram) || "⚪"}` },
     { key: "tiktok", label: `TikTok ${platformDot(ps.tiktok) || "⚪"}` },
     { key: "facebook", label: `Facebook ${platformDot(ps.facebook) || "⚪"}` },
@@ -271,14 +279,6 @@ export default function TopicDetailPage({ params }: { params: { id: string } }) 
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
-          <button
-            onClick={syncArtifact}
-            disabled={syncing}
-            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-sky-400 border border-gray-700 px-3 py-1.5 rounded-lg disabled:opacity-50"
-            title="Re-read artifact file from disk and sync to DB"
-          >
-            <RefreshCw size={14} className={syncing ? "animate-spin" : ""} /> Sync
-          </button>
           <select
             value={topic.status}
             onChange={(e) => setStatus(e.target.value)}
@@ -337,8 +337,9 @@ export default function TopicDetailPage({ params }: { params: { id: string } }) 
         />
       )}
       {tab === "youtube" && <YoutubeTab topic={topic} />}
+      {tab === "reels" && <ReelsScheduleTab topic={topic} mutate={mutate} />}
       {tab === "instagram" && <InstagramTab topic={topic} mutate={mutate} />}
-      {tab === "tiktok" && <TikTokTab topic={topic} />}
+      {tab === "tiktok" && <TikTokTab topic={topic} mutate={mutate} />}
       {tab === "facebook" && <FacebookTab topic={topic} mutate={mutate} />}
     </div>
   );
@@ -513,14 +514,14 @@ function MediaTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void })
       <section>
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2"><Video size={14} /> Shorts / Reels</h3>
         {m.shorts.filter((s) => s.video_file).length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {m.shorts.filter((s) => s.video_file).map((s, i) => (
-              <div key={i} className="space-y-1">
-                <p className="text-xs text-gray-400">Scene {s.scene}{s.description ? ` — ${s.description}` : ""}</p>
+              <div key={i} className="bg-gray-900 border border-gray-800 rounded-lg p-2 space-y-1">
+                <p className="text-xs text-gray-400">Scene {s.scene}</p>
                 <video
                   controls
                   src={`/api/media/video?path=${encodeURIComponent(s.video_file!)}`}
-                  className="w-full rounded-lg border border-gray-700 aspect-[9/16] object-contain bg-black"
+                  className="w-full rounded-lg border border-gray-700 aspect-[9/16] object-contain bg-black max-h-48"
                 />
               </div>
             ))}
@@ -542,8 +543,9 @@ function PipelineTab({
   runStages: () => void;
   launching: boolean;
 }) {
+  type StageStatus = "done" | "missing" | "partial" | "unknown";
   const m = topic.media;
-  const stageStatus = (n: number) => {
+  const stageStatus = (n: number): StageStatus => {
     if (n === 1) return m.artifact ? "done" : "missing";
     if (n === 2) return (m.images.length > 0 || m.scene_images.some((s) => s.image_16x9)) ? "done" : "missing";
     if (n === 3) return m.audio ? "done" : "missing";
@@ -649,10 +651,17 @@ function YoutubeTab({ topic }: { topic: TopicDetail }) {
               return (
                 <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-3 space-y-2">
                   <p className="text-xs text-gray-400">Scene {s.scene}{s.description ? ` — ${s.description}` : ""}</p>
+                  <div className="aspect-[9/16] rounded-lg overflow-hidden bg-black border border-gray-700">
+                    <iframe
+                      src={`https://www.youtube.com/embed/${shortId}`}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
                   <a href={shortUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-red-400 hover:underline text-xs">
-                    <ExternalLink size={11} /> Watch Short
+                    <ExternalLink size={11} /> Watch on YouTube
                   </a>
-                  <span className="block text-xs text-gray-600 font-mono">{shortId}</span>
                 </div>
               );
             })}
@@ -661,6 +670,140 @@ function YoutubeTab({ topic }: { topic: TopicDetail }) {
           <p className="text-gray-500 text-sm">No Shorts uploaded yet — run stage 11 (Upload Shorts YT).</p>
         )}
       </section>
+    </div>
+  );
+}
+
+// ── ReelsScheduleTab ────────────────────────────────────────────────────────
+function ReelsScheduleTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }) {
+  const shorts = topic.media.shorts;
+  const [inputs, setInputs] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState<Record<string, boolean>>({});
+
+  const schedule = async (scene: string | null, isoOrEmpty: string) => {
+    const k = String(scene);
+    setBusy((b) => ({ ...b, [k]: true }));
+    try {
+      await apiFetch(`/api/publish/reels/${topic.id}/scene/${scene}/schedule`, {
+        method: "PATCH",
+        body: JSON.stringify({ scheduled_at: isoOrEmpty }),
+      });
+      mutate();
+    } catch (err) {
+      alert(String(err));
+    } finally {
+      setBusy((b) => ({ ...b, [k]: false }));
+    }
+  };
+
+  if (shorts.length === 0) {
+    return (
+      <div className="text-gray-400 text-sm space-y-2">
+        <p>No scene shorts found. Run stage 10 (Render Shorts) first.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-gray-400">
+        Set a publish time for each reel. When that time passes,{" "}
+        <code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded">publish_pending_reels.py</code> will upload
+        to all enabled platforms (Instagram, TikTok, Facebook) in one pass.
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {shorts.map((s) => {
+          const k = String(s.scene);
+          const scheduled = s.reel_scheduled_at;
+          const igDone = !!(s.reel_id || s.instagram?.reel_id);
+          const ttDone = !!s.tiktok?.publish_id;
+          const fbDone = !!s.facebook?.post_id;
+          const allDone = igDone && ttDone && fbDone;
+
+          return (
+            <div key={k} className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-white">Scene {s.scene}</span>
+                {allDone
+                  ? <span className="text-xs bg-green-800/40 text-green-300 px-2 py-0.5 rounded border border-green-700/30">✓ All platforms done</span>
+                  : scheduled
+                  ? <span className="text-xs bg-purple-800/40 text-purple-300 px-2 py-0.5 rounded border border-purple-700/30">⏰ Scheduled</span>
+                  : <span className="text-xs bg-gray-800 text-gray-500 px-2 py-0.5 rounded border border-gray-700">Unscheduled</span>
+                }
+              </div>
+
+              {s.description && <p className="text-xs text-gray-400">{s.description}</p>}
+
+              {/* Platform upload status */}
+              <div className="flex gap-3 text-xs">
+                <span className={igDone ? "text-green-400" : "text-gray-600"}>
+                  {igDone ? "✓" : "○"} Instagram
+                </span>
+                <span className={ttDone ? "text-green-400" : "text-gray-600"}>
+                  {ttDone ? "✓" : "○"} TikTok
+                </span>
+                <span className={fbDone ? "text-green-400" : "text-gray-600"}>
+                  {fbDone ? "✓" : "○"} Facebook
+                </span>
+              </div>
+
+              {/* Video thumbnail */}
+              {s.video_file && (
+                <video
+                  src={`/api/media/video?path=${encodeURIComponent(s.video_file)}`}
+                  className="w-full rounded-lg aspect-[9/16] object-contain bg-black max-h-48"
+                />
+              )}
+
+              {/* Schedule controls */}
+              {!allDone && (
+                <div className="pt-2 border-t border-gray-800 space-y-2">
+                  {scheduled ? (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2 text-xs text-purple-300">
+                        <span>⏰ {formatNL(scheduled)} (NL)</span>
+                        <button
+                          onClick={() => schedule(s.scene, "")}
+                          disabled={busy[k]}
+                          className="text-gray-500 hover:text-red-400 underline"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Will upload to all enabled platforms automatically when this time arrives.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-500">Schedule for all platforms (NL time):</p>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="datetime-local"
+                          value={inputs[k] || ""}
+                          onChange={(e) => setInputs((p) => ({ ...p, [k]: e.target.value }))}
+                          className="text-xs bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-gray-200 flex-1 min-w-0"
+                        />
+                        <button
+                          onClick={() => {
+                            if (inputs[k]) schedule(s.scene, nlInputToUtcIso(inputs[k]));
+                          }}
+                          disabled={!inputs[k] || busy[k]}
+                          className="text-xs bg-purple-700 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg disabled:opacity-40 whitespace-nowrap"
+                        >
+                          {busy[k] ? "Saving…" : "Schedule"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -907,57 +1050,147 @@ function InstagramTab({ topic, mutate }: { topic: TopicDetail; mutate: () => voi
   );
 }
 
-function TikTokTab({ topic }: { topic: TopicDetail }) {
+function TikTokTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }) {
   const shorts = topic.media.shorts;
   const ps = topic.media.platform_status.tiktok;
+  const [busy, setBusy] = useState<Record<string, boolean>>({});
+  const [scheduleInputs, setScheduleInputs] = useState<Record<string, string>>({});
+  const [showMarkForm, setShowMarkForm] = useState<Record<string, boolean>>({});
+  const [markInputs, setMarkInputs] = useState<Record<string, string>>({});
+
+  const uploadNow = async (scene: string | null) => {
+    setBusy((b) => ({ ...b, [String(scene)]: true }));
+    try {
+      await apiFetch(`/api/publish/tiktok/${topic.id}/shorts/${scene}/upload`, { method: "POST" });
+      mutate();
+    } catch (err) { alert(String(err)); }
+    finally { setBusy((b) => ({ ...b, [String(scene)]: false })); }
+  };
+
+  const scheduleUpload = async (scene: string | null, dt: string) => {
+    setBusy((b) => ({ ...b, [String(scene)]: true }));
+    try {
+      await apiFetch(
+        `/api/publish/tiktok/${topic.id}/shorts/${scene}/schedule?scheduled_at=${encodeURIComponent(dt)}`,
+        { method: "POST" },
+      );
+      mutate();
+    } catch (err) { alert(String(err)); }
+    finally { setBusy((b) => ({ ...b, [String(scene)]: false })); }
+  };
+
+  const markUploaded = async (scene: string | null, publishId: string) => {
+    setBusy((b) => ({ ...b, [String(scene)]: true }));
+    try {
+      const params = new URLSearchParams();
+      if (publishId) params.set("publish_id", publishId);
+      await apiFetch(`/api/publish/tiktok/${topic.id}/shorts/${scene}/mark-uploaded?${params}`, { method: "POST" });
+      setShowMarkForm((p) => ({ ...p, [String(scene)]: false }));
+      mutate();
+    } catch (err) { alert(String(err)); }
+    finally { setBusy((b) => ({ ...b, [String(scene)]: false })); }
+  };
 
   if (shorts.length === 0) {
     return (
       <div className="text-gray-400 text-sm space-y-3">
-        <p>No shorts rendered yet.</p>
-        <p>Use the Pipeline tab to run stage 9 (Render Shorts) first, then stage 13 (Upload TikTok).</p>
+        <p>No shorts rendered yet. Run stage 9 (Render Shorts) first.</p>
       </div>
     );
   }
 
+  const uploadedCount = shorts.filter(s => s.tiktok?.publish_id).length;
+
   return (
     <div className="space-y-4">
-      {/* Platform status banner */}
+      {/* Status banner */}
       <div className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm border ${
         ps === "done" ? "bg-green-900/30 border-green-700/40 text-green-300"
         : ps === "partial" ? "bg-yellow-900/30 border-yellow-700/40 text-yellow-300"
         : "bg-gray-800/50 border-gray-700/40 text-gray-400"
       }`}>
         <span>{ps === "done" ? "✓ All scenes uploaded to TikTok" : ps === "partial" ? "⚡ Partially uploaded" : "⚪ Not uploaded yet"}</span>
-        <span className="text-xs opacity-60">({shorts.filter(s => s.tiktok?.publish_id).length}/{shorts.length} scenes)</span>
+        <span className="text-xs opacity-60">({uploadedCount}/{shorts.length} scenes)</span>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {shorts.map((s, i) => {
-          const publishId = s.tiktok?.publish_id as string | undefined;
-          const isUploaded = !!publishId;
+        {shorts.map((s) => {
+          const k = String(s.scene);
+          const isUploaded = !!s.tiktok?.publish_id;
+          const scheduledAt = s.tiktok_scheduled_at;
           return (
-            <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+            <div key={k} className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-white">Scene {s.scene}</p>
                 {isUploaded
                   ? <span className="text-xs bg-green-800/40 text-green-300 px-2 py-0.5 rounded border border-green-700/30">✓ Uploaded</span>
+                  : scheduledAt
+                  ? <span className="text-xs bg-purple-800/40 text-purple-300 px-2 py-0.5 rounded border border-purple-700/30">⏰ Scheduled</span>
                   : <span className="text-xs bg-gray-800 text-gray-500 px-2 py-0.5 rounded border border-gray-700">Pending</span>
                 }
               </div>
               {s.description && <p className="text-xs text-gray-400">{s.description}</p>}
               {s.video_file && (
-                <video
-                  src={`/api/media/video?path=${encodeURIComponent(s.video_file)}`}
-                  controls
-                  className="w-full rounded-lg aspect-[9/16] object-contain bg-black max-h-56"
-                />
+                <video src={`/api/media/video?path=${encodeURIComponent(s.video_file)}`} controls
+                  className="w-full rounded-lg aspect-[9/16] object-contain bg-black max-h-56" />
               )}
-              {isUploaded && (
-                <p className="text-xs text-gray-500 font-mono">Publish ID: {publishId}</p>
-              )}
-              {!isUploaded && (
-                <p className="text-xs text-gray-600">Run stage 13 to upload this scene.</p>
+
+              {isUploaded ? (
+                <p className="text-xs text-gray-500 font-mono">Publish ID: {s.tiktok?.publish_id}</p>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex gap-2 flex-wrap">
+                    <button onClick={() => uploadNow(s.scene)} disabled={busy[k]}
+                      className="text-xs bg-cyan-700 hover:bg-cyan-600 text-white px-3 py-1.5 rounded-lg disabled:opacity-50">
+                      {busy[k] ? "Uploading…" : "▶ Upload Now"}
+                    </button>
+                    <button onClick={() => setShowMarkForm((p) => ({ ...p, [k]: !p[k] }))}
+                      className="text-xs text-gray-400 hover:text-green-400 border border-gray-700 hover:border-green-700 px-2 py-1.5 rounded-lg">
+                      ✓ Mark Uploaded
+                    </button>
+                  </div>
+                  {showMarkForm[k] && (
+                    <div className="bg-gray-800/60 border border-gray-700 rounded-lg p-3 space-y-2">
+                      <input type="text" placeholder="Publish ID (optional)"
+                        value={markInputs[k] || ""}
+                        onChange={(e) => setMarkInputs((p) => ({ ...p, [k]: e.target.value }))}
+                        className="w-full text-xs bg-gray-900 border border-gray-700 rounded px-2 py-1 text-gray-200" />
+                      <div className="flex gap-2">
+                        <button onClick={() => markUploaded(s.scene, markInputs[k] || "")} disabled={busy[k]}
+                          className="text-xs bg-green-700 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg disabled:opacity-50">
+                          {busy[k] ? "Saving…" : "Confirm"}
+                        </button>
+                        <button onClick={() => setShowMarkForm((p) => ({ ...p, [k]: false }))}
+                          className="text-xs text-gray-500 hover:text-gray-300">Cancel</button>
+                      </div>
+                    </div>
+                  )}
+                  {/* Scheduler */}
+                  <div className="pt-1 border-t border-gray-800 space-y-1.5">
+                    {scheduledAt ? (
+                      <div className="flex items-center gap-2 text-xs text-purple-300">
+                        <span>⏰ {formatNL(scheduledAt)} (NL)</span>
+                        <button onClick={() => scheduleUpload(s.scene, "")}
+                          className="text-gray-500 hover:text-red-400 underline">Clear</button>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <p className="text-xs text-gray-500">NL time (Europe/Amsterdam)</p>
+                        <div className="flex items-center gap-2">
+                          <input type="datetime-local" value={scheduleInputs[k] || ""}
+                            onChange={(e) => setScheduleInputs((p) => ({ ...p, [k]: e.target.value }))}
+                            className="text-xs bg-gray-800 border border-gray-700 rounded px-2 py-1 text-gray-200 flex-1 min-w-0" />
+                          <button
+                            onClick={() => { if (scheduleInputs[k]) scheduleUpload(s.scene, nlInputToUtcIso(scheduleInputs[k])); }}
+                            disabled={!scheduleInputs[k] || busy[k]}
+                            className="text-xs bg-purple-700 hover:bg-purple-600 text-white px-2 py-1.5 rounded-lg disabled:opacity-40 whitespace-nowrap">
+                            Schedule
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           );

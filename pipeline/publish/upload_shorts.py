@@ -100,7 +100,6 @@ def _episode_tags(artifact: dict) -> list[str]:
 
 def upload_short(
     artifact: dict,
-    artifact_path: Path,
     scene_short: dict,
     full_video_id: str,
 ) -> dict:
@@ -108,7 +107,6 @@ def upload_short(
 
     Args:
         artifact:       Full episode artifact dict.
-        artifact_path:  Path to the artifact JSON (used to resolve thumbnail path).
         scene_short:    One entry from ``artifact["shorts"]`` (scene clip dict).
         full_video_id:  YouTube video ID of the already-uploaded full episode.
 
@@ -135,6 +133,9 @@ def upload_short(
         status["publishAt"] = scheduled_at
 
     video_file = Path(scene_short.get("video_file", ""))
+    if not video_file.is_absolute():
+        ROOT = Path(__file__).resolve().parent.parent.parent
+        video_file = ROOT / video_file
     if not video_file.exists():
         raise FileNotFoundError(f"Short video not found: {video_file}")
 
@@ -179,10 +180,10 @@ def upload_short(
     if short_video_id:
         thumb_str = scene_short.get("image_path", "")
         if thumb_str:
-            workspace = artifact_path.parent.parent.parent.parent
+            from pipeline import settings as _settings
             thumb_path = Path(thumb_str)
             if not thumb_path.is_absolute():
-                thumb_path = (workspace / thumb_path).resolve()
+                thumb_path = (_settings.ROOT / thumb_str).resolve()
             if thumb_path.exists():
                 try:
                     youtube.thumbnails().set(

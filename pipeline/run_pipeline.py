@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Optional
 
 from pipeline import settings
-from pipeline.core.db import init_db, mark_topic_done, mark_topic_generated, seed_topics_from_config
+from pipeline.core.db import init_db, mark_topic_generated, seed_topics_from_config
 from pipeline.core.select_topic import choose_next_topic
 from pipeline.core.store_content import (
     create_title_slug,
@@ -266,6 +266,7 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
                 script,
                 category=category,
                 level=level,
+                topic_id=topic.topic_id,
             )
             LOGGER.info("✓ Metadata: title=%s | playlist=%s", metadata.get("title", ""), playlist_name)
 
@@ -279,19 +280,21 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
     out_path = out_dir / f"episode_{topic.topic_id}_{title_slug}.json"
     LOGGER.info("output.dirs.ready level=%s category=%s slug=%s base=%s", level, category, title_slug, out_dir)
 
-    # --- Artifact: load existing or create initial version ---
-    # Written after every stage so it always reflects the latest state.
-    if out_path.exists():
-        artifact: dict = json.loads(out_path.read_text(encoding="utf-8"))
-        LOGGER.info("artifact.loaded %s", out_path)
-    else:
+    # --- Artifact: load from DB or build initial version ---
+    _topic_id = topic.topic_id
+    try:
+        from pipeline.core import artifact_store as _as
+        artifact: dict = _as.load(_topic_id)
+        _normalize(artifact)
+        LOGGER.info("artifact.loaded_from_db topic=%s", _topic_id)
+    except KeyError:
         artifact = {
             "level": level,
             "category": category,
-            "topic_id": topic.topic_id,
+            "topic_id": _topic_id,
             "title_slug": title_slug,
             "topic": {
-                "id": topic.topic_id,
+                "id": _topic_id,
                 "level": level,
                 "category": category,
                 "track": topic.track,
@@ -305,10 +308,8 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
             "playlist_id": playlist_id,
             "script": script,
             "metadata": metadata,
-            "storage": {"artifact_file": str(out_path)},
         }
-        out_path.write_text(json.dumps(artifact, ensure_ascii=False, indent=2), encoding="utf-8")
-        LOGGER.info("artifact.created %s", out_path)
+        LOGGER.info("artifact.new topic=%s", _topic_id)
 
     artifact["playlist"] = playlist_name
     artifact["playlist_description"] = playlist_description
@@ -322,12 +323,8 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
         if seed_rel:
             artifact["seed_image_used"] = seed_rel
 
-    def _write_artifact() -> None:
-        artifact["storage"]["artifact_file"] = str(out_path)
-        out_path.write_text(json.dumps(artifact, ensure_ascii=False, indent=2), encoding="utf-8")
-
     # Persist seed selection immediately so every downstream stage sees it.
-    _write_artifact()
+    _save_artifact(_topic_id, artifact)
 
     # --- Voice generation ---
     _existing_audio = artifact.get("audio_file") or (artifact.get("voice") or {}).get("dialogue_audio", "")
@@ -346,7 +343,7 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
             "audio_file_raw": voice_plan.get("dialogue_audio_raw", voice_plan.get("dialogue_audio", "")),
             "voice": voice_plan,
         })
-        _write_artifact()
+        _save_artifact(_topic_id, artifact)
 
     # --- Audio QA (blocks upload if score < 100%) ---
     _qa_passed: bool = True
@@ -389,7 +386,7 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
             "karaoke_file": subtitle_plan.get("karaoke_file", ""),
             "subtitles": subtitle_plan,
         })
-        _write_artifact()
+        _save_artifact(_topic_id, artifact)
 
     # --- Subtitle QA (non-blocking) ---
     if settings.QA_SUBTITLE_CHECK:
@@ -443,7 +440,7 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
             "generated_image_file": generated_image_file or "",
             "generated_image_files": generated_image_files or [],
         })
-        _write_artifact()
+        _save_artifact(_topic_id, artifact)
 
     with _stage("db_store_script"):
         canonical_script_id = store_canonical_script(
@@ -454,7 +451,7 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
         )
 
     artifact["canonical_script_id"] = canonical_script_id
-    _write_artifact()
+    _save_artifact(_topic_id, artifact)
 
     with _stage("script_export"):
         script_exports = _save_script_exports(
@@ -466,15 +463,15 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
         )
 
     artifact.setdefault("storage", {})["script_exports"] = script_exports
-    _write_artifact()
+    _save_artifact(_topic_id, artifact)
 
     # --- Render video ---
     with _stage("render_video"):
-        render_manifest_path = stage_render(out_path)
+        render_manifest_path = stage_render(artifact)
         mark_topic_generated(topic.topic_id)
         LOGGER.info("topic.generated id=%s", topic.topic_id)
         render_manifest = json.loads(render_manifest_path.read_text(encoding="utf-8"))
-        artifact["upload_payload_preview"] = build_upload_payload(out_path)
+        artifact["upload_payload_preview"] = build_upload_payload(artifact)
         artifact["render"] = render_manifest
         LOGGER.info("render.ready assembled=%s video=%s",
                     render_manifest.get("assembled"), render_manifest.get("planned_video_file", ""))
@@ -489,7 +486,7 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
             stable_video_path = str(archived_path)
             artifact.setdefault("storage", {})["archived_video_file"] = str(archived_path)
 
-    _write_artifact()
+    _save_artifact(_topic_id, artifact)
 
     if upload:
         video_path_for_upload = Path(stable_video_path) if stable_video_path else None
@@ -498,33 +495,34 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
         elif video_path_for_upload and video_path_for_upload.exists():
             with _stage("upload_youtube"):
                 try:
-                    result = stage_upload(out_path, video_path_for_upload)
+                    result = stage_upload(artifact, video_path_for_upload)
                     artifact["youtube"] = result
-                    _write_artifact()
+                    _save_artifact(_topic_id, artifact)
                     LOGGER.info("\u2713 Uploaded to YouTube: video_id=%s playlist=%s",
                                 result.get("video_id"), result.get("playlist_name"))
-                    mark_topic_done(topic.topic_id)
-                    LOGGER.info("topic.done id=%s", topic.topic_id)
+                    _check_and_mark_done(artifact)
+                    LOGGER.info("topic status checked after YouTube upload id=%s", topic.topic_id)
                 except Exception as exc:
                     LOGGER.warning("\u26a0 YouTube upload failed (video saved locally): %s", exc)
 
             # --- Step 9: Generate vertical images + Short clips ---
+            # Only dialogue episodes have multi-scene structure needed for shorts.
             full_video_id: str = artifact.get("youtube", {}).get("video_id", "")
-            if full_video_id:
+            if full_video_id and category == "dialogue":
                 with _stage("generate_shorts_images"):
                     try:
-                        shorts_images = stage_generate_shorts_images(artifact, out_path)
+                        shorts_images = stage_generate_shorts_images(artifact)
                         artifact["shorts_images"] = shorts_images
-                        _write_artifact()
+                        _save_artifact(_topic_id, artifact)
                         LOGGER.info("\u2713 Shorts images generated: %d scenes", len(shorts_images))
                     except Exception as exc:
                         LOGGER.warning("\u26a0 Shorts image generation failed (non-fatal): %s", exc)
 
                 with _stage("generate_shorts"):
                     try:
-                        shorts_list: list[dict] = stage_generate_shorts(artifact, out_path)
+                        shorts_list: list[dict] = stage_generate_shorts(artifact)
                         artifact["shorts"] = shorts_list
-                        _write_artifact()
+                        _save_artifact(_topic_id, artifact)
                         LOGGER.info("\u2713 Shorts rendered: %d scene clips", len(shorts_list))
                     except Exception as exc:
                         LOGGER.warning("\u26a0 Shorts generation failed (non-fatal): %s", exc)
@@ -536,10 +534,10 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
                         for i, short in enumerate(shorts_list):
                             try:
                                 short_result = stage_upload_short(
-                                    artifact, out_path, short, full_video_id
+                                    artifact, short, full_video_id
                                 )
                                 artifact["shorts"][i]["youtube"] = short_result
-                                _write_artifact()
+                                _save_artifact(_topic_id, artifact)
                                 LOGGER.info(
                                     "\u2713 Short uploaded scene=%d short_video_id=%s",
                                     short["scene"],
@@ -557,10 +555,10 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
                             for i, short in enumerate(shorts_list):
                                 try:
                                     ig_result = stage_upload_short_instagram(
-                                        artifact, out_path, short
+                                        artifact, short
                                     )
                                     artifact["shorts"][i]["instagram"] = ig_result
-                                    _write_artifact()
+                                    _save_artifact(_topic_id, artifact)
                                     LOGGER.info(
                                         "\u2713 Instagram Reel uploaded scene=%d reel_id=%s",
                                         short["scene"],
@@ -578,10 +576,10 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
                             for i, short in enumerate(shorts_list):
                                 try:
                                     tt_result = stage_upload_short_tiktok(
-                                        artifact, out_path, short
+                                        artifact, short
                                     )
                                     artifact["shorts"][i]["tiktok"] = tt_result
-                                    _write_artifact()
+                                    _save_artifact(_topic_id, artifact)
                                     LOGGER.info(
                                         "\u2713 TikTok Short uploaded scene=%d publish_id=%s",
                                         short["scene"],
@@ -592,13 +590,35 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
                                         "\u26a0 TikTok upload failed scene=%d (non-fatal): %s",
                                         short.get("scene"), exc,
                                     )
+
+                    # --- Step 10d: Upload Shorts to Facebook ---
+                    if settings.UPLOAD_FACEBOOK:
+                        with _stage("upload_shorts_facebook"):
+                            from pipeline.stages import stage_upload_short_facebook
+                            for i, short in enumerate(shorts_list):
+                                try:
+                                    fb_result = stage_upload_short_facebook(
+                                        artifact, short
+                                    )
+                                    artifact["shorts"][i]["facebook"] = fb_result
+                                    _save_artifact(_topic_id, artifact)
+                                    LOGGER.info(
+                                        "\u2713 Facebook Reel uploaded scene=%d post_id=%s",
+                                        short["scene"],
+                                        fb_result.get("post_id"),
+                                    )
+                                except Exception as exc:
+                                    LOGGER.warning(
+                                        "\u26a0 Facebook upload failed scene=%d (non-fatal): %s",
+                                        short.get("scene"), exc,
+                                    )
         else:
             LOGGER.warning("\u26a0 Upload skipped — no rendered video found at: %s", stable_video_path)
 
-    LOGGER.info("pipeline.done episode=%s elapsed_sec=%.2f artifact=%s",
-                canonical_script_id, time.perf_counter() - run_start, out_path)
+    LOGGER.info("pipeline.done episode=%s elapsed_sec=%.2f topic=%s",
+                canonical_script_id, time.perf_counter() - run_start, _topic_id)
 
-    return out_path
+    return _topic_id
 
 
 
@@ -610,12 +630,32 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
 # Artifact helpers
 # ---------------------------------------------------------------------------
 
-def load_artifact(artifact_path: str) -> dict:
-    path = Path(artifact_path)
-    if not path.exists():
-        raise FileNotFoundError(f"Artifact not found: {artifact_path}")
-    artifact = json.loads(path.read_text(encoding="utf-8"))
+def load_artifact(topic_id_or_path: str) -> dict:
+    """Load artifact from DB by topic_id (preferred) or legacy path."""
+    from pipeline.core import artifact_store
+    # Try topic_id first (direct DB lookup)
+    try:
+        artifact = artifact_store.load(topic_id_or_path)
+    except KeyError:
+        # Fall back: extract topic_id from path and retry
+        import re as _re
+        m = _re.search(r"episode_([^/\\]+?)(?:_[^/_\\]+)?\.json$", topic_id_or_path)
+        if m:
+            try:
+                artifact = artifact_store.load(m.group(1))
+            except KeyError:
+                raise FileNotFoundError(f"Artifact not found in DB for: {topic_id_or_path}")
+        else:
+            raise FileNotFoundError(f"Artifact not found in DB for: {topic_id_or_path}")
     _normalize(artifact)
+    if not artifact.get("title_slug"):
+        topic_meta = artifact.get("topic", {})
+        title_hint = (
+            topic_meta.get("title_hint")
+            or artifact.get("topic_title")
+            or artifact.get("topic_id", "")
+        )
+        artifact["title_slug"] = create_title_slug(title_hint)
     return artifact
 
 
@@ -637,12 +677,14 @@ def _check_and_mark_ready_to_publish(artifact: dict) -> None:
 
 
 def _check_and_mark_done(artifact: dict) -> None:
-    """Mark topic 'done' only when ALL active upload platforms are complete.
+    """Mark topic 'done' only when ALL enabled upload platforms are complete.
 
     Rules:
     - YouTube main video must be uploaded (youtube.video_id present).
-    - For each platform that has *any* upload, ALL shorts must be uploaded
-      to that platform (partial uploads keep status at ready_to_publish).
+    - For each platform that is *enabled in settings*, ALL shorts with a
+      video_file must be uploaded to that platform.
+    - If shorts exist but none of the enabled platforms have finished all
+      scenes, the topic stays at ready_to_publish.
     - If no shorts exist, done = YouTube main uploaded.
     """
     topic_id = artifact.get("topic_id")
@@ -653,7 +695,8 @@ def _check_and_mark_done(artifact: dict) -> None:
     if not (artifact.get("youtube") or {}).get("video_id"):
         return
 
-    shorts = artifact.get("shorts") or []
+    shorts = [s for s in (artifact.get("shorts") or []) if s.get("video_file")]
+
     if shorts:
         def _ig_done(s: dict) -> bool:
             return bool(s.get("reel_id") or (s.get("instagram") or {}).get("reel_id"))
@@ -667,20 +710,18 @@ def _check_and_mark_done(artifact: dict) -> None:
         def _fb_done(s: dict) -> bool:
             return bool((s.get("facebook") or {}).get("post_id"))
 
-        # Detect which platforms have at least one upload
-        any_ig = any(_ig_done(s) for s in shorts)
-        any_tt = any(_tt_done(s) for s in shorts)
-        any_yt = any(_yt_done(s) for s in shorts)
-        any_fb = any(_fb_done(s) for s in shorts)
+        # Check each *enabled* platform — ALL shorts must be done on that platform
+        # before the topic can be marked done.
+        if settings.UPLOAD_INSTAGRAM and not all(_ig_done(s) for s in shorts):
+            return
+        if settings.UPLOAD_TIKTOK and not all(_tt_done(s) for s in shorts):
+            return
+        if settings.UPLOAD_FACEBOOK and not all(_fb_done(s) for s in shorts):
+            return
 
-        # All uploads on each active platform must be complete
-        if any_ig and not all(_ig_done(s) for s in shorts):
-            return
-        if any_tt and not all(_tt_done(s) for s in shorts):
-            return
+        # YouTube Shorts: required if any short has already been uploaded to YT
+        any_yt = any(_yt_done(s) for s in shorts)
         if any_yt and not all(_yt_done(s) for s in shorts):
-            return
-        if any_fb and not all(_fb_done(s) for s in shorts):
             return
 
     try:
@@ -691,30 +732,13 @@ def _check_and_mark_done(artifact: dict) -> None:
         print(f"\u26a0\ufe0f  Could not update status to done: {exc}")
 
 
-def _save_artifact(artifact_path: str, artifact: dict) -> None:
-    Path(artifact_path).write_text(
-        json.dumps(artifact, indent=2, ensure_ascii=False), encoding="utf-8"
-    )
-    # Keep publish_jobs.artifact_json in sync so the webapp media tab
-    # always reflects the latest stage output without needing a full pipeline run.
+def _save_artifact(topic_id: str, artifact: dict) -> None:
+    """Persist artifact to DB. Non-fatal if no publish_job exists yet."""
+    from pipeline.core import artifact_store
     try:
-        from pipeline.core.store_content import save_episode_artifact
-        from pipeline.core.db import get_connection
-        canonical_script_id = artifact.get("canonical_script_id")
-        if canonical_script_id:
-            with get_connection() as conn:
-                row = conn.execute(
-                    "SELECT id FROM publish_jobs WHERE canonical_script_id = ? ORDER BY id DESC LIMIT 1",
-                    [canonical_script_id],
-                ).fetchone()
-            if row:
-                save_episode_artifact(
-                    publish_job_id=row["id"],
-                    artifact_json=artifact,
-                    artifact_file_path=artifact_path,
-                )
-    except Exception:
-        pass  # Non-fatal — disk write already succeeded
+        artifact_store.save(topic_id, artifact)
+    except KeyError:
+        LOGGER.debug("_save_artifact: no publish_job yet for %s — will persist after DB record created", topic_id)
 
 
 def _normalize(artifact: dict) -> None:
@@ -854,8 +878,8 @@ def _cleanup_artifact(artifact_path: str) -> None:
         print(f"⚠️  {len(skipped)} item(s) not found (already missing).")
 
 
-def run_script(artifact_path: str) -> None:
-    artifact = load_artifact(artifact_path)
+def run_script(topic_id: str) -> None:
+    artifact = load_artifact(topic_id)
     print(f"🎯 Re-generating script for: {artifact['title_slug']}")
     topic = _topic_from_artifact(artifact)
     script = stage_script(topic, language="nl", level=artifact["level"])
@@ -899,25 +923,25 @@ def run_script(artifact_path: str) -> None:
         )
         update_publish_job_artifacts(
             publish_job_id=publish_job_id,
-            artifact_path=artifact_path,
+            artifact_path="",
             video_file_path="",
         )
 
-    _save_artifact(artifact_path, artifact)
+    _save_artifact(topic_id, artifact)
     save_episode_artifact(
         publish_job_id=publish_job_id,
         artifact_json=artifact,
-        artifact_file_path=artifact_path,
+        artifact_file_path="",
     )
     print("✅ Script regenerated")
 
 
-def run_audio(artifact_path: str) -> str:
-    artifact = load_artifact(artifact_path)
+def run_audio(topic_id: str) -> str:
+    artifact = load_artifact(topic_id)
     print(f"🎯 Re-generating audio for: {artifact['title_slug']}")
     voice_plan = stage_voice(
         script=artifact.get("script", {}),
-        output_root=Path(artifact_path).parent,
+        output_root=settings.ROOT / "output" / artifact["level"] / artifact["category"],
         level=artifact["level"],
         category=artifact["category"],
         topic_id=artifact["topic_id"],
@@ -926,13 +950,13 @@ def run_audio(artifact_path: str) -> str:
     artifact["voice"] = voice_plan
     artifact["audio_file"] = voice_plan.get("dialogue_audio", "")
     artifact["audio_file_raw"] = voice_plan.get("dialogue_audio_raw", voice_plan.get("dialogue_audio", ""))
-    _save_artifact(artifact_path, artifact)
+    _save_artifact(topic_id, artifact)
     print("✅ Audio regenerated")
     return artifact["audio_file"]
 
 
-def run_subtitles(artifact_path: str, audio_path: Optional[str] = None) -> None:
-    artifact = load_artifact(artifact_path)
+def run_subtitles(topic_id: str, audio_path: Optional[str] = None) -> None:
+    artifact = load_artifact(topic_id)
     audio_path = audio_path or artifact.get("audio_file")
     if not audio_path or not Path(audio_path).exists():
         raise FileNotFoundError(f"Audio file not found: {audio_path}")
@@ -956,7 +980,7 @@ def run_subtitles(artifact_path: str, audio_path: Optional[str] = None) -> None:
 
     subtitle_plan = stage_subtitles(
         audio_path=audio_path,
-        output_root=Path(artifact_path).parent,
+        output_root=settings.ROOT / "output" / artifact["level"] / artifact["category"],
         level=artifact["level"],
         category=artifact["category"],
         topic_id=artifact["topic_id"],
@@ -966,12 +990,12 @@ def run_subtitles(artifact_path: str, audio_path: Optional[str] = None) -> None:
     )
     artifact["subtitles"] = subtitle_plan
     artifact["karaoke_file"] = subtitle_plan.get("karaoke_file", "")
-    _save_artifact(artifact_path, artifact)
+    _save_artifact(topic_id, artifact)
     print("✅ Subtitles regenerated")
 
 
-def run_image(artifact_path: str) -> None:
-    artifact = load_artifact(artifact_path)
+def run_image(topic_id: str) -> None:
+    artifact = load_artifact(topic_id)
     print(f"🎯 Re-generating image for: {artifact['title_slug']}")
     script = artifact.get("script", {})
     primary, all_files, seed_used = stage_image(
@@ -981,18 +1005,18 @@ def run_image(artifact_path: str) -> None:
         image_prompts=script.get("image_prompts") or artifact.get("image_prompts", []),
         level=artifact["level"],
         category=artifact["category"],
-        output_root=Path(artifact_path).parent,
+        output_root=settings.ROOT / "output" / artifact["level"] / artifact["category"],
     )
     artifact["generated_image_file"] = primary
     artifact["generated_image_files"] = all_files
     if seed_used:
         artifact["seed_image_used"] = seed_used
-    _save_artifact(artifact_path, artifact)
+    _save_artifact(topic_id, artifact)
     print(f"✅ Image regenerated ({len(all_files) or 1} image(s))")
 
 
-def run_render(artifact_path: str) -> str:
-    artifact = load_artifact(artifact_path)
+def run_render(topic_id: str) -> str:
+    artifact = load_artifact(topic_id)
     print(f"🎯 Re-rendering video for: {artifact['title_slug']}")
 
     # Staleness check: block render if audio is newer than the ASS subtitle file.
@@ -1011,29 +1035,29 @@ def run_render(artifact_path: str) -> str:
                     "   Run stage 4 (Subtitles) before stage 7 (Render) to fix this."
                 )
 
-    manifest_path = stage_render(artifact_path)
+    manifest_path = stage_render(artifact)
     # Load and save manifest to artifact
     render_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     artifact["render"] = render_manifest
     video_file = render_manifest.get("planned_video_file", "")
     if video_file:
         artifact["video_file"] = video_file
-    _save_artifact(artifact_path, artifact)
+    _save_artifact(topic_id, artifact)
     print(f"✅ Video re-rendered: {video_file}")
     _check_and_mark_ready_to_publish(artifact)
     return str(video_file)
 
 
-def run_upload(artifact_path: str, video_path: Optional[str] = None) -> None:
-    artifact = load_artifact(artifact_path)
+def run_upload(topic_id: str, video_path: Optional[str] = None) -> None:
+    artifact = load_artifact(topic_id)
     if not video_path:
         video_path = artifact.get("render", {}).get("planned_video_file") or artifact.get("video_file")
     if not video_path or not Path(video_path).exists():
         raise FileNotFoundError(f"Video file not found: {video_path}")
-    print(f"🎯 Uploading to YouTube: {artifact['title_slug']}")
-    result = stage_upload(artifact_path, video_path)
+    print(f"🎯 Uploading to YouTube: {artifact.get('title_slug', artifact.get('topic_id', 'Unknown'))}")
+    result = stage_upload(artifact, video_path)
     artifact["youtube"] = result
-    _save_artifact(artifact_path, artifact)
+    _save_artifact(topic_id, artifact)
     # Write youtube_video_id to publish_jobs; status -> ready_to_publish until all platforms done
     _topic_id = artifact.get("topic_id")
     _video_id = result.get("video_id")
@@ -1053,8 +1077,8 @@ def run_upload(artifact_path: str, video_path: Optional[str] = None) -> None:
     _check_and_mark_done(artifact)
 
 
-def run_captions(artifact_path: str, video_id: Optional[str] = None) -> None:
-    artifact = load_artifact(artifact_path)
+def run_captions(topic_id: str, video_id: Optional[str] = None) -> None:
+    artifact = load_artifact(topic_id)
     video_id = video_id or artifact.get("youtube", {}).get("video_id", "")
     if not video_id:
         raise ValueError("No YouTube video_id found. Pass --video-id or upload first.")
@@ -1062,7 +1086,7 @@ def run_captions(artifact_path: str, video_id: Optional[str] = None) -> None:
     if not srt_path or not Path(srt_path).exists():
         raise FileNotFoundError(f"English SRT not found: {srt_path}")
     print(f"🎯 Uploading captions for video_id={video_id}")
-    result = stage_upload_captions(artifact_path, video_id, srt_path)
+    result = stage_upload_captions(None, video_id, srt_path)
     if result:
         caption_id = result.get("id")
         language = result.get("snippet", {}).get("language", "en")
@@ -1073,15 +1097,15 @@ def run_captions(artifact_path: str, video_id: Optional[str] = None) -> None:
                 "name": result.get("snippet", {}).get("name", "English"),
                 "srt_file": str(srt_path),
             })
-        _save_artifact(artifact_path, artifact)
+        _save_artifact(topic_id, artifact)
         print(f"✅ Caption uploaded: id={caption_id}")
     else:
         print("⚠️  Caption upload returned no result (possibly already exists).")
 
 
-def run_qa(artifact_path: str) -> None:
+def run_qa(topic_id: str) -> None:
     from pipeline.generate.qa_audio import log_qa_report
-    artifact = load_artifact(artifact_path)
+    artifact = load_artifact(topic_id)
     audio_path = artifact.get("audio_file_raw") or artifact.get("audio_file") or \
                  artifact.get("voice", {}).get("dialogue_audio", "")
     if not audio_path or not Path(audio_path).exists():
@@ -1123,9 +1147,9 @@ def run_qa(artifact_path: str) -> None:
         raise ValueError(f"❌ Audio QA failed with score {score:.1f}/100. Fix audio issues before proceeding.")
 
 
-def run_qa_subtitles(artifact_path: str) -> None:
+def run_qa_subtitles(topic_id: str) -> None:
     from pipeline.generate.qa_subtitles import log_subtitle_qa_report
-    artifact = load_artifact(artifact_path)
+    artifact = load_artifact(topic_id)
     subs = artifact.get("subtitles") or {}
     ass_file = artifact.get("karaoke_file") or subs.get("karaoke_file")
     srt_file = subs.get("srt_en") or subs.get("srt_files", {}).get("en")
@@ -1207,12 +1231,12 @@ def run_qa_subtitles(artifact_path: str) -> None:
         raise ValueError(f"❌ Subtitle QA failed with score {total_score:.1f}/100. Fix subtitle issues before proceeding.")
 
 
-def run_export_image_prompts(artifact_path: str) -> None:
+def run_export_image_prompts(topic_id: str) -> None:
     """Export formatted image prompts for all scenes to a text file.
     Use these prompts in the Gemini web app (aistudio.google.com) to generate
     images manually by uploading the seed image + pasting the prompt text.
     """
-    artifact = load_artifact(artifact_path)
+    artifact = load_artifact(topic_id)
     script = artifact.get("script", {})
     image_prompts = script.get("image_prompts", [])
     seed_image = artifact.get("seed_image_used", "")
@@ -1222,15 +1246,25 @@ def run_export_image_prompts(artifact_path: str) -> None:
         print("⚠️  No image_prompts found in artifact — run Script stage first.")
         return
 
-    common_instructions = (
-        "OUTPUT REQUIREMENT: ONE single continuous 16:9 image. "
-        "NEVER split into panels, NEVER tile, NEVER repeat, NEVER show the scene twice. One frame only.\n"
-        "ABSOLUTELY NO TEXT, NO WORDS, NO LABELS, NO SIGNS, NO CAPTIONS, "
-        "NO WRITING OF ANY KIND anywhere in the generated image. "
-        "Any props that would normally have writing must appear blank or decorative only."
-    )
+    def _output_req(prompt: str, ratio: str = "16:9") -> str:
+        if "SPLIT-SCREEN" in prompt:
+            return (
+                f"OUTPUT REQUIREMENT: SPLIT-SCREEN — two side-by-side panels in ONE {ratio} image. "
+                f"Each panel shows a different character in their own environment. "
+                f"Do NOT merge them into a single shared scene.\n"
+                "ABSOLUTELY NO TEXT, NO WORDS, NO LABELS, NO SIGNS, NO CAPTIONS, "
+                "NO WRITING OF ANY KIND anywhere in the generated image. "
+                "Any props that would normally have writing must appear blank or decorative only."
+            )
+        return (
+            f"OUTPUT REQUIREMENT: ONE single continuous {ratio} image. "
+            "Split into panels only if necessary, NEVER tile, NEVER repeat, NEVER show the scene twice. One frame only.\n"
+            "ABSOLUTELY NO TEXT, NO WORDS, NO LABELS, NO SIGNS, NO CAPTIONS, "
+            "NO WRITING OF ANY KIND anywhere in the generated image. "
+            "Any props that would normally have writing must appear blank or decorative only."
+        )
 
-    out_path = Path(artifact_path).parent / f"image_prompts_{title_slug}.txt"
+    out_path = settings.ROOT / "output" / artifact["level"] / artifact["category"] / f"image_prompts_{title_slug}.txt"
     lines: list[str] = []
     lines.append(f"IMAGE PROMPTS — {title_slug}")
     lines.append("=" * 70)
@@ -1288,7 +1322,7 @@ def run_export_image_prompts(artifact_path: str) -> None:
             f"skin tones, and clothing IDENTICAL. "
             f"IGNORE the characters' poses, gestures, and any objects they are holding — "
             f"do NOT reproduce them. IGNORE any text visible in the reference image.\n"
-            f"{common_instructions}\n"
+            f"{_output_req(scene_prompt)}\n"
             f"Art style: {scene_prompt.split('Environment:')[0].strip() if 'Environment:' in scene_prompt else ''}"
         )
         lines.append(prompt_text)
@@ -1321,12 +1355,7 @@ def run_export_image_prompts(artifact_path: str) -> None:
         "The bottom portion must show the actual floor/ground surface — "
         "NOT a flat colour or gradient."
     )
-    common_instructions_9_16 = (
-        "OUTPUT REQUIREMENT: ONE single continuous 9:16 portrait image. "
-        "NEVER split into panels, NEVER tile, NEVER repeat. One frame only.\n"
-        "ABSOLUTELY NO TEXT, NO WORDS, NO LABELS, NO SIGNS, NO CAPTIONS, "
-        "NO WRITING OF ANY KIND anywhere in the image."
-    )
+    common_instructions_9_16 = _output_req("", "9:16 portrait")
 
     for p in image_prompts:
         scene_n = p.get("scene", "?")
@@ -1388,27 +1417,27 @@ def run_export_image_prompts(artifact_path: str) -> None:
     print(f"   {len(image_prompts)} × 16:9 scenes + {len(image_prompts)} × 9:16 shorts")
 
 
-def run_generate_shorts_images(artifact_path: str) -> None:
-    artifact = load_artifact(artifact_path)
+def run_generate_shorts_images(topic_id: str) -> None:
+    artifact = load_artifact(topic_id)
     print(f"\U0001f3af Generating vertical (9:16) Short images for: {artifact['title_slug']}")
-    results = stage_generate_shorts_images(artifact, artifact_path)
+    results = stage_generate_shorts_images(artifact)
     artifact["shorts_images"] = results
-    _save_artifact(artifact_path, artifact)
+    _save_artifact(topic_id, artifact)
     print(f"\u2705 Generated {len(results)} vertical scene image(s)")
 
 
-def run_generate_shorts(artifact_path: str) -> None:
-    artifact = load_artifact(artifact_path)
+def run_generate_shorts(topic_id: str) -> None:
+    artifact = load_artifact(topic_id)
     print(f"\U0001f3af Generating Shorts for: {artifact['title_slug']}")
-    shorts_list = stage_generate_shorts(artifact, artifact_path)
+    shorts_list = stage_generate_shorts(artifact)
     artifact["shorts"] = shorts_list
-    _save_artifact(artifact_path, artifact)
+    _save_artifact(topic_id, artifact)
     print(f"\u2705 Generated {len(shorts_list)} Short clip(s)")
     _check_and_mark_ready_to_publish(artifact)
 
 
-def run_upload_shorts(artifact_path: str) -> None:
-    artifact = load_artifact(artifact_path)
+def run_upload_shorts(topic_id: str) -> None:
+    artifact = load_artifact(topic_id)
     full_video_id: str = artifact.get("youtube", {}).get("video_id", "")
     if not full_video_id:
         raise ValueError("No YouTube video_id found in artifact. Upload the full video first.")
@@ -1418,9 +1447,9 @@ def run_upload_shorts(artifact_path: str) -> None:
     print(f"\U0001f3af Uploading {len(shorts_list)} Short(s) for: {artifact['title_slug']}")
     for i, short in enumerate(shorts_list):
         try:
-            short_result = stage_upload_short(artifact, artifact_path, short, full_video_id)
+            short_result = stage_upload_short(artifact, short, full_video_id)
             artifact["shorts"][i]["youtube"] = short_result
-            _save_artifact(artifact_path, artifact)
+            _save_artifact(topic_id, artifact)
             print(f"  \u2705 Scene {short['scene']} uploaded: short_video_id={short_result.get('short_video_id')}")
         except Exception as exc:
             print(f"  \u26a0\ufe0f  Scene {short['scene']} upload failed: {exc}")
@@ -1428,8 +1457,8 @@ def run_upload_shorts(artifact_path: str) -> None:
     _check_and_mark_done(artifact)
 
 
-def run_upload_shorts_instagram(artifact_path: str) -> None:
-    artifact = load_artifact(artifact_path)
+def run_upload_shorts_instagram(topic_id: str) -> None:
+    artifact = load_artifact(topic_id)
     shorts_list: list[dict] = artifact.get("shorts", [])
     if not shorts_list:
         raise ValueError("No shorts found in artifact. Run 'Generate Shorts' first.")
@@ -1443,9 +1472,9 @@ def run_upload_shorts_instagram(artifact_path: str) -> None:
     print(f"\U0001f4f8 Uploading {len(pending)} Reel(s) to Instagram (skipping {len(shorts_list) - len(pending)} already done) for: {artifact['title_slug']}")
     for i, short in pending:
         try:
-            ig_result = stage_upload_short_instagram(artifact, artifact_path, short)
+            ig_result = stage_upload_short_instagram(artifact, short)
             artifact["shorts"][i]["instagram"] = ig_result
-            _save_artifact(artifact_path, artifact)
+            _save_artifact(topic_id, artifact)
             print(f"  \u2705 Scene {short['scene']} uploaded: reel_id={ig_result.get('reel_id')}")
         except Exception as exc:
             print(f"  \u26a0\ufe0f  Scene {short['scene']} Instagram upload failed: {exc}")
@@ -1453,8 +1482,8 @@ def run_upload_shorts_instagram(artifact_path: str) -> None:
     _check_and_mark_done(artifact)
 
 
-def run_upload_shorts_tiktok(artifact_path: str) -> None:
-    artifact = load_artifact(artifact_path)
+def run_upload_shorts_tiktok(topic_id: str) -> None:
+    artifact = load_artifact(topic_id)
     shorts_list: list[dict] = artifact.get("shorts", [])
     if not shorts_list:
         raise ValueError("No shorts found in artifact. Run 'Generate Shorts' first.")
@@ -1468,9 +1497,9 @@ def run_upload_shorts_tiktok(artifact_path: str) -> None:
     print(f"\U0001f3b5 Uploading {len(pending)} Short(s) to TikTok (skipping {len(shorts_list) - len(pending)} already done) for: {artifact['title_slug']}")
     for i, short in pending:
         try:
-            tt_result = stage_upload_short_tiktok(artifact, artifact_path, short)
+            tt_result = stage_upload_short_tiktok(artifact, short)
             artifact["shorts"][i]["tiktok"] = tt_result
-            _save_artifact(artifact_path, artifact)
+            _save_artifact(topic_id, artifact)
             print(f"  \u2705 Scene {short['scene']} uploaded: publish_id={tt_result.get('publish_id')}")
         except Exception as exc:
             print(f"  \u26a0\ufe0f  Scene {short['scene']} TikTok upload failed: {exc}")
@@ -1478,9 +1507,9 @@ def run_upload_shorts_tiktok(artifact_path: str) -> None:
     _check_and_mark_done(artifact)
 
 
-def run_upload_shorts_facebook(artifact_path: str) -> None:
+def run_upload_shorts_facebook(topic_id: str) -> None:
     from pipeline.stages import stage_upload_short_facebook
-    artifact = load_artifact(artifact_path)
+    artifact = load_artifact(topic_id)
     shorts_list: list[dict] = artifact.get("shorts", [])
     if not shorts_list:
         raise ValueError("No shorts found in artifact. Run 'Generate Shorts' first.")
@@ -1494,9 +1523,9 @@ def run_upload_shorts_facebook(artifact_path: str) -> None:
     print(f"\U0001f4d8 Uploading {len(pending)} Reel(s) to Facebook for: {artifact['title_slug']}")
     for i, short in pending:
         try:
-            fb_result = stage_upload_short_facebook(artifact, artifact_path, short)
+            fb_result = stage_upload_short_facebook(artifact, short)
             artifact["shorts"][i]["facebook"] = fb_result
-            _save_artifact(artifact_path, artifact)
+            _save_artifact(topic_id, artifact)
             print(f"  \u2705 Scene {short['scene']} uploaded: post_id={fb_result.get('post_id')}")
         except Exception as exc:
             print(f"  \u26a0\ufe0f  Scene {short['scene']} Facebook upload failed: {exc}")
@@ -1551,8 +1580,8 @@ def _parse_selection(raw: str, max_n: int) -> list[int]:
     return sorted(set(indices))  # deduplicate and sort
 
 
-def interactive_menu(artifact_path: str) -> None:
-    artifact = load_artifact(artifact_path)
+def interactive_menu(topic_id: str) -> None:
+    artifact = load_artifact(topic_id)
     title = artifact.get("title_slug", artifact.get("topic_id", "unknown"))
     level = artifact.get("level", "")
     category = artifact.get("category", "")
@@ -1585,7 +1614,7 @@ def interactive_menu(artifact_path: str) -> None:
         name, fn = _STAGES[idx]
         print(f"\n▶  Running: {name}")
         try:
-            fn(artifact_path)
+            fn(topic_id)
         except Exception as exc:
             print(f"  ❌ {name} failed: {exc}")
             LOGGER.exception("interactive_menu.stage_failed stage=%s", name)
@@ -1642,22 +1671,45 @@ Examples:
         _cleanup_artifact(args.cleanup)
         return
 
-    # ── ARTIFACT MODE: interactive stage re-run on existing episode ──────────
+    # ── ARTIFACT MODE (legacy): resolve topic_id from path, run stages ───────
     if args.artifact:
         try:
+            # Resolve topic_id from the artifact path via DB
+            topic_id = load_artifact(args.artifact).get("topic_id") if args.artifact else None
+            if not topic_id:
+                print(f"✗ Could not resolve topic_id from: {args.artifact}", file=sys.stderr)
+                sys.exit(1)
             if args.stages:
-                # Non-interactive: run specified stages directly
                 selected = _parse_selection(args.stages, len(_STAGES))
                 if not selected:
                     print("✗ No valid stages in --stages", file=sys.stderr)
                     sys.exit(1)
-                artifact_data = load_artifact(args.artifact)
                 for idx in selected:
                     name, fn = _STAGES[idx]
                     print(f"\n▶  Running: {name}")
-                    fn(args.artifact)
+                    fn(topic_id)
             else:
-                interactive_menu(args.artifact)
+                interactive_menu(topic_id)
+        except Exception as e:
+            LOGGER.exception("artifact_mode.failed")
+            print(f"\u274c Error: {e}", file=sys.stderr)
+            sys.exit(1)
+        return
+
+    # ── TOPIC-ID + STAGES MODE: DB-primary stage re-run ──────────────────────
+    if args.topic_id and args.stages:
+        try:
+            from pipeline.core.db import init_db, seed_topics_from_config
+            init_db()
+            seed_topics_from_config()
+            selected = _parse_selection(args.stages, len(_STAGES))
+            if not selected:
+                print("✗ No valid stages in --stages", file=sys.stderr)
+                sys.exit(1)
+            for idx in selected:
+                name, fn = _STAGES[idx]
+                print(f"\n▶  Running: {name}")
+                fn(args.topic_id)
         except Exception as e:
             LOGGER.exception("artifact_mode.failed")
             print(f"\u274c Error: {e}", file=sys.stderr)
@@ -1696,22 +1748,39 @@ Examples:
             level = normalize_level(row["level"])
             category = row["category"]
             title_slug = create_title_slug(topic.title_hint)
-            out_dir = ensure_output_dir(level, category)
-            out_path = out_dir / f"episode_{args.topic_id}_{title_slug}.json"
-            
+
             # Generate script and metadata
             script = stage_script(topic, language="nl", level=level)
             playlist_name, playlist_description, playlist_id, metadata = stage_metadata(
                 script,
                 category=category,
                 level=level,
+                topic_id=args.topic_id,
             )
-            
-            # Create or load artifact
-            if out_path.exists():
-                artifact = load_artifact(str(out_path))
-                LOGGER.info("artifact.loaded %s", out_path)
-            else:
+
+            # Persist script to DB
+            canonical_script_id = store_canonical_script(
+                topic_id=args.topic_id,
+                language="nl",
+                title=metadata["title"],
+                script=script,
+            )
+
+            # Create or update publish_job and artifact in DB
+            from pipeline.core.schedule_publish import next_publish_slot
+            publish_job_id = store_publish_job(
+                canonical_script_id=canonical_script_id,
+                playlist_track=topic.track,
+                scheduled_at_iso=next_publish_slot().isoformat(),
+                playlist_name=playlist_name,
+            )
+
+            # Try to load existing artifact from DB; build fresh if not found
+            try:
+                from pipeline.core import artifact_store as _as
+                artifact = _as.load(args.topic_id)
+                _normalize(artifact)
+            except KeyError:
                 artifact = {
                     "level": level,
                     "category": category,
@@ -1726,55 +1795,25 @@ Examples:
                         "title_hint": topic.title_hint,
                     },
                     "workflow_mode": "single_agent",
-                    "playlist": playlist_name,
-                    "playlist_description": playlist_description,
-                    "playlist_id": playlist_id,
-                    "storage": {"artifact_file": str(out_path)},
                 }
-                LOGGER.info("artifact.created %s", out_path)
-            
-            # Update with script and metadata
-            artifact.update(
-                {
-                    "playlist": playlist_name,
-                    "playlist_description": playlist_description,
-                    "playlist_id": playlist_id,
-                    "script": script,
-                    "metadata": metadata,
-                }
-            )
-            _save_artifact(str(out_path), artifact)
 
-            # Persist script to DB so the webapp can display it
-            canonical_script_id = store_canonical_script(
-                topic_id=args.topic_id,
-                language="nl",
-                title=metadata["title"],
-                script=script,
-            )
-            artifact["canonical_script_id"] = canonical_script_id
+            artifact.update({
+                "playlist": playlist_name,
+                "playlist_description": playlist_description,
+                "playlist_id": playlist_id,
+                "script": script,
+                "metadata": metadata,
+                "canonical_script_id": canonical_script_id,
+                "title_slug": title_slug,
+            })
 
-            # Create a publish_job stub so artifact_path is tracked in the DB
-            from pipeline.core.schedule_publish import next_publish_slot
-            publish_job_id = store_publish_job(
-                canonical_script_id=canonical_script_id,
-                playlist_track=topic.track,
-                scheduled_at_iso=next_publish_slot().isoformat(),
-                playlist_name=playlist_name,
-            )
-            update_publish_job_artifacts(
-                publish_job_id=publish_job_id,
-                artifact_path=str(out_path),
-                video_file_path="",
-            )
             save_episode_artifact(
                 publish_job_id=publish_job_id,
                 artifact_json=artifact,
-                artifact_file_path=str(out_path),
+                artifact_file_path="",
             )
-
-            _save_artifact(str(out_path), artifact)
-            print(f"\u2713 Script-only complete. Artifact: {out_path}")
+            _save_artifact(args.topic_id, artifact)
+            print(f"\u2713 Script-only complete. topic_id={args.topic_id}")
             return
         except Exception as e:
             LOGGER.exception("script_only.failed")

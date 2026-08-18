@@ -32,6 +32,7 @@ def _generate_multiple_images(
     aspect_ratio: str = "16:9",
     output_dir: Path | None = None,
     scene_background_seeds: dict[int, bytes] | None = None,
+    speakers: list[dict] | None = None,
 ) -> list[Path]:
     """Generate multiple scene images in parallel, all seeded from a reference image.
     
@@ -89,6 +90,8 @@ def _generate_multiple_images(
             scene_num = prompt_item.get("scene", 0)
             image_prompt = prompt_item.get("prompt", "")
 
+            is_split_screen = "SPLIT-SCREEN" in image_prompt
+
             if seed_image_bytes:
                 if aspect_ratio == "9:16":
                     placement = (
@@ -111,11 +114,27 @@ def _generate_multiple_images(
                         "block anywhere in the lower half or anywhere else in the image."
                     )
                 else:
-                    placement = (
-                        "Place the male character in the left 35-40% of the frame and the female "
-                        "character in the right 35-40%, both facing inward toward the center, "
-                        "with the center 20% kept open."
-                    )
+                    if is_split_screen:
+                        placement = (
+                            "Render a split-screen: left half shows Speaker1 centered in their own "
+                            "environment; right half shows Speaker2 centered in their own environment. "
+                            "A thin vertical dividing line separates the two halves. "
+                            "Do NOT place both characters in the same shared space."
+                        )
+                    else:
+                        # Use actual Speaker1/Speaker2 gender+role from topic config
+                        _spk = speakers or []
+                        _s1 = _spk[0] if len(_spk) > 0 else {}
+                        _s2 = _spk[1] if len(_spk) > 1 else {}
+                        _s1g = _s1.get("gender", "first speaker")
+                        _s1r = _s1.get("role", "Speaker1")
+                        _s2g = _s2.get("gender", "second speaker")
+                        _s2r = _s2.get("role", "Speaker2")
+                        placement = (
+                            f"Place the {_s1g} character ({_s1r}) in the left 35-40% of the frame "
+                            f"and the {_s2g} character ({_s2r}) in the right 35-40%, "
+                            f"both facing inward toward the center, with the center 20% kept open."
+                        )
 
                 parts: list = [
                     genai_types.Part(
@@ -157,9 +176,7 @@ def _generate_multiple_images(
                             f"IGNORE any text, words, labels, or signs visible in reference images — "
                             f"do NOT reproduce them.\n"
                             f"{bg_instruction}"
-                            f"OUTPUT REQUIREMENT: ONE single continuous {aspect_ratio} image. "
-                            f"NEVER split into panels, NEVER tile, NEVER repeat, "
-                            f"NEVER show the scene twice. One frame only.\n"
+                            f"OUTPUT REQUIREMENT: {'SPLIT-SCREEN — two side-by-side panels in ONE ' + aspect_ratio + ' image. Each panel shows a different character in their own environment. Do NOT merge them into a single shared scene.' if is_split_screen else 'ONE single continuous ' + aspect_ratio + ' image. Split into panels only if necessary, NEVER tile, NEVER repeat, NEVER show the scene twice. One frame only.'}\n"
                             f"ABSOLUTELY NO TEXT, NO WORDS, NO LABELS, NO SIGNS, NO CAPTIONS, "
                             f"NO WRITING OF ANY KIND anywhere in the generated image. "
                             f"Any props that would normally have writing (menus, signs, nameplates, "
@@ -470,22 +487,68 @@ def _enrich_dialogue_image_prompt(
 
     prompt_text = prompt_path.read_text(encoding="utf-8").strip()
 
-    # Extract speaker metadata from artifact
-    speakers = artifact.get("speakers", [])
-    scenario = artifact.get("scenario", "cafe")
+    # Extract speaker metadata — may live at top-level or nested under "script"
+    speakers = (
+        artifact.get("speakers")
+        or artifact.get("script", {}).get("speakers")
+        or []
+    )
+    scenario = (
+        artifact.get("scenario")
+        or artifact.get("script", {}).get("scenario")
+        or ""
+    )
 
-    speaker1_role = "Dutch teacher"
-    speaker1_gender = "female"
-    speaker2_role = "learner"
-    speaker2_gender = "female"
+    # Derive roles/genders strictly from config (via stored speakers list)
+    speaker1_role = ""
+    speaker1_gender = ""
+    speaker2_role = ""
+    speaker2_gender = ""
 
-    if speakers and len(speakers) >= 2:
+    if len(speakers) >= 2:
         speaker1 = speakers[0]
-        speaker2 = speakers[1] if len(speakers) > 1 else {}
-        speaker1_role = speaker1.get("role", speaker1_role)
-        speaker1_gender = speaker1.get("gender", speaker1_gender)
-        speaker2_role = speaker2.get("role", speaker2_role)
-        speaker2_gender = speaker2.get("gender", speaker2_gender)
+        speaker2 = speakers[1]
+        speaker1_role = speaker1.get("role", "Speaker1")
+        speaker1_gender = speaker1.get("gender", "")
+        speaker2_role = speaker2.get("role", "Speaker2")
+        speaker2_gender = speaker2.get("gender", "")
+    elif len(speakers) == 1:
+        speaker1_role = speakers[0].get("role", "Speaker1")
+        speaker1_gender = speakers[0].get("gender", "")
+
+    # Build scene_composition and scene_background placeholders
+    phone_call = _is_phone_call_scenario(
+        scenario, artifact.get("topic_id", ""), artifact.get("topic_title", "")
+    )
+    if phone_call:
+        # Use the LLM-generated image_prompt as Speaker1's environment description;
+        # derive Speaker2's environment from their role.
+        speaker1_env = artifact.get("image_prompt") or artifact.get("script", {}).get("image_prompt", "")
+        speaker2_env = f"a typical home or workplace setting for a {speaker2_role} receiving a call"
+        scene_composition, scene_background = _build_split_screen_placeholders(
+            orientation, speaker1_gender, speaker1_role, speaker2_gender, speaker2_role,
+            speaker1_env=speaker1_env, speaker2_env=speaker2_env,
+        )
+        # Override char-position placeholders so the template's Character-placement
+        # section reinforces split-screen rather than a shared single frame
+        orientation = {
+            **orientation,
+            "char_position_1": "centered in their own left half",
+            "char_position_2": "centered in their own right half",
+            "char_center": "thin vertical dividing line separating the two halves — do NOT place any character at the center divider",
+        }
+    else:
+        frame_label = orientation.get("frame_label", "16:9")
+        scene_composition = (
+            f"ONE SINGLE CONTINUOUS SCENE — do NOT split the image into panels, "
+            f"sections, columns, or side-by-side halves. "
+            f"The entire {frame_label} frame is ONE unified illustration."
+        )
+        scene_background = (
+            f"Full background: the {scenario} environment fills 100% of the frame "
+            f"as a single cohesive space — rich, detailed, and in focus. "
+            f"NO DIVIDING LINES, NO BORDERS, NO SPLIT PANELS."
+        )
 
     # Substitute content placeholders
     enriched = prompt_text.replace("{scenario}", scenario)
@@ -494,13 +557,75 @@ def _enrich_dialogue_image_prompt(
     enriched = enriched.replace("{speaker1_gender}", speaker1_gender)
     enriched = enriched.replace("{speaker2_gender}", speaker2_gender)
     enriched = enriched.replace("{topic_title}", artifact.get("topic_title", ""))
+    enriched = enriched.replace("{scene_composition}", scene_composition)
+    enriched = enriched.replace("{scene_background}", scene_background)
 
     # Substitute orientation placeholders
     for key, value in orientation.items():
         enriched = enriched.replace(f"{{{key}}}", value)
 
-    LOGGER.debug("dialogue_image_prompt loaded from %s portrait=%s", prompt_path, portrait)
+    LOGGER.debug("dialogue_image_prompt loaded from %s portrait=%s phone_call=%s", prompt_path, portrait, phone_call)
     return enriched
+
+
+_PHONE_CALL_KEYWORDS = frozenset([
+    "phone", "call", "calling", "telephone", "bellen", "telefoon", "telefoongesprek",
+    "phone call", "phone_call", "mobiel", "mobile",
+])
+
+
+def _is_phone_call_scenario(scenario: str, topic_id: str, topic_title: str) -> bool:
+    """Return True if the scenario/topic looks like a phone call."""
+    haystack = f"{scenario} {topic_id} {topic_title}".lower()
+    return any(kw in haystack for kw in _PHONE_CALL_KEYWORDS)
+
+
+def _build_split_screen_placeholders(
+    orientation: dict[str, str],
+    speaker1_gender: str,
+    speaker1_role: str,
+    speaker2_gender: str,
+    speaker2_role: str,
+    speaker1_env: str = "",
+    speaker2_env: str = "",
+) -> tuple[str, str]:
+    """Return (scene_composition, scene_background) strings for a split-screen phone call.
+
+    speaker1_env / speaker2_env: short descriptions of each speaker's physical location
+    (e.g. 'a cosy living room with a smartphone on the table'). When omitted, generic
+    descriptions are used.
+    """
+    s1_env = speaker1_env or f"their own indoor environment as a {speaker1_role}"
+    s2_env = speaker2_env or f"a different indoor environment suited to a {speaker2_role}"
+
+    if orientation.get("frame_label", "").startswith("9:16"):
+        composition = (
+            f"SPLIT-SCREEN PHONE CALL — two separate locations stacked vertically. "
+            f"Top half: {speaker1_gender} character ({speaker1_role}) in {s1_env}, "
+            f"holding a phone to their ear, looking slightly downward. "
+            f"Bottom half: {speaker2_gender} character ({speaker2_role}) in {s2_env}, "
+            f"holding a phone to their ear, looking slightly upward. "
+            f"A thin, clean horizontal dividing line separates the two halves."
+        )
+    else:
+        composition = (
+            f"SPLIT-SCREEN PHONE CALL — two separate locations side by side. "
+            f"Left half: {speaker1_gender} character ({speaker1_role}) in {s1_env}, "
+            f"holding a phone to their ear, body angled toward center. "
+            f"Right half: {speaker2_gender} character ({speaker2_role}) in {s2_env}, "
+            f"holding a phone to their ear, body angled toward center. "
+            f"A thin, clean vertical dividing line separates the two halves."
+        )
+    background = (
+        f"Left background: {s1_env} — rich, detailed, fills the left half fully. "
+        f"Right background: {s2_env} — rich, detailed, fills the right half fully. "
+        f"Each half is a distinct, coherent environment in focus."
+    ) if not orientation.get("frame_label", "").startswith("9:16") else (
+        f"Top background: {s1_env} — rich, detailed, fills the top half fully. "
+        f"Bottom background: {s2_env} — rich, detailed, fills the bottom half fully. "
+        f"Each half is a distinct, coherent environment in focus."
+    )
+    return composition, background
 
 
 def generate_image_from_artifact(
@@ -526,6 +651,7 @@ def generate_image_from_artifact(
     category = artifact.get("category", "dialogue")
     image_prompts = artifact.get("image_prompts") or artifact.get("script", {}).get("image_prompts", [])
     image_prompt = artifact.get("image_prompt") or artifact.get("script", {}).get("image_prompt", "")
+    speakers = artifact.get("speakers") or artifact.get("script", {}).get("speakers", [])
     
     # Default output root based on level/category
     if output_root is None:
@@ -573,6 +699,7 @@ def generate_image_from_artifact(
                 output_root=output_root,
                 image_prompts=image_prompts,
                 seed_image_path=seed_image_path,
+                speakers=speakers,
             )
             
             # Update artifact with generated image files list

@@ -1,36 +1,17 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
+from datetime import datetime, timezone
 
-from pipeline import settings
-from pipeline.core.db import get_connection
-
-
-def _get_last_scheduled_time() -> datetime | None:
-    with get_connection() as conn:
-        row = conn.execute(
-            "SELECT scheduled_at FROM publish_jobs ORDER BY id DESC LIMIT 1"
-        ).fetchone()
-    if not row:
-        return None
-    return datetime.fromisoformat(row["scheduled_at"])
+# Sentinel value stored in publish_jobs.scheduled_at when an episode has not
+# yet been manually scheduled.  publish_pending.py filters on scheduled_at <= now,
+# so this date is never picked up automatically.
+UNSCHEDULED_SENTINEL = "9999-12-31T00:00:00+00:00"
 
 
 def next_publish_slot() -> datetime:
-    config = settings.SCHEDULING_CONFIG.get("publish", {})
-    cadence_days = int(config.get("cadence_days", 2))
-    hour = int(config.get("preferred_hour_24", 18))
-    minute = int(config.get("preferred_minute", 0))
-    tz = ZoneInfo(config.get("timezone", settings.CHANNEL_TIMEZONE))
+    """Return the 'unscheduled' sentinel datetime.
 
-    last = _get_last_scheduled_time()
-    now_local = datetime.now(tz)
-
-    if last is None:
-        candidate = now_local.replace(hour=hour, minute=minute, second=0, microsecond=0)
-        if candidate <= now_local:
-            candidate = candidate + timedelta(days=cadence_days)
-        return candidate
-
-    return (last + timedelta(days=cadence_days)).astimezone(tz)
+    Automatic cadence scheduling has been disabled.  Episodes are scheduled
+    manually via the webapp (Episodes → Schedule button).
+    """
+    return datetime.fromisoformat(UNSCHEDULED_SENTINEL)

@@ -23,9 +23,47 @@ def _sanitize_description(text: str) -> str:
     return text[:5000]
 
 
-def build_upload_payload(artifact_path: Path) -> dict:
-    data = json.loads(artifact_path.read_text(encoding="utf-8"))
-    metadata = data.get("metadata", {})
+def _get_title_from_canonical_script(topic_id: str) -> str:
+    """Look up topic_title from canonical_scripts.script_json in the DB."""
+    try:
+        from pipeline.core.db import get_connection
+        with get_connection() as conn:
+            row = conn.execute(
+                """
+                SELECT script_json FROM canonical_scripts
+                WHERE topic_id = ?
+                ORDER BY id DESC LIMIT 1
+                """,
+                [topic_id],
+            ).fetchone()
+        if row and row["script_json"]:
+            script = json.loads(row["script_json"])
+            return script.get("topic_title_en") or script.get("topic_title") or ""
+    except Exception:
+        pass
+    return ""
+
+
+def build_upload_payload(artifact: dict) -> dict:
+    data = artifact
+    metadata = data.get("metadata") or {}
+    topic_id = data.get("topic_id", "")
+
+    # Fallback title chain:
+    # 1. metadata.title (from generate_metadata stage)
+    # 2. canonical_scripts.script_json.topic_title (DB source of truth)
+    # 3. artifact script.topic_title
+    # 4. artifact top-level topic_title
+    # 5. title_slug
+    title = (
+        metadata.get("title")
+        or _get_title_from_canonical_script(topic_id)
+        or (data.get("script") or {}).get("topic_title_en")
+        or (data.get("script") or {}).get("topic_title")
+        or data.get("topic_title_en")
+        or data.get("topic_title")
+        or data.get("title_slug", "")
+    )
 
     status = {
         "privacyStatus": "private",
@@ -37,7 +75,7 @@ def build_upload_payload(artifact_path: Path) -> dict:
 
     return {
         "snippet": {
-            "title": metadata.get("title", "")[:100],
+            "title": title[:100],
             "description": _sanitize_description(metadata.get("description", "")),
             "tags": list(metadata.get("tags") or []),
             "categoryId": "27",
@@ -106,9 +144,10 @@ def _get_youtube_client():
     return build("youtube", "v3", credentials=creds)
 
 
-def upload_video(artifact_path: Path, video_file: Path) -> dict:
+def upload_video(artifact: dict, video_file: Path) -> dict:
+    from pipeline import settings as _settings
     _, _, _, MediaFileUpload, _ = _load_google_clients()
-    payload = build_upload_payload(artifact_path)
+    payload = build_upload_payload(artifact)
     youtube = _get_youtube_client()
 
     request = youtube.videos().insert(
@@ -150,7 +189,7 @@ def upload_video(artifact_path: Path, video_file: Path) -> dict:
         if thumbnail:
             thumb_path = Path(thumbnail)
             if not thumb_path.is_absolute():
-                thumb_path = (artifact_path.parent.parent.parent / thumbnail).resolve()
+                thumb_path = (_settings.ROOT / thumbnail).resolve()
             if thumb_path.exists():
                 try:
                     youtube.thumbnails().set(
@@ -163,12 +202,11 @@ def upload_video(artifact_path: Path, video_file: Path) -> dict:
                     logging.getLogger(__name__).warning("Thumbnail upload failed: %s", exc)
 
         # Upload English SRT caption track
-        artifact_data = json.loads(artifact_path.read_text(encoding="utf-8"))
-        srt_en_raw = artifact_data.get("subtitles", {}).get("srt_en", "")
+        srt_en_raw = artifact.get("subtitles", {}).get("srt_en", "")
         if srt_en_raw:
             srt_path = Path(srt_en_raw)
             if not srt_path.is_absolute():
-                srt_path = artifact_path.parent.parent.parent.parent / srt_en_raw
+                srt_path = _settings.ROOT / srt_en_raw
             try:
                 caption_result = upload_captions(youtube, video_id, srt_path)
                 if caption_result:

@@ -525,7 +525,7 @@ def _render_short_vertical(
 # ---------------------------------------------------------------------------
 
 
-def generate_shorts_images(artifact: dict, artifact_path: Path) -> list[dict]:
+def generate_shorts_images(artifact: dict) -> list[dict]:
     """Generate native 9:16 (portrait) scene images for Shorts.
 
     Builds each scene prompt from the level-specific ``dialogue_image_prompt.md``
@@ -555,7 +555,8 @@ def generate_shorts_images(artifact: dict, artifact_path: Path) -> list[dict]:
     level = artifact.get("level", "A1A2")
     category = artifact.get("category", "dialogue")
 
-    workspace = artifact_path.parent.parent.parent.parent
+    from pipeline import settings as _settings
+    workspace = _settings.ROOT
     shorts_base = (
         workspace / "output" / level / category
         / "shorts" / f"episode_{topic_id}_{title_slug}"
@@ -682,7 +683,7 @@ def generate_shorts_images(artifact: dict, artifact_path: Path) -> list[dict]:
 # Public entry point
 # ---------------------------------------------------------------------------
 
-def generate_scene_shorts(artifact: dict, artifact_path: Path) -> list[dict]:
+def generate_scene_shorts(artifact: dict) -> list[dict]:
     """Generate one Short per scene in ``artifact["script"]["image_prompts"]``.
 
     Returns a list of dicts (one per successfully rendered scene) with keys:
@@ -696,9 +697,8 @@ def generate_scene_shorts(artifact: dict, artifact_path: Path) -> list[dict]:
         return []
 
     # ── Resolve source file paths ─────────────────────────────────────────
-    root = artifact_path.parent.parent.parent  # output/{level}/{category} → output/
-    # Some paths in artifact are relative to the workspace root
-    workspace = artifact_path.parent.parent.parent.parent  # repo root
+    from pipeline import settings as _settings
+    workspace = _settings.ROOT  # always the repo root, regardless of artifact depth
 
     def _resolve(rel: str) -> Path:
         p = Path(rel)

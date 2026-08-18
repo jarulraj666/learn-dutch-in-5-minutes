@@ -598,7 +598,127 @@ topics:
     track: daily_life
     title_hint: "Dat-clauses: Ik denk dat hij werkt / Ze zegt dat ze morgen komt — indirect speech and opinions"
 
-  # ── DIALOGUE (A1A2) ────────────────────────────────────────────────────────
+  - id: grammar_imperfect_regular
+    level: A1A2
+    category: grammar
+    order_index: 30
+    track: daily_life
+    title_hint: "Simple past (OVT) of regular verbs: werkte, woonde, speelde — how to form and use it"
+
+  - id: grammar_imperfect_irregular
+    level: A1A2
+    category: grammar
+    order_index: 31
+    track: daily_life
+    title_hint: "Simple past of irregular verbs: was, had, ging, zag, deed, kon, wist — the most common strong verbs"
+
+  - id: grammar_imperfect_vs_perfect
+    level: A1A2
+    category: grammar
+    order_index: 32
+    track: daily_life
+    title_hint: "Simple past vs perfect tense: when to use OVT (werkte) vs VTT (heeft gewerkt) in Dutch"
+
+  - id: grammar_future_zullen
+    level: A1A2
+    category: grammar
+    order_index: 33
+    track: daily_life
+    title_hint: "Future with zullen: ik zal, jij zult, hij zal — predictions, promises and formal future"
+
+  - id: grammar_conditional_zou
+    level: A1A2
+    category: grammar
+    order_index: 34
+    track: daily_life
+    title_hint: "Conditional with zou/zouden: ik zou graag willen, dat zou leuk zijn — polite requests and hypotheticals"
+
+  # ── GRAMMAR (B1) ─────────────────────────────────────────────────────────
+  - id: grammar_b1_past_perfect
+    level: B1
+    category: grammar
+    order_index: 1
+    track: daily_life
+    title_hint: "Past perfect (VVT): had gewerkt, was gegaan — actions completed before another past event"
+
+  - id: grammar_b1_passive_present
+    level: B1
+    category: grammar
+    order_index: 2
+    track: daily_life
+    title_hint: "Passive voice in the present: wordt gemaakt, worden gebruikt — focus on the action, not the doer"
+
+  - id: grammar_b1_passive_past
+    level: B1
+    category: grammar
+    order_index: 3
+    track: daily_life
+    title_hint: "Passive voice in the past: werd gemaakt, werden verkocht — past passive with werd/werden"
+
+  - id: grammar_b1_modal_verbs_past
+    level: B1
+    category: grammar
+    order_index: 4
+    track: daily_life
+    title_hint: "Modal verbs in the past: kon, mocht, moest, wilde, zou — how modals change in OVT and VTT"
+
+  - id: grammar_b1_conditional_perfect
+    level: B1
+    category: grammar
+    order_index: 5
+    track: daily_life
+    title_hint: "Conditional perfect: zou hebben gedaan, zou zijn gegaan — hypothetical past actions"
+
+  - id: grammar_b1_strong_verbs
+    level: B1
+    category: grammar
+    order_index: 6
+    track: daily_life
+    title_hint: "Strong (irregular) verbs overview: rijden→reed, schrijven→schreef, blijven→bleef — vowel-change patterns"
+
+  - id: grammar_b1_worden_passive
+    level: B1
+    category: grammar
+    order_index: 7
+    track: daily_life
+    title_hint: "Worden vs zijn in passive: wordt gebeld (process) vs is gebeld (state/result) — the key distinction"
+
+  - id: grammar_b1_infinitive_complement
+    level: B1
+    category: grammar
+    order_index: 8
+    track: daily_life
+    title_hint: "Infinitive as verbal complement: zien lopen, horen zingen, laten repareren — verb clusters without te"
+
+  - id: grammar_b1_indirect_speech
+    level: B1
+    category: grammar
+    order_index: 9
+    track: daily_life
+    title_hint: "Indirect speech and tense shift: hij zei dat hij moe was — how tenses shift in reported speech"
+
+  - id: grammar_b1_double_infinitive
+    level: B1
+    category: grammar
+    order_index: 10
+    track: daily_life
+    title_hint: "Double infinitive in perfect tense: heeft kunnen gaan, had willen zeggen — modal + main verb in VTT"
+
+  - id: grammar_b1_past_imperfect_context
+    level: B1
+    category: grammar
+    order_index: 11
+    track: daily_life
+    title_hint: "Using OVT for background narration: was, had, liep — setting the scene in past tense stories"
+
+  - id: grammar_b1_future_perfect
+    level: B1
+    category: grammar
+    order_index: 12
+    track: daily_life
+    title_hint: "Future perfect: zal hebben gewerkt, zal zijn aangekomen — completed future actions and logical deductions"
+
+
   - id: intro_name_origin
     level: A1A2
     category: dialogue

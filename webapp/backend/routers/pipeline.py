@@ -20,8 +20,10 @@ class RunRequest(BaseModel):
 
 
 class StageRequest(BaseModel):
-    artifact_path: str
+    topic_id: str
     stages: list[int]
+    # Legacy: artifact_path still accepted but ignored (topic_id is used)
+    artifact_path: str | None = None
 
 
 @router.post("/pipeline/run")
@@ -50,7 +52,7 @@ async def run_stages(req: StageRequest):
 
     try:
         job = await pipeline_runner.start_pipeline(
-            artifact_path=req.artifact_path,
+            topic_id=req.topic_id,
             stages=req.stages,
         )
     except ValueError as exc:

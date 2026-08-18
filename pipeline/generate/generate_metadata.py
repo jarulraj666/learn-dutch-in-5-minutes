@@ -95,7 +95,33 @@ def generate_description(script: dict[str, Any], level: str = "A1A2", category: 
     return description[:5000]
 
 
-def generate_title(script: dict[str, Any], level: str = "A1A2", category: str = "") -> str:
+def generate_title(
+    script: dict[str, Any],
+    level: str = "A1A2",
+    category: str = "",
+    topic_id: str = "",
+) -> str:
+    """Return the YouTube title for a topic.
+
+    If ``topic_id`` is provided and the topic has a ``youtube_title`` set in the
+    database, that canonical numbered title is returned (e.g.
+    "🇳🇱 Dutch Grammar #1: De & Het (Dutch Articles) | A1 Beginners").
+
+    Falls back to the auto-generated format for topics that don't have a
+    numbered title yet.
+    """
+    if topic_id:
+        try:
+            from pipeline.core.db import get_connection
+            with get_connection() as conn:
+                row = conn.execute(
+                    "SELECT youtube_title FROM topics WHERE id = ?", [topic_id]
+                ).fetchone()
+            if row and row["youtube_title"]:
+                return row["youtube_title"]
+        except Exception:
+            pass  # Fall through to default
+
     topic_title_en = script.get("topic_title_en") or script.get("topic_title", "Dutch Lesson")
     cat_label = _category_label(category) if category else "Dutch Lesson"
     return f"{topic_title_en} - {cat_label} | Dutch in 5 minutes | {_level_label(level)} Beginners"
@@ -106,8 +132,9 @@ def generate_metadata(
     playlist_track: str,
     level: str = "A1A2",
     category: str = "",
+    topic_id: str = "",
 ) -> dict[str, Any]:
-    title = generate_title(script, level=level, category=category)
+    title = generate_title(script, level=level, category=category, topic_id=topic_id)
     description = generate_description(script, level=level, category=category)
     cat_label = _category_label(category) if category else playlist_track
     topic_title_en = script.get("topic_title_en") or script.get("topic_title", "")

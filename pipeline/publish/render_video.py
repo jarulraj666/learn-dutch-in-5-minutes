@@ -982,10 +982,11 @@ def _concat_video_segments(
         return False, str(exc)
 
 
-def render_from_artifact(artifact_path: Path) -> Path:
+def render_from_artifact(artifact: dict) -> Path:
     render_start = time.perf_counter()
-    LOGGER.info("render.start artifact=%s", artifact_path)
-    data = json.loads(artifact_path.read_text(encoding="utf-8"))
+    topic_id = artifact.get("topic_id", "unknown")
+    LOGGER.info("render.start topic=%s", topic_id)
+    data = artifact
 
     out_dir = settings.OUTPUT_DIR
     if not out_dir.is_absolute():

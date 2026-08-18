@@ -61,12 +61,15 @@ export interface SceneImageInfo {
 export interface ShortInfo {
   scene: string | null;
   description: string | null;
+  image_path?: string | null;
   video_file: string | null;
   reel_id: string | null;
   container_id: string | null;
   permalink: string | null;
   draft: boolean;
+  reel_scheduled_at: string | null;
   instagram_scheduled_at: string | null;
+  tiktok_scheduled_at: string | null;
   facebook_scheduled_at: string | null;
   youtube: { short_video_id?: string; [key: string]: unknown } | null;
   tiktok: { publish_id?: string; [key: string]: unknown } | null;
@@ -106,4 +109,58 @@ export interface PublishJob {
   artifact_path: string | null;
   published_at: string | null;
   status_detail: string | null;
+}
+
+export interface PlatformShortStatus {
+  scene: number;
+  description: string | null;
+  video_file: string | null;
+  reel_scheduled_at: string | null;
+  youtube: {
+    short_video_id: string | null;
+    url: string | null;
+    playlist_name: string | null;
+  } | null;
+  instagram: {
+    reel_id: string | null;
+    permalink: string | null;
+    manually_marked: boolean;
+    scheduled_at: string | null;
+  } | null;
+  tiktok: {
+    publish_id: string | null;
+    scheduled_at: string | null;
+  } | null;
+  facebook: {
+    post_id: string | null;
+    video_id: string | null;
+    manually_marked: boolean;
+    scheduled_at: string | null;
+  } | null;
+}
+
+export interface PlatformStatusItem {
+  topic_id: string;
+  title: string;
+  level: string;
+  category: string;
+  youtube: {
+    video_id: string | null;
+    url: string | null;
+    status: string;
+    scheduled_at: string | null;
+    published_at: string | null;
+  };
+  shorts: PlatformShortStatus[];
+}
+
+export interface PlatformCount {
+  published: number;
+  scheduled: number;
+  pending: number;
+}
+
+export interface PlatformStatusResponse {
+  counts: Record<string, PlatformCount>;
+  items: PlatformStatusItem[];
 }

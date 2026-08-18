@@ -270,26 +270,23 @@ def _poll_publish_status(publish_id: str, access_token: str) -> str:
 
 def upload_short_tiktok(
     artifact: dict,
-    artifact_path: Path,
     scene_short: dict,
 ) -> dict:
     """Upload one Short clip to TikTok.
 
     Args:
-        artifact:       Full episode artifact dict.
-        artifact_path:  Path to the artifact JSON (unused here, kept for API symmetry).
-        scene_short:    One entry from ``artifact["shorts"]``.
+        artifact:    Full episode artifact dict.
+        scene_short: One entry from ``artifact["shorts"]``.
 
     Returns:
         Dict with ``publish_id``.
-
-    Raises:
-        RuntimeError:   If credentials are missing, the API returns an error, or
-                        the publish job times out.
     """
     access_token = _get_access_token()
 
     video_file = Path(scene_short.get("video_file", ""))
+    if not video_file.is_absolute():
+        ROOT = Path(__file__).resolve().parent.parent.parent
+        video_file = ROOT / video_file
     if not video_file.exists():
         raise FileNotFoundError(f"Short video not found: {video_file}")
 

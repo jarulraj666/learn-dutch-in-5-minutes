@@ -93,20 +93,48 @@ def store_canonical_script(
     fingerprint = content_fingerprint(topic_id, title, key_phrases)
 
     with get_connection() as conn:
-        cursor = conn.execute(
+        # If a canonical script already exists for this topic+language, update it
+        # rather than inserting a duplicate row.
+        existing = conn.execute(
             """
-            INSERT INTO canonical_scripts (topic_id, language, title, script_json, fingerprint, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            SELECT id FROM canonical_scripts
+            WHERE topic_id = ? AND language = ?
+            ORDER BY id DESC LIMIT 1
             """,
-            (
-                topic_id,
-                language,
-                title,
-                json.dumps(script, ensure_ascii=False),
-                fingerprint,
-                now_utc_iso(),
-            ),
-        )
+            (topic_id, language),
+        ).fetchone()
+
+        if existing:
+            conn.execute(
+                """
+                UPDATE canonical_scripts
+                SET title = ?, script_json = ?, fingerprint = ?
+                WHERE id = ?
+                """,
+                (
+                    title or existing["title"],
+                    json.dumps(script, ensure_ascii=False),
+                    fingerprint,
+                    existing["id"],
+                ),
+            )
+            script_id = int(existing["id"])
+        else:
+            cursor = conn.execute(
+                """
+                INSERT INTO canonical_scripts (topic_id, language, title, script_json, fingerprint, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    topic_id,
+                    language,
+                    title,
+                    json.dumps(script, ensure_ascii=False),
+                    fingerprint,
+                    now_utc_iso(),
+                ),
+            )
+            script_id = int(cursor.lastrowid)
 
         conn.execute(
             """
@@ -117,7 +145,7 @@ def store_canonical_script(
             (now_utc_iso(), topic_id),
         )
 
-    return int(cursor.lastrowid)
+    return script_id
 
 
 def store_publish_job(

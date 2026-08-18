@@ -31,7 +31,15 @@ def serve_audio(path: str):
 @router.get("/media/video")
 def serve_video(path: str):
     p = _safe_resolve(path)
-    return FileResponse(p, media_type="video/mp4")
+    return FileResponse(
+        p,
+        media_type="video/mp4",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
 
 
 @router.get("/media/image")
@@ -90,14 +98,11 @@ async def upload_scene_image(
 
     format: "16x9" or "9x16"
     """
-    from services.artifact import find_artifact, load_artifact
+    from services.artifact import load_artifact_from_db, save_artifact
 
-    artifact_file = find_artifact(topic_id)
-    if not artifact_file:
+    artifact = load_artifact_from_db(topic_id)
+    if artifact is None:
         raise HTTPException(status_code=404, detail=f"Artifact not found for topic {topic_id}")
-    artifact = load_artifact(artifact_file)
-    if not artifact:
-        raise HTTPException(status_code=500, detail="Could not load artifact")
 
     level = artifact.get("level", "A1A2")
     category = artifact.get("category", "dialogue")
@@ -149,10 +154,5 @@ async def upload_scene_image(
     else:
         raise HTTPException(status_code=400, detail="format must be '16x9' or '9x16'")
 
-    artifact_file.write_text(json.dumps(artifact, indent=2, ensure_ascii=False), encoding="utf-8")
-
-    # Sync updated artifact back to DB so the API returns fresh image paths
-    from services.db import update_publish_job_artifact_json
-    update_publish_job_artifact_json(topic_id, artifact)
-
+    save_artifact(topic_id, artifact)
     return {"path": rel, "scene": scene_num, "format": format}

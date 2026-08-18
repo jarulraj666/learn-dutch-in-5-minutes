@@ -97,23 +97,16 @@ def _graph_post(path: str, token: str, **params) -> dict:
 
 def upload_short_facebook(
     artifact: dict,
-    artifact_path: Path,
     scene_short: dict,
 ) -> dict:
     """Upload one Short clip to a Facebook Page as a Reel.
 
     Args:
-        artifact:      Full episode artifact dict.
-        artifact_path: Path to the artifact JSON file (unused but kept for
-                       API symmetry with upload_short_instagram).
-        scene_short:   One scene entry from ``artifact["shorts"]``.
+        artifact:    Full episode artifact dict.
+        scene_short: One scene entry from ``artifact["shorts"]``.
 
     Returns:
         Dict with ``post_id`` and ``video_id``.
-
-    Raises:
-        RuntimeError: If credentials are missing or the API returns an error.
-        FileNotFoundError: If the video file does not exist.
     """
     page_id = os.getenv("FACEBOOK_PAGE_ID", "")
     page_token = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN", "")
