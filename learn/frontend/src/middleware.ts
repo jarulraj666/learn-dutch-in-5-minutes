@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // for the presence of the session cookie. Pages re-validate it with auth().
 export function middleware(req: NextRequest) {
   const hasSession =
+    req.cookies.has("learn-session-token") ||
     req.cookies.has("__Secure-authjs.session-token") ||
     req.cookies.has("authjs.session-token");
 
