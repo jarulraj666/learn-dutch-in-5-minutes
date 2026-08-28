@@ -145,7 +145,7 @@ function RunPageInner() {
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white"
               >
-                {["common_words", "grammar", "vocabulary", "dialogue"].map((c) => (
+                {["course_intro", "common_words", "grammar", "vocabulary", "dialogue"].map((c) => (
                   <option key={c} value={c}>{c.replace("_", " ")}</option>
                 ))}
               </select>

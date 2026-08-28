@@ -6,6 +6,8 @@ google-auth-oauthlib==1.2.2
 google-auth-httplib2==0.2.0
 google-generativeai>=0.5.0
 elevenlabs>=1.3.0
+# Postgres driver used by pipeline/tools/export_learning_content.py
+psycopg[binary]>=3.1
 # WhisperX for local speech-to-text (medium model, word-level timestamps)
 whisperx
 # Kokoro TTS (local ONNX): pip install kokoro-onnx soundfile

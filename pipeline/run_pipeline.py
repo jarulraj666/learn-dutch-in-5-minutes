@@ -28,10 +28,12 @@ from pipeline.stages import (
     normalize_level,
     stage_generate_shorts,
     stage_generate_shorts_images,
+    stage_expression_tags,
     stage_image,
     stage_metadata,
     stage_qa_audio,
     stage_qa_subtitles,
+    stage_quiz,
     stage_render,
     stage_script,
     stage_subtitles,
@@ -253,6 +255,20 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
             script = stage_script(topic, language=language, level=level)
             LOGGER.info("✓ Script generated: %d dialogue lines", len(script.get("dialogue", [])))
 
+    # --- Quiz generation (must precede metadata: the description embeds quiz answers) ---
+    from pipeline.generate.generate_quiz import quiz_is_complete
+
+    if quiz_is_complete(script.get("quiz")):
+        LOGGER.info("artifact.skip quiz_generation (%d questions)", len(script["quiz"]))
+    else:
+        with _stage("quiz_generation"):
+            quiz = stage_quiz(script, level=level, category=category, topic_id=topic.topic_id)
+            if quiz:
+                script["quiz"] = quiz
+                LOGGER.info("✓ Quiz generated: %d questions", len(quiz))
+            else:
+                LOGGER.warning("quiz generation produced nothing — continuing without a quiz")
+
     # --- Metadata generation ---
     if _resume.get("metadata"):
         playlist_name = _resume.get("playlist", "")
@@ -332,10 +348,17 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
         voice_plan = artifact.get("voice", {})
         LOGGER.info("artifact.skip voice_generation — audio: %s", _existing_audio)
     else:
+        with _stage("expression_tag_generation"):
+            tts_dialogue = stage_expression_tags(
+                script.get("dialogue", []), settings.TTS_PROVIDER
+            )
+            artifact["tts_dialogue"] = tts_dialogue
+            _save_artifact(_topic_id, artifact)
         with _stage("voice_generation"):
             voice_plan = stage_voice(
                 script, output_root=out_dir, level=level, category=category,
                 topic_id=topic.topic_id, title_slug=title_slug,
+                tts_dialogue=tts_dialogue,
             )
             LOGGER.info("\u2713 Voice generated: %s", voice_plan.get("dialogue_audio", ""))
         artifact.update({
@@ -884,6 +907,8 @@ def run_script(topic_id: str) -> None:
     topic = _topic_from_artifact(artifact)
     script = stage_script(topic, language="nl", level=artifact["level"])
     artifact["script"] = script
+    artifact["script_manually_edited"] = False
+    artifact.pop("script_edit_source", None)
     artifact["topic_title"] = script.get("topic_title", artifact.get("topic_title"))
     artifact["image_prompt"] = script.get("image_prompt", "")
 
@@ -939,6 +964,11 @@ def run_script(topic_id: str) -> None:
 def run_audio(topic_id: str) -> str:
     artifact = load_artifact(topic_id)
     print(f"🎯 Re-generating audio for: {artifact['title_slug']}")
+    with _stage("expression_tag_generation"):
+        tts_dialogue = stage_expression_tags(
+            artifact.get("script", {}).get("dialogue", []), settings.TTS_PROVIDER
+        )
+        artifact["tts_dialogue"] = tts_dialogue
     voice_plan = stage_voice(
         script=artifact.get("script", {}),
         output_root=settings.ROOT / "output" / artifact["level"] / artifact["category"],
@@ -946,6 +976,7 @@ def run_audio(topic_id: str) -> str:
         category=artifact["category"],
         topic_id=artifact["topic_id"],
         title_slug=artifact["title_slug"],
+        tts_dialogue=tts_dialogue,
     )
     artifact["voice"] = voice_plan
     artifact["audio_file"] = voice_plan.get("dialogue_audio", "")
@@ -953,6 +984,20 @@ def run_audio(topic_id: str) -> str:
     _save_artifact(topic_id, artifact)
     print("✅ Audio regenerated")
     return artifact["audio_file"]
+
+
+def run_expression_tags(topic_id: str) -> None:
+    artifact = load_artifact(topic_id)
+    script = artifact.get("script", {})
+    with _stage("expression_tag_generation"):
+        artifact["tts_dialogue"] = stage_expression_tags(
+            script.get("dialogue", []), settings.TTS_PROVIDER
+        )
+    artifact.pop("audio_file", None)
+    artifact.pop("audio_file_raw", None)
+    artifact.pop("voice", None)
+    _save_artifact(topic_id, artifact)
+    print("✅ Expression tags generated; regenerate audio to apply them")
 
 
 def run_subtitles(topic_id: str, audio_path: Optional[str] = None) -> None:
@@ -1229,6 +1274,41 @@ def run_qa_subtitles(topic_id: str) -> None:
     
     if total_score < 100:
         raise ValueError(f"❌ Subtitle QA failed with score {total_score:.1f}/100. Fix subtitle issues before proceeding.")
+
+
+def run_quiz(topic_id: str) -> None:
+    """Regenerate the learner-facing quiz and persist it into the stored script."""
+    from pipeline.core.store_content import store_canonical_script
+
+    artifact = load_artifact(topic_id)
+    script = artifact.get("script")
+    if not script:
+        print("⚠️  No script in artifact — run the Script stage first.")
+        return
+
+    print(f"🎯 Generating quiz for: {artifact['title_slug']}")
+    quiz = stage_quiz(
+        script,
+        level=artifact["level"],
+        category=artifact["category"],
+        topic_id=artifact["topic_id"],
+    )
+    if not quiz:
+        print("✗ Quiz generation produced no valid questions — artifact left unchanged.")
+        return
+
+    script["quiz"] = quiz
+    artifact["script"] = script
+    _save_artifact(topic_id, artifact)
+
+    # Keep canonical_scripts in sync so the DB copy of the script carries the quiz too.
+    store_canonical_script(
+        topic_id=artifact["topic_id"],
+        language=script.get("language", "nl"),
+        title=artifact.get("metadata", {}).get("title") or artifact.get("title_slug", ""),
+        script=script,
+    )
+    print(f"✅ Quiz generated: {len(quiz)} questions")
 
 
 def run_export_image_prompts(topic_id: str) -> None:
@@ -1539,6 +1619,7 @@ def run_upload_shorts_facebook(topic_id: str) -> None:
 
 _STAGES = [
     ("Script",           run_script),
+    ("Generate Expression Tags", run_expression_tags),
     ("Image",            run_image),
     ("Audio",            run_audio),
     ("Subtitles",        run_subtitles),
@@ -1554,6 +1635,7 @@ _STAGES = [
     ("Upload Shorts Facebook", run_upload_shorts_facebook),
     ("Upload captions",      run_captions),
     ("Export image prompts", run_export_image_prompts),
+    ("Generate Quiz",        run_quiz),
 ]
 
 
@@ -1646,7 +1728,7 @@ Examples:
     parser.add_argument("--level", default="A1A2", choices=["A1A2", "B1", "B2"], help="CEFR level")
     parser.add_argument(
         "--category",
-        choices=["common_words", "grammar", "vocabulary", "dialogue"],
+        choices=["course_intro", "common_words", "grammar", "vocabulary", "dialogue"],
         default=None,
         help="Filter by category. Runs all pending videos unless --single or --count is also set.",
     )

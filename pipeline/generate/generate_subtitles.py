@@ -290,16 +290,16 @@ def _build_ass_karaoke_text(
             else:
                 w_end = seg_end
 
-        # Cap at 1.5 s: Wav2Vec2 absorbs trailing silence into the last word's
-        # end timestamp, which would make the highlight sweep far too slowly.
+        # Use WhisperX's exact word timestamps as-is — no artificial caps or
+        # heuristic guesses. Only guard against zero/negative rounding and
+        # against cumulative rounding drift pushing the total past the line's
+        # actual duration.
         raw_cs = int(round((float(w_end) - float(w_start)) * 100.0))
-        dur_cs = max(1, min(raw_cs, 150))
+        dur_cs = max(1, raw_cs)
 
-        # Never let accumulated karaoke time exceed the line duration
         remaining_cs = line_duration_cs - accumulated_cs
         if i == num_words - 1:
-            # Last word gets whatever time remains in the line
-            dur_cs = max(1, remaining_cs)
+            dur_cs = max(1, min(dur_cs, remaining_cs))
         else:
             dur_cs = min(dur_cs, max(1, remaining_cs - (num_words - i - 1)))
 

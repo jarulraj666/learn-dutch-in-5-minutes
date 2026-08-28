@@ -165,6 +165,63 @@ def update_topic_status(topic_id: str, status: str) -> bool:
         return cur.rowcount > 0
 
 
+def update_topic_script(topic_id: str, script: dict[str, Any]) -> bool:
+    """Update latest canonical script and mirrored artifact JSON for a topic."""
+    script_json = json.dumps(script, ensure_ascii=False)
+
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT id, title
+            FROM canonical_scripts
+            WHERE topic_id = ?
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            [topic_id],
+        ).fetchone()
+        if not row:
+            return False
+
+        title = script.get("topic_title") or row["title"]
+        conn.execute(
+            """
+            UPDATE canonical_scripts
+            SET title = ?, script_json = ?
+            WHERE id = ?
+            """,
+            [title, script_json, row["id"]],
+        )
+
+        artifact_row = conn.execute(
+            """
+            SELECT id, artifact_json
+            FROM publish_jobs
+            WHERE canonical_script_id = ?
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            [row["id"]],
+        ).fetchone()
+
+        if artifact_row and artifact_row["artifact_json"]:
+            try:
+                artifact = json.loads(artifact_row["artifact_json"])
+                artifact["script"] = script
+                artifact["script_manually_edited"] = True
+                artifact["script_edit_source"] = "webapp"
+                if isinstance(script.get("image_prompt"), str):
+                    artifact["image_prompt"] = script.get("image_prompt")
+                conn.execute(
+                    "UPDATE publish_jobs SET artifact_json = ? WHERE id = ?",
+                    [json.dumps(artifact, ensure_ascii=False), artifact_row["id"]],
+                )
+            except Exception:
+                pass
+
+    return True
+
+
 def get_stats() -> dict:
     with get_connection() as conn:
         total = conn.execute("SELECT COUNT(*) FROM topics").fetchone()[0]

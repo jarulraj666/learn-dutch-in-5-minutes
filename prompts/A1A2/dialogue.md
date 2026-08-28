@@ -43,7 +43,12 @@ The conversation takes place in: **{scenario}**
 
 ## TTS Notes
 
-Write clean dialogue lines without inline speech tags. Do not add bracketed markers such as `[slow]`, `[pause for 1 second]`, or expression tags.
+Produce a raw script only.
+
+Rules:
+- Do not include any expressive, pace, pause, emotion, or stage-direction tags.
+- Do not include bracketed instructions such as `[pause for 1 second]`, `[laughs]`, or similar.
+- Output spoken Dutch lines only in each dialogue turn.
 
 ## Language
 

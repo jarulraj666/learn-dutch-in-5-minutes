@@ -54,6 +54,20 @@ def get_env_float(name: str, default: float) -> float:
         return default
 
 
+def _env_clean(name: str) -> str:
+    """Return env var with inline comments removed and whitespace trimmed."""
+    raw = os.getenv(name, "")
+    # Support values like: "false # disable fallback"
+    return raw.split("#", 1)[0].strip()
+
+
+def get_env_bool(name: str, default: bool) -> bool:
+    value = _env_clean(name)
+    if value == "":
+        return default
+    return value.lower() not in ("false", "0", "no")
+
+
 load_env_file(ROOT / ".env")
 
 DB_PATH = Path(os.getenv("DB_PATH", "db/content.db"))
@@ -69,6 +83,7 @@ VIDEO_ARCHIVE_DIR = Path(os.getenv("VIDEO_ARCHIVE_DIR", "output/archive"))
 # TTS Provider Configuration
 TTS_PROVIDER = os.getenv("TTS_PROVIDER", "gemini")  # Options: gemini, elevenlabs
 TTS_FALLBACK_PROVIDER = os.getenv("TTS_FALLBACK_PROVIDER", "gemini")  # Options: gemini, elevenlabs
+TTS_ENABLE_FALLBACK = get_env_bool("TTS_ENABLE_FALLBACK", True)
 # Comma-separated API key lists — set these in .env to enable round-robin rotation.
 GEMINI_API_KEYS: list[str] = [k.strip() for k in os.getenv("GEMINI_API_KEYS", "").split(",") if k.strip()]
 GEMINI_IMAGE_CREATION_API_KEYS: list[str] = [k.strip() for k in os.getenv("GEMINI_IMAGE_CREATION_API_KEYS", "").split(",") if k.strip()]
@@ -77,7 +92,9 @@ _raw_tts_keys = [k.strip() for k in os.getenv("GEMINI_TTS_API_KEYS", "").split("
 GEMINI_TTS_API_KEYS: list[str] = _raw_tts_keys if _raw_tts_keys else GEMINI_API_KEYS
 
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
-ELEVENLABS_SPEED = get_env_float("ELEVENLABS_SPEED", 0.75)
+ELEVENLABS_SPEED = get_env_float("ELEVENLABS_SPEED", 0.7)
+ELEVENLABS_VOICE_PLAN = (_env_clean("ELEVENLABS_VOICE_PLAN") or "free").lower()
+ELEVENLABS_MODEL = _env_clean("ELEVENLABS_MODEL") or "eleven_flash_v2_5"
 
 # Key rotators — shared singletons for 429-aware round-robin rotation.
 # Cooldown duration is taken from the API response when available; falls back to 12 hours.

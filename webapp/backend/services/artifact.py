@@ -78,6 +78,7 @@ def get_topic_media(
         "artifact": None,
         "audio": None,
         "video": None,
+        "audio_mtime": None,
         "images": [],
         "scene_images": [],
         "subtitles": {"ass": None, "srt_nl": None, "srt_en": None},

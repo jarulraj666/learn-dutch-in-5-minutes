@@ -15,6 +15,7 @@ def _level_label(level: str) -> str:
 
 
 _CATEGORY_LABELS: dict[str, str] = {
+    "course_intro": "Start Here",
     "common_words": "Common Words",
     "grammar": "Grammar",
     "vocabulary": "Vocabulary",
@@ -44,6 +45,10 @@ def _flatten_grammar_notes(notes: list[dict[str, Any]]) -> tuple[str, str, str]:
     mini_examples = []
 
     for n in notes:
+        # Older stored scripts predate shape normalisation and may hold bare strings.
+        if not isinstance(n, dict):
+            grammar_lines.append(str(n))
+            continue
         grammar_lines.append(f"{n.get('title', '')}: {n.get('explanation', '')}")
         examples = n.get("examples", [])
         if examples:
@@ -62,7 +67,11 @@ def _format_key_phrases(phrases: list[str]) -> str:
 
 
 def _format_vocabulary(vocab: list[dict[str, str]]) -> str:
-    return "\n".join(f"• {v.get('nl', '')} — {v.get('en', '')}" for v in vocab) if vocab else ""
+    lines = [
+        f"• {v.get('nl', '')} — {v.get('en', '')}" if isinstance(v, dict) else f"• {v}"
+        for v in vocab
+    ]
+    return "\n".join(lines) if lines else ""
 
 
 def generate_description(script: dict[str, Any], level: str = "A1A2", category: str = "") -> str:

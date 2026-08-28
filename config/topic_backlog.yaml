@@ -1,5 +1,41 @@
 topics:
 
+  # ── COURSE INTRO / START HERE (A1A2) ───────────────────────────────────────
+  - id: course_welcome
+    level: A1A2
+    category: course_intro
+    order_index: 1
+    track: daily_life
+    title_hint: "Welcome to the course: what you will learn, how the modules work, how to use the transcripts, quizzes and flashcards"
+
+  - id: pronunciation_tricky_sounds
+    level: A1A2
+    category: course_intro
+    order_index: 2
+    track: daily_life
+    title_hint: "Dutch sounds that trip up English speakers: ui, eu, ij/ei, oe, aa, g and sch — with English comparisons and repetition drills"
+
+  - id: intro_self_monologue
+    level: A1A2
+    category: vocabulary
+    order_index: 24
+    track: daily_life
+    title_hint: "Introduce yourself: ik heet, ik ben ... jaar, ik kom uit, ik woon in, ik werk als — build your own introduction line by line"
+
+  - id: grammar_jij_vs_u
+    level: A1A2
+    category: grammar
+    order_index: 35
+    track: daily_life
+    title_hint: "Formal and informal you: jij/je versus u — when to use each, and how the verb changes"
+
+  - id: grammar_spelling_open_closed
+    level: A1A2
+    category: grammar
+    order_index: 36
+    track: daily_life
+    title_hint: "Dutch spelling rule: open and closed syllables — man/mannen, maan/manen, and why vowels and consonants double"
+
   # ── COMMON WORDS (A1A2) ────────────────────────────────────────────────────
   - id: cw_pronouns
     level: A1A2

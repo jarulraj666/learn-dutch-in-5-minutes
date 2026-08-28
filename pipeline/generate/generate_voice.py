@@ -7,13 +7,11 @@ automatic fallback support.
 from __future__ import annotations
 
 import logging
-import subprocess
 from pathlib import Path
 from typing import Any
 
 from pipeline import settings
 from pipeline.clients.tts_provider_factory import create_tts_client, normalize_provider_name
-from pipeline.utils import command_exists
 
 LOGGER = logging.getLogger(__name__)
 
@@ -22,14 +20,18 @@ def _resolve_provider_order(category: str) -> list[str]:
     """Return ordered providers to try for the given category."""
     primary = normalize_provider_name(settings.TTS_PROVIDER)
     fallback = normalize_provider_name(settings.TTS_FALLBACK_PROVIDER)
+    fallback_enabled = settings.TTS_ENABLE_FALLBACK
 
     # Keep non-dialogue categories on Gemini for now.
     if category != "dialogue":
         return ["gemini"]
 
     providers: list[str] = [primary]
-    if fallback and fallback != primary:
+    if fallback_enabled and fallback and fallback != primary:
         providers.append(fallback)
+
+    if not fallback_enabled:
+        LOGGER.info("tts.fallback.disabled primary=%s", primary)
     return providers
 
 
@@ -48,6 +50,7 @@ def generate_voice_assets(
     category: str,
     topic_id: str,
     title_slug: str,
+    tts_dialogue: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Generates audio files for a dialogue script.
 
@@ -62,7 +65,7 @@ def generate_voice_assets(
     Returns:
         Dictionary containing execution metadata and the output file path.
     """
-    dialogue = script.get("dialogue", [])
+    dialogue = tts_dialogue if tts_dialogue is not None else script.get("dialogue", [])
     if not dialogue:
         raise ValueError("Script must contain a non-empty 'dialogue' list.")
 

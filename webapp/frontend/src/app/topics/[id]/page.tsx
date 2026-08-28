@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import useSWR from "swr";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api";
@@ -15,13 +15,13 @@ import type { SceneImageInfo } from "@/lib/types";
 const fetcher = (url: string) => apiFetch<TopicDetail>(url);
 
 // ── Scene Image Card ────────────────────────────────────────────────────────
-function SceneImageCard({ scene, topicId, onUploaded }: { scene: SceneImageInfo; topicId: string; onUploaded: () => void }) {
+function SceneImageCard({ scene, topicId, onUploaded, cacheBust }: { scene: SceneImageInfo; topicId: string; onUploaded: () => void; cacheBust: number }) {
   const [showPrompt16, setShowPrompt16] = useState(false);
   const [showPrompt9, setShowPrompt9] = useState(false);
   const [uploading16, setUploading16] = useState(false);
   const [uploading9, setUploading9] = useState(false);
-  const [bust16, setBust16] = useState(0);
-  const [bust9, setBust9] = useState(0);
+  const [bust16, setBust16] = useState(cacheBust);
+  const [bust9, setBust9] = useState(cacheBust);
   const ref16 = useRef<HTMLInputElement>(null);
   const ref9 = useRef<HTMLInputElement>(null);
 
@@ -55,7 +55,7 @@ function SceneImageCard({ scene, topicId, onUploaded }: { scene: SceneImageInfo;
         title="Click to upload image"
       >
         {path ? (
-          <img src={`/api/media/image?path=${encodeURIComponent(path)}${cacheBust ? `&v=${cacheBust}` : ""}`} alt={`Scene ${scene.scene} ${format}`} className={`w-full h-full ${format === "9x16" ? "object-contain" : "object-cover"}`} />
+          <img src={`/api/media/image?path=${encodeURIComponent(path)}&v=${cacheBust}`} alt={`Scene ${scene.scene} ${format}`} className={`w-full h-full ${format === "9x16" ? "object-contain" : "object-cover"}`} />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-800/50">
             <Upload size={20} className="text-gray-500 group-hover:text-sky-400" />
@@ -101,21 +101,22 @@ function SceneImageCard({ scene, topicId, onUploaded }: { scene: SceneImageInfo;
 // ────────────────────────────────────────────────────────────────────────────
 
 const STAGES = [
-  { n: 1,  d: 1,  label: "Script" },
-  { n: 2,  d: 2,  label: "16:9 Image" },
-  { n: 9,  d: 3,  label: "9:16 Image" },
-  { n: 3,  d: 4,  label: "Audio" },
-  { n: 4,  d: 5,  label: "Subtitles" },
-  { n: 5,  d: 6,  label: "Audio QA" },
-  { n: 6,  d: 7,  label: "Subtitle QA" },
-  { n: 7,  d: 8,  label: "Render Video" },
-  { n: 10, d: 9,  label: "Render Shorts" },
-  { n: 8,  d: 10, label: "Upload YouTube" },
-  { n: 11, d: 11, label: "Upload Shorts (YT)" },
-  { n: 12, d: 12, label: "Upload Instagram" },
-  { n: 13, d: 13, label: "Upload TikTok" },
-  { n: 14, d: 14, label: "Upload Facebook" },
-  { n: 15, d: 15, label: "Upload Captions" },
+  { n: 1,  d: 1,  label: "Script (AI regenerate)" },
+  { n: 2,  d: 2,  label: "Expression Tags" },
+  { n: 3,  d: 3,  label: "16:9 Image" },
+  { n: 10, d: 4,  label: "9:16 Image" },
+  { n: 4,  d: 5,  label: "Audio" },
+  { n: 5,  d: 6,  label: "Subtitles" },
+  { n: 6,  d: 7,  label: "Audio QA" },
+  { n: 7,  d: 8,  label: "Subtitle QA" },
+  { n: 8,  d: 9,  label: "Render Video" },
+  { n: 11, d: 10, label: "Render Shorts" },
+  { n: 9,  d: 11, label: "Upload YouTube" },
+  { n: 12, d: 12, label: "Upload Shorts (YT)" },
+  { n: 13, d: 13, label: "Upload Instagram" },
+  { n: 14, d: 14, label: "Upload TikTok" },
+  { n: 15, d: 15, label: "Upload Facebook" },
+  { n: 16, d: 16, label: "Upload Captions" },
 ];
 
 type TabKey = "overview" | "script" | "media" | "pipeline" | "youtube" | "reels" | "instagram" | "tiktok" | "facebook";
@@ -325,7 +326,7 @@ export default function TopicDetailPage({ params }: { params: { id: string } }) 
 
       {/* Tab content */}
       {tab === "overview" && <OverviewTab topic={topic} />}
-      {tab === "script" && <ScriptTab topic={topic} />}
+      {tab === "script" && <ScriptTab topic={topic} mutate={mutate} />}
       {tab === "media" && <MediaTab topic={topic} mutate={mutate} />}
       {tab === "pipeline" && (
         <PipelineTab
@@ -376,15 +377,105 @@ function OverviewTab({ topic }: { topic: TopicDetail }) {
   );
 }
 
-function ScriptTab({ topic }: { topic: TopicDetail }) {
+function ScriptTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }) {
   const script = topic.script as any;
   if (!script) return <p className="text-gray-500">No script generated yet.</p>;
+  const ttsDialogue = Array.isArray(topic.tts_dialogue) ? topic.tts_dialogue : [];
+  const hasExpressiveTags = ttsDialogue.some((line: any) => {
+    const speaker = line.speaker || Object.keys(line)[0];
+    const text = line.line || line[speaker] || "";
+    return /\[[^\]]+\]/.test(String(text));
+  });
+
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
+
+  useEffect(() => {
+    if (!editing) {
+      setDraft(JSON.stringify(script, null, 2));
+    }
+  }, [script, editing]);
+
+  const startEditing = () => {
+    setDraft(JSON.stringify(script, null, 2));
+    setSaveMsg("");
+    setEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setDraft(JSON.stringify(script, null, 2));
+    setSaveMsg("");
+    setEditing(false);
+  };
+
+  const saveScript = async () => {
+    setSaving(true);
+    setSaveMsg("");
+    try {
+      const parsed = JSON.parse(draft);
+      await apiFetch(`/api/topics/${topic.id}/script`, {
+        method: "PUT",
+        body: JSON.stringify({ script: parsed }),
+      });
+      await mutate();
+      setEditing(false);
+      setSaveMsg("Saved");
+    } catch (err) {
+      setSaveMsg(String(err));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const dialogue: Array<{ Speaker1?: string; Speaker2?: string } | { speaker: string; line: string }> =
     script.dialogue || script.script || [];
 
   return (
     <div className="space-y-6">
+      <section className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Script JSON</h3>
+          {!editing ? (
+            <button
+              onClick={startEditing}
+              className="text-xs border border-sky-700 text-sky-300 hover:text-white hover:bg-sky-900/40 px-3 py-1.5 rounded-lg"
+            >
+              Edit Script
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={cancelEditing}
+                disabled={saving}
+                className="text-xs border border-gray-700 text-gray-300 hover:text-white px-3 py-1.5 rounded-lg disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveScript}
+                disabled={saving}
+                className="text-xs bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg disabled:opacity-50"
+              >
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          )}
+        </div>
+        {editing ? (
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            className="w-full min-h-[22rem] bg-gray-950 border border-gray-700 rounded-lg p-3 text-xs font-mono text-gray-200 focus:outline-none focus:border-sky-600"
+            spellCheck={false}
+          />
+        ) : (
+          <p className="text-xs text-gray-500">Click Edit Script to modify and save the generated script.</p>
+        )}
+        {saveMsg && <p className="text-xs text-gray-300">{saveMsg}</p>}
+      </section>
+
       {/* Dialogue */}
       <section>
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Dialogue</h3>
@@ -405,6 +496,35 @@ function ScriptTab({ topic }: { topic: TopicDetail }) {
             );
           })}
         </div>
+      </section>
+
+      {/* Expressive dialogue */}
+      <section>
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Expressive Dialogue (Stage 2)</h3>
+        {ttsDialogue.length > 0 && !hasExpressiveTags && (
+          <p className="text-yellow-400 text-xs mb-2">Stage 2 output exists but contains no expressive tags yet.</p>
+        )}
+        {ttsDialogue.length > 0 ? (
+          <div className="space-y-2">
+            {ttsDialogue.map((line: any, i: number) => {
+              const speaker = line.speaker || Object.keys(line)[0];
+              const text = line.line || line[speaker];
+              const isLeft = speaker === "Speaker1";
+              return (
+                <div key={`tts-${i}`} className={`flex gap-3 ${isLeft ? "" : "flex-row-reverse"}`}>
+                  <div className={`text-xs px-1.5 py-0.5 rounded self-start mt-1 ${isLeft ? "bg-emerald-800 text-emerald-200" : "bg-teal-800 text-teal-200"}`}>
+                    {speaker}
+                  </div>
+                  <div className={`bg-gray-800 rounded-xl px-4 py-2.5 text-sm max-w-lg ${isLeft ? "rounded-tl-sm" : "rounded-tr-sm"}`}>
+                    {text}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-sm">No expressive tags yet. Run stage 2 (Expression Tags) to generate tagged TTS dialogue.</p>
+        )}
       </section>
 
       {/* Grammar notes */}
@@ -439,13 +559,21 @@ function ScriptTab({ topic }: { topic: TopicDetail }) {
 
 function MediaTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }) {
   const m = topic.media;
+  // Recomputed whenever the topic data is re-fetched so every media URL below is unique,
+  // forcing the browser to always issue a fresh request instead of reusing a cached one.
+  const v = useMemo(() => Date.now(), [topic]);
   return (
     <div className="space-y-6">
       {/* Audio */}
       <section>
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2"><Music size={14} /> Audio</h3>
         {m.audio ? (
-          <audio controls src={`/api/media/audio?path=${encodeURIComponent(m.audio)}`} className="w-full" />
+          <audio
+            key={`${m.audio}-${m.audio_mtime ?? v}`}
+            controls
+            src={`/api/media/audio?path=${encodeURIComponent(m.audio)}&v=${m.audio_mtime ?? v}`}
+            className="w-full"
+          />
         ) : <p className="text-gray-500 text-sm">No audio generated yet.</p>}
       </section>
 
@@ -453,13 +581,13 @@ function MediaTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void })
       <section>
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2"><Video size={14} /> Video</h3>
         {m.video ? (
-          <video controls src={`/api/media/video?path=${encodeURIComponent(m.video)}`} className="w-full rounded-xl max-h-96">
+          <video key={`${m.video}-${v}`} controls src={`/api/media/video?path=${encodeURIComponent(m.video)}&v=${v}`} className="w-full rounded-xl max-h-96">
             {m.subtitles.srt_en && (
               <track
                 kind="subtitles"
                 label="English"
                 srcLang="en"
-                src={`/api/media/subtitle-vtt?path=${encodeURIComponent(m.subtitles.srt_en)}`}
+                src={`/api/media/subtitle-vtt?path=${encodeURIComponent(m.subtitles.srt_en)}&v=${v}`}
                 default
               />
             )}
@@ -473,13 +601,13 @@ function MediaTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void })
         {m.scene_images.length > 0 ? (
           <div className="space-y-4">
             {m.scene_images.map((scene) => (
-              <SceneImageCard key={scene.scene} scene={scene} topicId={topic.id} onUploaded={mutate} />
+              <SceneImageCard key={scene.scene} scene={scene} topicId={topic.id} onUploaded={mutate} cacheBust={v} />
             ))}
           </div>
         ) : m.images.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {m.images.map((img, i) => (
-              <img key={i} src={`/api/media/image?path=${encodeURIComponent(img)}`} alt={`Scene ${i + 1}`} className="rounded-lg border border-gray-700 object-cover aspect-video" />
+              <img key={`${img}-${v}`} src={`/api/media/image?path=${encodeURIComponent(img)}&v=${v}`} alt={`Scene ${i + 1}`} className="rounded-lg border border-gray-700 object-cover aspect-video" />
             ))}
           </div>
         ) : <p className="text-gray-500 text-sm">No images yet — run the Script stage to generate scene prompts.</p>}
@@ -490,17 +618,17 @@ function MediaTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void })
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2"><FileText size={14} /> Subtitles</h3>
         <div className="flex gap-3 flex-wrap">
           {m.subtitles.srt_en && (
-            <a href={`/api/media/subtitle?path=${encodeURIComponent(m.subtitles.srt_en)}`} target="_blank" rel="noopener noreferrer" className="text-xs text-sky-400 hover:underline border border-sky-700/40 px-3 py-1.5 rounded-lg">
+            <a href={`/api/media/subtitle?path=${encodeURIComponent(m.subtitles.srt_en)}&v=${v}`} target="_blank" rel="noopener noreferrer" className="text-xs text-sky-400 hover:underline border border-sky-700/40 px-3 py-1.5 rounded-lg">
               📄 English SRT
             </a>
           )}
           {m.subtitles.srt_nl && (
-            <a href={`/api/media/subtitle?path=${encodeURIComponent(m.subtitles.srt_nl)}`} target="_blank" rel="noopener noreferrer" className="text-xs text-sky-400 hover:underline border border-sky-700/40 px-3 py-1.5 rounded-lg">
+            <a href={`/api/media/subtitle?path=${encodeURIComponent(m.subtitles.srt_nl)}&v=${v}`} target="_blank" rel="noopener noreferrer" className="text-xs text-sky-400 hover:underline border border-sky-700/40 px-3 py-1.5 rounded-lg">
               📄 Dutch SRT
             </a>
           )}
           {m.subtitles.ass && (
-            <a href={`/api/media/subtitle?path=${encodeURIComponent(m.subtitles.ass)}`} target="_blank" rel="noopener noreferrer" className="text-xs text-sky-400 hover:underline border border-sky-700/40 px-3 py-1.5 rounded-lg">
+            <a href={`/api/media/subtitle?path=${encodeURIComponent(m.subtitles.ass)}&v=${v}`} target="_blank" rel="noopener noreferrer" className="text-xs text-sky-400 hover:underline border border-sky-700/40 px-3 py-1.5 rounded-lg">
               🎨 Karaoke ASS
             </a>
           )}
@@ -519,15 +647,16 @@ function MediaTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void })
               <div key={i} className="bg-gray-900 border border-gray-800 rounded-lg p-2 space-y-1">
                 <p className="text-xs text-gray-400">Scene {s.scene}</p>
                 <video
+                  key={`${s.video_file}-${v}`}
                   controls
-                  src={`/api/media/video?path=${encodeURIComponent(s.video_file!)}`}
+                  src={`/api/media/video?path=${encodeURIComponent(s.video_file!)}&v=${v}`}
                   className="w-full rounded-lg border border-gray-700 aspect-[9/16] object-contain bg-black max-h-48"
                 />
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">No shorts rendered yet — run stage 9 (Render Shorts).</p>
+          <p className="text-gray-500 text-sm">No shorts rendered yet — run stage 11 (Render Shorts).</p>
         )}
       </section>
     </div>
@@ -545,20 +674,22 @@ function PipelineTab({
 }) {
   type StageStatus = "done" | "missing" | "partial" | "unknown";
   const m = topic.media;
+  const hasTtsDialogue = Array.isArray(topic.tts_dialogue) && topic.tts_dialogue.length > 0;
   const stageStatus = (n: number): StageStatus => {
     if (n === 1) return m.artifact ? "done" : "missing";
-    if (n === 2) return (m.images.length > 0 || m.scene_images.some((s) => s.image_16x9)) ? "done" : "missing";
-    if (n === 3) return m.audio ? "done" : "missing";
-    if (n === 4) return m.subtitles.ass ? "done" : "missing";
-    if (n === 7) return m.video ? "done" : "missing";
-    if (n === 8) return topic.youtube_video_id ? "done" : "missing";
-    if (n === 9) return m.scene_images.some((s) => s.image_9x16) ? "done" : "missing";
-    if (n === 10) return m.shorts.length > 0 ? "done" : "missing";
-    if (n === 11) return m.shorts.some((s: any) => s.youtube?.short_video_id) ? "done" : "missing";
-    if (n === 12) return m.shorts.some((s: any) => s.reel_id || s.instagram?.reel_id) ? "done" : "missing";
-    if (n === 13) return m.shorts.some((s: any) => s.tiktok?.publish_id) ? "done" : "missing";
-    if (n === 14) return m.shorts.some((s: any) => s.facebook?.post_id) ? "done" : "missing";
-    if (n === 15) return (topic as any).artifact_youtube_captions ? "done" : "missing";
+    if (n === 2) return hasTtsDialogue ? "done" : "missing";
+    if (n === 3) return (m.images.length > 0 || m.scene_images.some((s) => s.image_16x9)) ? "done" : "missing";
+    if (n === 4) return m.audio ? "done" : "missing";
+    if (n === 5) return m.subtitles.ass ? "done" : "missing";
+    if (n === 8) return m.video ? "done" : "missing";
+    if (n === 9) return topic.youtube_video_id ? "done" : "missing";
+    if (n === 10) return m.scene_images.some((s) => s.image_9x16) ? "done" : "missing";
+    if (n === 11) return m.shorts.length > 0 ? "done" : "missing";
+    if (n === 12) return m.shorts.some((s: any) => s.youtube?.short_video_id) ? "done" : "missing";
+    if (n === 13) return m.shorts.some((s: any) => s.reel_id || s.instagram?.reel_id) ? "done" : "missing";
+    if (n === 14) return m.shorts.some((s: any) => s.tiktok?.publish_id) ? "done" : "missing";
+    if (n === 15) return m.shorts.some((s: any) => s.facebook?.post_id) ? "done" : "missing";
+    if (n === 16) return (topic as any).artifact_youtube_captions ? "done" : "missing";
     return "unknown";
   };
 
@@ -590,6 +721,9 @@ function PipelineTab({
       </div>
       {!m.artifact && (
         <p className="text-yellow-400 text-sm">No artifact yet — select Stage 1 (Script) to initialise this topic.</p>
+      )}
+      {selectedStages.has(1) && (
+        <p className="text-amber-400 text-sm">Stage 1 regenerates script from AI and overwrites manual Script tab edits.</p>
       )}
       <div>
         <button

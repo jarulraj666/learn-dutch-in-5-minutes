@@ -10,7 +10,7 @@ import { Play, RotateCcw, ExternalLink, Instagram } from "lucide-react";
 const fetcher = (url: string) => apiFetch<Topic[]>(url);
 
 const LEVELS = ["A1A2", "B1", "B2"];
-const CATEGORIES = ["common_words", "grammar", "vocabulary", "dialogue"];
+const CATEGORIES = ["course_intro", "common_words", "grammar", "vocabulary", "dialogue"];
 const STATUSES = ["pending", "generated", "done"];
 
 export default function TopicsPage() {

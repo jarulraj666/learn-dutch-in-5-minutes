@@ -17,13 +17,33 @@
     "dialogue": {
       "type": "array",
       "minItems": 2,
+      "description": "Compact speaker-keyed turns, e.g. {\"Speaker1\": \"Hallo\"}. The legacy {speaker, line} form is still accepted.",
+      "items": {
+        "anyOf": [
+          {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {"type": "string"},
+            "propertyNames": {"pattern": "^Speaker[0-9]+$"}
+          },
+          {
+            "type": "object",
+            "required": ["speaker", "line"],
+            "properties": {
+              "speaker": {"type": "string"},
+              "line": {"type": "string"}
+            }
+          }
+        ]
+      }
+    },
+    "dialogue_en": {
+      "type": "array",
+      "description": "English translation, index-aligned with dialogue.",
       "items": {
         "type": "object",
-        "required": ["speaker", "line"],
-        "properties": {
-          "speaker": {"type": "string"},
-          "line": {"type": "string"}
-        }
+        "minProperties": 1,
+        "additionalProperties": {"type": "string"}
       }
     },
     "key_phrases": {
@@ -46,16 +66,31 @@
       "minItems": 3,
       "items": {
         "type": "object",
-        "required": ["question", "type", "answer"],
+        "required": ["id", "question", "options", "answer", "explanation"],
         "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable identifier, '<topic_id>-q<n>', so learner answers survive regeneration."
+          },
           "question": {"type": "string"},
-          "type": {"type": "string"},
-          "choices": {
+          "options": {
             "type": "array",
+            "minItems": 2,
             "items": {"type": "string"}
           },
-          "answer": {"type": "string"},
-          "explanation": {"type": "string"}
+          "answer": {
+            "type": "string",
+            "description": "Must match one entry of options exactly."
+          },
+          "explanation": {"type": "string"},
+          "difficulty": {
+            "type": "string",
+            "enum": ["easy", "medium", "hard"]
+          },
+          "skill": {
+            "type": "string",
+            "enum": ["comprehension", "vocabulary", "grammar"]
+          }
         }
       }
     },

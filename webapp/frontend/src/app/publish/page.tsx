@@ -86,7 +86,8 @@ function useSortable<T>(rows: T[], key: keyof T | null, dir: SortDir): T[] {
       if (av == null) return 1;
       if (bv == null) return -1;
       // Convert ISO date strings to timestamps so different timezone offsets sort correctly
-      let va: unknown = av, vb: unknown = bv;
+      let va: string | number = typeof av === "number" ? av : String(av);
+      let vb: string | number = typeof bv === "number" ? bv : String(bv);
       if (typeof av === "string" && typeof bv === "string" && /^\d{4}-\d{2}-\d{2}/.test(av)) {
         const ta = Date.parse(av), tb = Date.parse(bv);
         if (!isNaN(ta) && !isNaN(tb)) { va = ta; vb = tb; }

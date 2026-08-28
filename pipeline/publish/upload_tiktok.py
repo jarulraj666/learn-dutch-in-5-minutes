@@ -127,15 +127,17 @@ def _get_access_token() -> str:
 
 def _build_tiktok_caption(artifact: dict, scene_short: dict) -> str:
     """Build a TikTok caption (≤2200 chars including hashtags)."""
-    topic_title_en: str = artifact.get("script", {}).get("topic_title_en", "")
+    from pipeline.publish.upload_shorts import build_scene_title  # noqa: PLC0415
+
+    title = build_scene_title(artifact, scene_short)
     scene_desc: str = scene_short.get("description", "")
     level: str = artifact.get("level", "")
     display_level = level.replace("A1A2", "A1-A2").replace("B1B2", "B1-B2")
     tag_level = display_level.replace("-", "").replace(" ", "")
 
     parts: list[str] = []
-    if topic_title_en:
-        parts.append(topic_title_en)
+    if title:
+        parts.append(title)
     if scene_desc:
         parts.append(scene_desc)
     parts.append(

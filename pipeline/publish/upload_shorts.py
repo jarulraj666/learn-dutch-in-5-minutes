@@ -31,14 +31,20 @@ def _shorts_playlist_name(level: str) -> str:
     return f"{display} | Dutch Shorts"
 
 
-def _build_short_title(artifact: dict, scene_short: dict) -> str:
-    """Build a YouTube Short title (≤100 chars, ends with ``#Shorts``)."""
+def build_scene_title(artifact: dict, scene_short: dict) -> str:
+    """Build the scene title (topic + scene number + level), shared across
+    YouTube Shorts, Instagram Reels, and TikTok so all platforms show the same title.
+    """
     topic_title_en: str = artifact.get("script", {}).get("topic_title_en", "")
     scene_n: int = scene_short.get("scene", 1)
     level: str = artifact.get("level", "")
     display_level = level.replace("A1A2", "A1-A2").replace("B1B2", "B1-B2")
+    return f"{topic_title_en} (Scene {scene_n}) | Dutch {display_level}"
 
-    base = f"{topic_title_en} (Scene {scene_n}) | Dutch {display_level}"
+
+def _build_short_title(artifact: dict, scene_short: dict) -> str:
+    """Build a YouTube Short title (≤100 chars, ends with ``#Shorts``)."""
+    base = build_scene_title(artifact, scene_short)
     full = base + _SUFFIX
     if len(full) <= 100:
         return full
@@ -164,14 +170,17 @@ def upload_short(
     LOGGER.info("upload_short.uploaded short_video_id=%s", short_video_id)
 
     # Add to dedicated Shorts playlist
-    level = artifact.get("level", "")
-    playlist_name = _shorts_playlist_name(level)
-    playlist_id: str | None = None
+    from pipeline import settings
+
+    shorts_cfg = settings.PLAYLISTS_CONFIG.get("playlists", {}).get("shorts", {}).get("default", {})
+    playlist_id: str | None = shorts_cfg.get("id") or None
+    playlist_name = shorts_cfg.get("name") or _shorts_playlist_name(artifact.get("level", ""))
     if short_video_id:
         try:
-            playlist_id = ensure_playlist(youtube, playlist_name, "Dutch language learning Short clips")
+            if not playlist_id:
+                playlist_id = ensure_playlist(youtube, playlist_name, shorts_cfg.get("description", "Dutch language learning Short clips"))
             add_video_to_playlist(youtube, playlist_id, short_video_id)
-            LOGGER.info("upload_short.playlist short_video_id=%s playlist=%s", short_video_id, playlist_name)
+            LOGGER.info("upload_short.playlist short_video_id=%s playlist=%s", short_video_id, playlist_id)
         except Exception as exc:
             LOGGER.warning("upload_short.playlist_failed: %s", exc)
 

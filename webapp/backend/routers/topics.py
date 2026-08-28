@@ -1,7 +1,12 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
 from services import db as db_service
 
 router = APIRouter()
+
+
+class ScriptUpdateRequest(BaseModel):
+    script: dict
 
 
 @router.get("/topics")
@@ -30,15 +35,21 @@ def get_topic(topic_id: str):
         artifact_json_str=topic.get("artifact_json"),
     )
 
-    # Fall back to artifact JSON for youtube_video_id if publish_jobs column is NULL
-    if not topic.get("youtube_video_id") and topic.get("artifact_json"):
+    artifact = None
+    if topic.get("artifact_json"):
         try:
             artifact = json.loads(topic["artifact_json"])
-            vid = (artifact.get("youtube") or {}).get("video_id")
-            if vid:
-                topic["youtube_video_id"] = vid
         except Exception:
-            pass
+            artifact = None
+
+    # Fall back to artifact JSON for youtube_video_id if publish_jobs column is NULL
+    if not topic.get("youtube_video_id") and artifact:
+        vid = (artifact.get("youtube") or {}).get("video_id")
+        if vid:
+            topic["youtube_video_id"] = vid
+
+    # Surface expressive-tag dialogue produced by stage 2 for pipeline status + UI.
+    topic["tts_dialogue"] = artifact.get("tts_dialogue", []) if artifact else []
 
     return topic
 
@@ -54,6 +65,23 @@ def reset_topic_status(topic_id: str, status: str = "pending"):
     if not ok:
         raise HTTPException(status_code=404, detail="Topic not found")
     return {"ok": True, "status": status}
+
+
+@router.put("/topics/{topic_id}/script")
+def update_topic_script(topic_id: str, req: ScriptUpdateRequest):
+    from fastapi import HTTPException
+
+    script = req.script
+    if not isinstance(script, dict):
+        raise HTTPException(status_code=400, detail="script must be a JSON object")
+    dialogue = script.get("dialogue") or script.get("script")
+    if not isinstance(dialogue, list) or len(dialogue) == 0:
+        raise HTTPException(status_code=400, detail="script must contain non-empty dialogue or script array")
+
+    ok = db_service.update_topic_script(topic_id, script)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Topic or canonical script not found")
+    return {"ok": True}
 
 
 @router.get("/stats")

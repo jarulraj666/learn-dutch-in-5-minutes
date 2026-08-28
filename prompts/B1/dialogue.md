@@ -27,7 +27,7 @@ The conversation takes place in: **{scenario}**
 
 ## TTS Audio Tags
 
-Prepend **`[pause for 1 second] [medium slow]`** to EVERY dialogue line — no exceptions.
+Use pacing and expression tags only where they help delivery. Do not prepend tags to every line.
 
 Add **expression tags** naturally where they fit the scenario and moment. Choose based on what the character would actually feel:
 
@@ -46,7 +46,8 @@ Add **expression tags** naturally where they fit the scenario and moment. Choose
 Tag order: pacing tag first, then expression tag.
 Example: `{"Speaker1": "[pause for 1 second] [medium slow] [excited] Dat is geweldig!"}` · `{"Speaker2": "[pause for 1 second] [medium slow] [curious] Wat betekent dat?"}`
 
-Don't force tags on every line — use them where the scenario makes them natural.
+Use tags on about 15-30% of lines total, and only when context supports them.
+Use at most one expression tag per line.
 
 ## Language
 

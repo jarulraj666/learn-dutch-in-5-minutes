@@ -59,6 +59,24 @@ def stage_metadata(script: dict, category: str, level: str, topic_id: str = "") 
     return playlist_name, playlist_description, playlist_id, metadata
 
 
+def stage_quiz(
+    script: dict,
+    level: str,
+    category: str,
+    topic_id: str = "",
+    question_count: int = 5,
+) -> list[dict]:
+    """Generate a learner-facing multiple-choice quiz. Returns the quiz list."""
+    from pipeline.generate.generate_quiz import generate_quiz
+    return generate_quiz(
+        script,
+        level=level,
+        category=category,
+        topic_id=topic_id,
+        question_count=question_count,
+    )
+
+
 def stage_voice(
     script: dict,
     output_root: str | Path,
@@ -66,6 +84,7 @@ def stage_voice(
     category: str,
     topic_id: str,
     title_slug: str,
+    tts_dialogue: list | None = None,
 ) -> dict:
     """Generate TTS audio. Returns voice_plan dict."""
     from pipeline.generate.generate_voice import generate_voice_assets
@@ -76,7 +95,14 @@ def stage_voice(
         category=category,
         topic_id=topic_id,
         title_slug=title_slug,
+        tts_dialogue=tts_dialogue,
     )
+
+
+def stage_expression_tags(dialogue: list, provider_name: str) -> list[dict[str, str]]:
+    """Add provider-specific expressive tags to a temporary TTS dialogue."""
+    from pipeline.generate.generate_expression_tags import add_expression_tags
+    return add_expression_tags(dialogue, provider_name)
 
 
 def stage_subtitles(

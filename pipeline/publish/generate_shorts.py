@@ -35,9 +35,6 @@ SHORT_CRF = 19
 SHORT_PRESET = "slow"
 SHORT_AUDIO_BITRATE = "192k"
 
-# Gap (seconds) added to the end of each scene window so the last word isn't cut off.
-_END_BUFFER_SEC = 0.6
-
 
 # ---------------------------------------------------------------------------
 # ASS time helpers (self-contained; avoids importing private render_video symbols)
@@ -96,27 +93,35 @@ def _parse_srt_segments(srt_path: Path) -> list[dict]:
     return segments
 
 
-def _find_trigger_time(segments: list[dict], trigger: str) -> float | None:
-    """Return the start time of the segment best matching *trigger*, or None."""
+def _find_trigger_time(
+    segments: list[dict], trigger: str, after_index: int = 0
+) -> tuple[float, int] | None:
+    """Return ``(start_sec, segment_index)`` of the segment best matching *trigger*.
+
+    Only considers segments at or after *after_index* so that repeated phrases
+    earlier in the dialogue can't be mismatched to a later scene (which would
+    make scene windows go backwards in time and overlap/collide).
+    """
     trig = trigger.strip().lower()
     if not trig:
         return None
+    candidates = list(enumerate(segments))[after_index:]
     # Exact match
-    for seg in segments:
+    for idx, seg in candidates:
         if seg["text"].strip().lower() == trig:
-            return seg["start_sec"]
+            return seg["start_sec"], idx
     # Substring
-    for seg in segments:
+    for idx, seg in candidates:
         seg_text = seg["text"].strip().lower()
         if trig in seg_text or seg_text in trig:
-            return seg["start_sec"]
+            return seg["start_sec"], idx
     # First-5-word prefix
     words = trig.split()
     if len(words) >= 3:
         prefix = " ".join(words[:5])
-        for seg in segments:
+        for idx, seg in candidates:
             if prefix in seg["text"].strip().lower():
-                return seg["start_sec"]
+                return seg["start_sec"], idx
     return None
 
 
@@ -138,41 +143,46 @@ def _compute_scene_windows(
 ) -> list[dict]:
     """Map each image_prompt to a time window using trigger sentence lookup.
 
+    Triggers are matched in order, each one constrained to start searching
+    after the previous match, so scenes always advance monotonically through
+    the dialogue (no backward jumps from repeated phrases). Every scene must
+    resolve to a trigger time; a missing match raises instead of silently
+    dropping the scene, which previously caused the neighboring scenes to
+    absorb the gap (looking like missing/overlapping scenes downstream).
+
     Returns a list of dicts with keys:
       scene, trigger_sentence, description, image_path,
       start_sec, end_sec
     """
-    windows: list[dict] = []
-    trigger_times: list[tuple[int, float]] = []
-
+    trigger_times: list[float] = []
+    search_from = 0
     for i, prompt_info in enumerate(image_prompts):
         trigger = prompt_info.get("trigger_sentence", "")
-        t = _find_trigger_time(srt_segments, trigger)
-        if t is None:
-            LOGGER.warning(
-                "Scene %d trigger not found in SRT: %r — skipping scene", i + 1, trigger[:80]
+        found = _find_trigger_time(srt_segments, trigger, after_index=search_from)
+        if found is None:
+            raise ValueError(
+                f"Scene {i + 1} trigger not found in SRT (searching from segment "
+                f"{search_from}): {trigger[:80]!r}"
             )
-            continue
-        trigger_times.append((i, t))
-        LOGGER.info("scene=%d trigger_time=%.2fs trigger=%r", i + 1, t, trigger[:60])
+        start_sec, seg_idx = found
+        trigger_times.append(start_sec)
+        search_from = seg_idx + 1
+        LOGGER.info("scene=%d trigger_time=%.3fs trigger=%r", i + 1, start_sec, trigger[:60])
 
-    # Sort by time in case the order differs
-    trigger_times.sort(key=lambda x: x[1])
-
-    for rank, (orig_idx, start_sec) in enumerate(trigger_times):
-        prompt_info = image_prompts[orig_idx]
-        if rank + 1 < len(trigger_times):
-            end_sec = trigger_times[rank + 1][1]
+    windows: list[dict] = []
+    for i, prompt_info in enumerate(image_prompts):
+        start_sec = trigger_times[i]
+        if i + 1 < len(trigger_times):
+            # End exactly where the next scene begins so clips never overlap.
+            end_sec = trigger_times[i + 1]
         else:
+            # Final scene always runs to the true end of the audio.
             end_sec = audio_end_sec
 
-        # Add a small buffer at the end so the last syllable isn't cut
-        end_sec = min(end_sec + _END_BUFFER_SEC, audio_end_sec)
-
-        img_path = image_files[orig_idx] if orig_idx < len(image_files) else ""
+        img_path = image_files[i] if i < len(image_files) else ""
 
         windows.append({
-            "scene": orig_idx + 1,
+            "scene": i + 1,
             "trigger_sentence": prompt_info.get("trigger_sentence", ""),
             "description": prompt_info.get("description", ""),
             "image_path": img_path,
@@ -180,7 +190,25 @@ def _compute_scene_windows(
             "end_sec": end_sec,
         })
 
+    _validate_scene_windows(windows)
     return windows
+
+
+def _validate_scene_windows(windows: list[dict]) -> None:
+    """Raise if scene windows are empty, out of order, or overlapping."""
+    prev_end: float | None = None
+    for w in windows:
+        if w["end_sec"] <= w["start_sec"]:
+            raise ValueError(
+                f"Scene {w['scene']}: end_sec ({w['end_sec']:.3f}) <= start_sec "
+                f"({w['start_sec']:.3f})"
+            )
+        if prev_end is not None and w["start_sec"] < prev_end:
+            raise ValueError(
+                f"Scene {w['scene']}: start_sec ({w['start_sec']:.3f}) overlaps previous "
+                f"scene's end_sec ({prev_end:.3f})"
+            )
+        prev_end = w["end_sec"]
 
 
 # ---------------------------------------------------------------------------
@@ -745,7 +773,11 @@ def generate_scene_shorts(artifact: dict) -> list[dict]:
         return []
 
     # ── Compute per-scene time windows ───────────────────────────────────
-    scene_windows = _compute_scene_windows(image_prompts, srt_segments, audio_end_sec, image_files)
+    try:
+        scene_windows = _compute_scene_windows(image_prompts, srt_segments, audio_end_sec, image_files)
+    except ValueError as err:
+        LOGGER.error("generate_shorts: scene window computation failed: %s — aborting", err)
+        return []
     if not scene_windows:
         LOGGER.error("generate_shorts: could not resolve any scene windows — aborting")
         return []

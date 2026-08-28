@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 from pathlib import Path
 
 from pipeline import settings  # ensures .env is loaded
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 SCOPES = [
@@ -182,6 +186,7 @@ def upload_video(artifact: dict, video_file: Path) -> dict:
                 add_video_to_playlist(youtube, playlist_id, response["id"])
 
     captions_uploaded = []
+    caption_upload_errors = []
     thumbnail_uploaded = False
     video_id = response.get("id")
     if video_id:
@@ -217,14 +222,24 @@ def upload_video(artifact: dict, video_file: Path) -> dict:
                         "srt_file": str(srt_path),
                     })
             except Exception as exc:
-                import logging
-                logging.getLogger(__name__).warning("Caption upload failed: %s", exc)
+                LOGGER.exception(
+                    "Caption upload failed: video_id=%s language=en srt_path=%s",
+                    video_id,
+                    srt_path,
+                )
+                caption_upload_errors.append({
+                    "video_id": video_id,
+                    "language": "en",
+                    "srt_file": str(srt_path),
+                    "error": str(exc),
+                })
 
     return {
         "video_id": video_id,
         "playlist_name": playlist_name,
         "playlist_id": playlist_id,
         "captions_uploaded": captions_uploaded,
+        "caption_upload_errors": caption_upload_errors,
         "thumbnail_uploaded": thumbnail_uploaded,
     }
 
@@ -268,6 +283,58 @@ def add_video_to_playlist(youtube, playlist_id: str, video_id: str) -> None:
     ).execute()
 
 
+def _wait_for_video_available(youtube, video_id: str, max_attempts: int = 6, delay: float = 5.0) -> None:
+    """Poll videos().list() until the newly-uploaded video is visible.
+
+    Right after videos().insert() returns an ID, other API endpoints (like
+    captions) can briefly 404 on that same ID because the video hasn't
+    finished replicating through YouTube's backend yet. Polling videos.list()
+    (which tends to become consistent slightly earlier) avoids that race.
+    """
+    import logging
+    import time
+
+    logger = logging.getLogger(__name__)
+
+    for attempt in range(1, max_attempts + 1):
+        response = youtube.videos().list(part="status", id=video_id).execute()
+        if response.get("items"):
+            return
+        logger.info(
+            "youtube.video_not_yet_indexed video_id=%s attempt=%d/%d — waiting %.0fs",
+            video_id, attempt, max_attempts, delay,
+        )
+        # deliberately blocking sleep — this runs in a batch publish job, not a request handler
+        time.sleep(delay)
+
+
+def _execute_with_retry(request, max_attempts: int = 4, delay: float = 5.0):
+    """Execute a googleapiclient request, retrying on transient videoNotFound 404s.
+
+    The captions API can 404 on a valid video_id for a short window after upload
+    because it indexes independently of (and sometimes slower than) videos().list().
+    """
+    import logging
+    import time
+
+    from googleapiclient.errors import HttpError
+
+    logger = logging.getLogger(__name__)
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return request.execute()
+        except HttpError as exc:
+            is_video_not_found = exc.resp.status == 404 and "videoNotFound" in str(exc)
+            if not is_video_not_found or attempt == max_attempts:
+                raise
+            logger.info(
+                "youtube.caption_request_video_not_found_yet attempt=%d/%d — retrying in %.0fs",
+                attempt, max_attempts, delay,
+            )
+            time.sleep(delay)
+
+
 def upload_captions(
     youtube,
     video_id: str,
@@ -291,6 +358,7 @@ def upload_captions(
         Caption resource dict on success, None if the SRT file is missing.
     """
     import logging
+
     from googleapiclient.http import MediaFileUpload as _MediaFileUpload
 
     logger = logging.getLogger(__name__)
@@ -299,11 +367,18 @@ def upload_captions(
         logger.warning("Caption SRT file not found, skipping upload: %s", srt_path)
         return None
 
-    # Check for an existing caption track with the same language — update it if found
-    existing = youtube.captions().list(
-        part="snippet",
-        videoId=video_id,
-    ).execute()
+    _wait_for_video_available(youtube, video_id)
+
+    max_attempts = 4
+    retry_delay = 5.0
+
+    # The captions API can lag behind videos().list() independently, so retry
+    # this lookup on videoNotFound too rather than assuming it's immediately consistent.
+    existing = _execute_with_retry(
+        youtube.captions().list(part="snippet", videoId=video_id),
+        max_attempts=max_attempts,
+        delay=retry_delay,
+    )
 
     existing_id = None
     for item in existing.get("items", []):
@@ -318,7 +393,7 @@ def upload_captions(
             video_id,
             existing_id,
         )
-        response = youtube.captions().update(
+        request = youtube.captions().update(
             part="snippet",
             body={
                 "id": existing_id,
@@ -330,30 +405,26 @@ def upload_captions(
                 },
             },
             media_body=_MediaFileUpload(str(srt_path), mimetype="application/octet-stream"),
-        ).execute()
-        logger.info(
-            "✓ Caption updated: video=%s language=%s caption_id=%s",
-            video_id,
-            language,
-            response.get("id"),
         )
-        return response
+    else:
+        request = youtube.captions().insert(
+            part="snippet",
+            body={
+                "snippet": {
+                    "videoId": video_id,
+                    "language": language,
+                    "name": name,
+                    "isDraft": False,
+                }
+            },
+            media_body=_MediaFileUpload(str(srt_path), mimetype="application/octet-stream"),
+        )
 
-    response = youtube.captions().insert(
-        part="snippet",
-        body={
-            "snippet": {
-                "videoId": video_id,
-                "language": language,
-                "name": name,
-                "isDraft": False,
-            }
-        },
-        media_body=_MediaFileUpload(str(srt_path), mimetype="application/octet-stream"),
-    ).execute()
+    response = _execute_with_retry(request, max_attempts=max_attempts, delay=retry_delay)
 
     logger.info(
-        "✓ Caption uploaded: video=%s language=%s caption_id=%s",
+        "✓ Caption %s: video=%s language=%s caption_id=%s",
+        "updated" if existing_id else "uploaded",
         video_id,
         language,
         response.get("id"),

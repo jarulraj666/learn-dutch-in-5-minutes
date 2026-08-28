@@ -2,8 +2,8 @@ Read the following conversation and render it as natural multi-speaker dialogue 
 
 # Audio Profile
 
-**Speaker1** — {speaker1_role} ({speaker1_gender}). Near-natural pace. Expressive, confident Dutch. Rich prosody and intonation.
-**Speaker2** — {speaker2_role} ({speaker2_gender}). Near-natural pace. Fluid, authentic Dutch. Natural conversational rhythm.
+**Speaker1** — {speaker1_role} ({speaker1_gender}). Near-natural pace with assertive, structured delivery and a slightly lower, steadier contour.
+**Speaker2** — {speaker2_role} ({speaker2_gender}). Near-natural pace with more fluid, reactive delivery and a more varied melodic contour.
 
 # Director's Note
 
@@ -17,9 +17,14 @@ Read the following conversation and render it as natural multi-speaker dialogue 
 
 **Articulation:** Authentic Dutch pronunciation with full intonation range. Natural rhythm and stress.
 
-**Tone:** Expressive and genuine — like a real intellectual conversation between two confident Dutch speakers.
+**Tone Contrast (required):** Speaker1 should feel authoritative and intentional. Speaker2 should feel adaptive, agile, and dialogic. Maintain this contrast line-by-line.
 
 **Voice Consistency:** Keep each speaker's voice identity stable for the full transcript. Speaker1 and Speaker2 must sound clearly different from each other from first line to last line.
+
+**Prosody Contrast (required):**
+- Speaker1: stronger declarative endings, clearer rhetorical structure.
+- Speaker2: more responsive contour, subtle conversational lift.
+- Preserve authenticity, but avoid matching cadence between speakers.
 
 **Turn Prefix Rule:** Add `[pause for 1 second]` at the beginning of every spoken dialogue line before the actual text.
 

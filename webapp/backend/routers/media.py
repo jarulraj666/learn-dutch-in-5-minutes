@@ -31,15 +31,7 @@ def serve_audio(path: str):
 @router.get("/media/video")
 def serve_video(path: str):
     p = _safe_resolve(path)
-    return FileResponse(
-        p,
-        media_type="video/mp4",
-        headers={
-            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
-            "Pragma": "no-cache",
-            "Expires": "0",
-        },
-    )
+    return FileResponse(p, media_type="video/mp4")
 
 
 @router.get("/media/image")

@@ -21,6 +21,7 @@ export interface Topic {
 
 export interface TopicDetail extends Topic {
   script: Record<string, unknown> | null;
+  tts_dialogue: Array<Record<string, string>>;
   canonical_script_id: number | null;
   publish_job_id: number | null;
   published_at: string | null;
@@ -34,6 +35,7 @@ export type PlatformUploadStatus = "pending" | "partial" | "done";
 export interface MediaInfo {
   artifact: string | null;
   audio: string | null;
+  audio_mtime: number | null;
   video: string | null;
   images: string[];
   scene_images: SceneImageInfo[];

@@ -7,11 +7,19 @@ from pipeline.core.db import get_connection
 
 # Category pick order: lower number = higher priority
 _CATEGORY_ORDER = {
+    "course_intro": 0,
     "common_words": 1,
     "vocabulary": 2,
     "grammar": 3,
     "dialogue": 4,
 }
+
+# Built from _CATEGORY_ORDER so the two queries below can never drift apart.
+_CATEGORY_CASE_SQL = "CASE category\n" + "\n".join(
+    f"    WHEN '{name}' THEN {rank}" for name, rank in sorted(
+        _CATEGORY_ORDER.items(), key=lambda kv: kv[1]
+    )
+) + "\n    ELSE 99\n  END"
 
 
 @dataclass
@@ -50,15 +58,7 @@ def choose_next_topic(level: str = "A1A2", category: str | None = None) -> Topic
             SELECT id, track, title_hint, level, category
             FROM topics
             WHERE level = ? AND status = 'selected' {category_filter}
-            ORDER BY
-              CASE category
-                WHEN 'common_words' THEN 1
-                WHEN 'vocabulary'   THEN 2
-                WHEN 'grammar'      THEN 3
-                WHEN 'dialogue'     THEN 4
-                ELSE 5
-              END,
-              order_index
+            ORDER BY {_CATEGORY_CASE_SQL}, order_index
             LIMIT 1
             """,
             params_base,
@@ -71,15 +71,7 @@ def choose_next_topic(level: str = "A1A2", category: str | None = None) -> Topic
                 SELECT id, track, title_hint, level, category
                 FROM topics
                 WHERE level = ? AND status = 'pending' {category_filter}
-                ORDER BY
-                  CASE category
-                    WHEN 'common_words' THEN 1
-                    WHEN 'vocabulary'   THEN 2
-                    WHEN 'grammar'      THEN 3
-                    WHEN 'dialogue'     THEN 4
-                    ELSE 5
-                  END,
-                  order_index
+                ORDER BY {_CATEGORY_CASE_SQL}, order_index
                 LIMIT 1
                 """,
                 params_base,

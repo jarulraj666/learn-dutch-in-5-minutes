@@ -10,6 +10,7 @@ import base64
 import hashlib
 import json
 import logging
+import random
 import re
 import threading
 import time
@@ -141,6 +142,33 @@ class GeminiTTSClient:
         """
         self.client = genai.Client(api_key=api_key)
 
+    def _normalize_speaker_genders(
+        self,
+        speaker_genders: dict[str, str] | None,
+    ) -> dict[str, str]:
+        genders = {
+            "Speaker1": (speaker_genders or {}).get("Speaker1", "").lower(),
+            "Speaker2": (speaker_genders or {}).get("Speaker2", "").lower(),
+        }
+        if genders["Speaker1"] not in ("female", "male"):
+            genders["Speaker1"] = "female"
+        if genders["Speaker2"] not in ("female", "male"):
+            genders["Speaker2"] = "male"
+        return genders
+
+    def _extract_multispeaker_voices(self, speech_config: types.SpeechConfig) -> dict[str, str]:
+        voices: dict[str, str] = {}
+        multi_cfg = getattr(speech_config, "multi_speaker_voice_config", None)
+        speaker_cfgs = getattr(multi_cfg, "speaker_voice_configs", None) or []
+        for cfg in speaker_cfgs:
+            speaker = getattr(cfg, "speaker", "")
+            voice_cfg = getattr(cfg, "voice_config", None)
+            prebuilt = getattr(voice_cfg, "prebuilt_voice_config", None)
+            voice_name = getattr(prebuilt, "voice_name", "")
+            if speaker and voice_name:
+                voices[speaker] = voice_name
+        return voices
+
     def _load_prompt(
         self,
         dialogue: list[dict[str, str]],
@@ -188,6 +216,16 @@ class GeminiTTSClient:
         speech_cfg = settings.PEDAGOGY_CONFIG.get("speech", {})
         gemini_voices = speech_cfg.get("voice_map", {}).get("gemini", {})
 
+        def _voice_pool(value: Any, fallback: str) -> list[str]:
+            if isinstance(value, str):
+                pool = [value]
+            elif isinstance(value, list):
+                pool = [v for v in value if isinstance(v, str)]
+            else:
+                pool = []
+            normalized = list(dict.fromkeys(v.strip() for v in pool if v.strip()))
+            return normalized or [fallback]
+
         # Guardrail: current config schema expects gender keys.
         if not isinstance(gemini_voices, dict):
             LOGGER.warning(
@@ -203,18 +241,38 @@ class GeminiTTSClient:
                     missing_gender_keys,
                 )
 
-        # Gender-based voice selection
-        female_voice = gemini_voices.get("female", "Kore")
-        male_voice = gemini_voices.get("male", "Puck")
+        # Gender-based voice pools; supports scalar or list config.
+        female_pool = _voice_pool(gemini_voices.get("female", "Kore"), "Kore")
+        male_pool = _voice_pool(gemini_voices.get("male", "Puck"), "Puck")
+
+        genders = self._normalize_speaker_genders(speaker_genders)
+
+        same_gender = genders["Speaker1"] == genders["Speaker2"]
+        female_selected = random.sample(female_pool, 2) if same_gender and genders["Speaker1"] == "female" and len(female_pool) >= 2 else None
+        male_selected = random.sample(male_pool, 2) if same_gender and genders["Speaker1"] == "male" and len(male_pool) >= 2 else None
 
         def _voice_for(speaker_id: str) -> str:
-            gender = (speaker_genders or {}).get(speaker_id, "").lower()
+            gender = genders.get(speaker_id, "")
             if gender == "female":
-                return female_voice
+                if female_selected:
+                    return female_selected[0] if speaker_id == "Speaker1" else female_selected[1]
+                if same_gender and len(female_pool) < 2:
+                    LOGGER.warning(
+                        "Only one female Gemini voice configured but both speakers are female; reusing %s.",
+                        female_pool[0],
+                    )
+                return female_pool[0]
             if gender == "male":
-                return male_voice
+                if male_selected:
+                    return male_selected[0] if speaker_id == "Speaker1" else male_selected[1]
+                if same_gender and len(male_pool) < 2:
+                    LOGGER.warning(
+                        "Only one male Gemini voice configured but both speakers are male; reusing %s.",
+                        male_pool[0],
+                    )
+                return male_pool[0]
             # Fallback: Speaker1 → female, Speaker2 → male
-            return female_voice if speaker_id == "Speaker1" else male_voice
+            return female_pool[0] if speaker_id == "Speaker1" else male_pool[0]
 
         s1_voice = _voice_for("Speaker1")
         s2_voice = _voice_for("Speaker2")
@@ -225,7 +283,14 @@ class GeminiTTSClient:
                 s1_voice,
             )
 
-        LOGGER.info("tts.voices Speaker1=%s Speaker2=%s", s1_voice, s2_voice)
+        LOGGER.info(
+            "tts.voices.multispeaker genders=Speaker1:%s,Speaker2:%s same_gender=%s voices=Speaker1:%s,Speaker2:%s",
+            genders["Speaker1"],
+            genders["Speaker2"],
+            same_gender,
+            s1_voice,
+            s2_voice,
+        )
 
         return types.SpeechConfig(
             multi_speaker_voice_config=types.MultiSpeakerVoiceConfig(
@@ -256,6 +321,7 @@ class GeminiTTSClient:
         speech_config: types.SpeechConfig,
         idx: int,
         total_chunks: int,
+        speaker_genders: dict[str, str] | None = None,
     ) -> bytes:
         """Call the Gemini API for one chunk prompt with retries.
 
@@ -269,6 +335,20 @@ class GeminiTTSClient:
         max_retries = 3
         retry_delay = 1
         raw_pcm: bytes | None = None
+        genders = self._normalize_speaker_genders(speaker_genders)
+        voices = self._extract_multispeaker_voices(speech_config)
+        same_gender = genders["Speaker1"] == genders["Speaker2"]
+
+        LOGGER.info(
+            "tts.gemini.api_call chunk=%d/%d same_gender=%s genders=Speaker1:%s,Speaker2:%s voices=Speaker1:%s,Speaker2:%s",
+            idx,
+            total_chunks,
+            same_gender,
+            genders["Speaker1"],
+            genders["Speaker2"],
+            voices.get("Speaker1", "unknown"),
+            voices.get("Speaker2", "unknown"),
+        )
 
         for attempt in range(max_retries):
             try:
@@ -333,6 +413,7 @@ class GeminiTTSClient:
         chunk_file: Path,
         cached_hash: str,
         dialogue_hash: str,
+        speaker_genders: dict[str, str] | None = None,
     ) -> bytes:
         """Process one dialogue chunk: check cache, call API if needed, trim silence, save.
 
@@ -366,7 +447,13 @@ class GeminiTTSClient:
         LOGGER.info("%s", prompt)
         LOGGER.info("tts.prompt.end chunk=%d", idx)
 
-        raw_pcm = self._call_chunk_api(prompt, speech_config, idx, total_chunks)
+        raw_pcm = self._call_chunk_api(
+            prompt,
+            speech_config,
+            idx,
+            total_chunks,
+            speaker_genders=speaker_genders,
+        )
         raw_pcm = _trim_long_silences(raw_pcm, sample_rate=24000, max_silence_sec=2.0)
         write_wave_file(chunk_file, raw_pcm, channels=1, rate=24000, sample_width=2)
         LOGGER.info("chunk %d/%d saved: %s", idx, total_chunks, chunk_file)
@@ -483,7 +570,15 @@ class GeminiTTSClient:
             chunk_file = target_file.with_name(f"{target_file.stem}_chunk_{idx}.wav")
             try:
                 raw_pcm = self._process_one_chunk(
-                    chunk, idx, len(dialogue_chunks), prompt, speech_config, chunk_file, cached_hash, dialogue_hash
+                    chunk,
+                    idx,
+                    len(dialogue_chunks),
+                    prompt,
+                    speech_config,
+                    chunk_file,
+                    cached_hash,
+                    dialogue_hash,
+                    speaker_genders=speaker_genders,
                 )
             except RuntimeError as err:
                 if str(err).startswith("RATE_LIMITED:"):
@@ -688,7 +783,15 @@ class RotatingGeminiTTSClient:
                 client = GeminiTTSClient(api_key)
                 try:
                     pcm = client._process_one_chunk(
-                        chunk, idx, total, prompt, speech_config, chunk_file, cached_hash, dialogue_hash
+                        chunk,
+                        idx,
+                        total,
+                        prompt,
+                        speech_config,
+                        chunk_file,
+                        cached_hash,
+                        dialogue_hash,
+                        speaker_genders=speaker_genders,
                     )
                     return idx, pcm
                 except RuntimeError as exc:

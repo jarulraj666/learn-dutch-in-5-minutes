@@ -1,14 +1,37 @@
 speech:
   language: nl            # Primary language: Dutch
+  # Provider-specific tags are added only at voice-generation time; generated scripts stay clean.
+  expression_tags:
+    elevenlabs:
+      enabled: true
+    gemini:
+      enabled: false
   voice_map:
     gemini:
       # Google Gemini TTS voices — assign by gender
-      female: Sulafat
-      male: Puck
+      female:
+        - Sulafat
+        - Aoede
+      male:
+        - Puck
+        - Achird
+        - Alnilam
     elevenlabs:
-      # Fill these with ElevenLabs voice IDs before enabling TTS_PROVIDER=elevenlabs
-      female: "yO6w2xlECAQRFP6pX7Hw"
-      male: "fLc0xzaCWvgABhwDGnZI"
+      # Choose pool by env flag: ELEVENLABS_VOICE_PLAN=free|paid
+      free:
+        female:
+          - "c5NmojBy0pTRAevPI981" # usable on this account (API: free_plan_only)
+          - "USgcEP066QFQvzPePl89" # usable on this account (API: free_plan_only)
+        male:
+          - "Ts1ZMgDChRGFhfCSgIU7" # usable on this account (API: free_plan_only)
+          - "Ts1ZMgDChRGFhfCSgIU7" # usable on this account (API: free_plan_only)
 
-      # secondary male xdzjnRtJ19GiZY2bpv4i
-      # secondary female: 94W4cf0CMSgymY1uoRiX
+      paid:
+        female:
+          - "uq30epO48rrDeUhHgRfL" # paid plan (API: paid_plan_required on free)
+          - "wmWLdRPPbh5HMS43PMIi" # paid plan (API: paid_plan_required on free)
+          - "qcswjObkrLS9hLQKGaib" # paid plan (API: paid_plan_required on free)
+        male:
+          - "xdzjnRtJ19GiZY2bpv4i" # paid plan (API: paid_plan_required on free)
+          - "2GJZCZIWrWiGFDntCFaz" # paid plan (API: paid_plan_required on free)
+          - "tRyB8BgRzpNUv3o2XWD4" # paid plan (API: paid_plan_required on free)

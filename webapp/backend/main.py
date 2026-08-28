@@ -34,6 +34,11 @@ from fastapi.staticfiles import StaticFiles
 
 from routers import config, health, media, pipeline, publish, topics
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    stream=sys.stdout,
+)
 LOGGER = logging.getLogger(__name__)
 
 
@@ -42,6 +47,7 @@ async def _instagram_scheduler_loop() -> None:
     from services.artifact import load_artifact_from_db
     from services.db import get_connection, update_publish_job_artifact_json
 
+    await asyncio.sleep(60)
     while True:
         try:
             now = datetime.now(timezone.utc)
@@ -103,6 +109,7 @@ async def _facebook_scheduler_loop() -> None:
     """Every 60 s: find shorts with facebook_scheduled_at <= now and upload them."""
     from services.db import get_connection, update_publish_job_artifact_json
 
+    await asyncio.sleep(60)
     while True:
         try:
             now = datetime.now(timezone.utc)
@@ -160,6 +167,7 @@ async def _tiktok_scheduler_loop() -> None:
     import os
     from services.db import get_connection, update_publish_job_artifact_json
 
+    await asyncio.sleep(60)
     while True:
         try:
             if os.getenv("UPLOAD_TIKTOK", "true").lower() not in ("1", "true", "yes"):
@@ -237,6 +245,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def no_cache_middleware(request, call_next):
+    """Disable all caching so regenerated media/config is never served stale."""
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
 
 app.include_router(health.router, prefix="/api")
 app.include_router(topics.router, prefix="/api")

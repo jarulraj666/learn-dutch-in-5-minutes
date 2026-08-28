@@ -53,15 +53,17 @@ _POLL_TIMEOUT_SEC = 300
 
 def _build_reel_caption(artifact: dict, scene_short: dict) -> str:
     """Build the Instagram Reel caption (≤2200 chars, hashtags included)."""
-    topic_title_en: str = artifact.get("script", {}).get("topic_title_en", "")
+    from pipeline.publish.upload_shorts import build_scene_title  # noqa: PLC0415
+
+    title = build_scene_title(artifact, scene_short)
     scene_desc: str = scene_short.get("description", "")
     key_phrases: list[str] = artifact.get("script", {}).get("key_phrases", [])
     level: str = artifact.get("level", "")
     display_level = level.replace("A1A2", "A1-A2").replace("B1B2", "B1-B2")
 
     lines: list[str] = []
-    if topic_title_en:
-        lines.append(topic_title_en)
+    if title:
+        lines.append(title)
     if scene_desc:
         lines.append(scene_desc)
     lines.append("")

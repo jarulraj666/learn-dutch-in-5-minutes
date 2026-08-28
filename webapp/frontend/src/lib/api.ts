@@ -10,6 +10,7 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   const url = `${baseUrl()}${path}`;
   const res = await fetch(url, {
     ...init,
+    cache: "no-store",
     headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
   });
   if (!res.ok) {

@@ -1,5 +1,9 @@
 playlists:
   A1A2:
+    course_intro:
+      name: "A1-A2 | Beginners | Start Here"
+      description: "Begin your Dutch here. Course orientation and pronunciation primers for absolute beginners — how Dutch sounds, and how to work through the course from zero to A1-A2."
+      id: ""
     common_words:
       name: "A1-A2 | Beginners | Common Words"
       description: "Learn the most essential Dutch words for absolute beginners. Each episode covers a themed group of everyday words with clear pronunciation, English translations, and simple example sentences. Perfect for A1-A2 learners starting their Dutch journey."
@@ -20,3 +24,8 @@ playlists:
     default:
       name: "A1-A2 | Beginners | Dutch Complete Course"
       description: "A complete Dutch language course for absolute beginners. This playlist combines common words, grammar, vocabulary, and real conversations to take you from zero to A1-A2 level in Dutch."
+  shorts:
+    default:
+      name: "Dutch Shorts"
+      description: "Dutch language learning Short clips"
+      id: "PLehA43_xiKQo"

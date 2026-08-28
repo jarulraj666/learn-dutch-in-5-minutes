@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeoutError
 import json
 import logging
 import re
@@ -11,6 +13,8 @@ from pipeline.core.select_topic import TopicChoice
 from pipeline.utils import iter_dialogue_turns, to_compact_dialogue
 
 LOGGER = logging.getLogger(__name__)
+
+_GEMINI_REQUEST_TIMEOUT_SEC = 90
 
 
 def _extract_json(text: str) -> dict[str, Any]:
@@ -180,6 +184,79 @@ def _build_script_text(turns: list[tuple[str, str]]) -> str:
     return "\n".join(f"{speaker}: {line}" for speaker, line in turns if line)
 
 
+def _normalize_key_phrases(raw: Any) -> list[str]:
+    """Coerce to plain strings; models sometimes emit {nl, en} objects here."""
+    phrases: list[str] = []
+    for item in raw or []:
+        if item is None:
+            continue
+        if isinstance(item, str):
+            text = item
+        elif isinstance(item, dict):
+            text = str(
+                item.get("nl")
+                or item.get("phrase")
+                or item.get("text")
+                or next(iter(item.values()), "")
+            )
+        else:
+            text = str(item)
+        text = text.strip()
+        if text and text not in phrases:
+            phrases.append(text)
+    return phrases
+
+
+def _normalize_grammar_notes(raw: Any) -> list[dict[str, Any]]:
+    """Coerce to {title, explanation, examples}; models sometimes emit bare strings."""
+    notes: list[dict[str, Any]] = []
+    for item in raw or []:
+        if item is None:
+            continue
+        if isinstance(item, str):
+            title, sep, explanation = item.partition(": ")
+            note = {
+                "title": (title if sep else item).strip(),
+                "explanation": explanation.strip(),
+                "examples": [],
+            }
+        elif isinstance(item, dict):
+            examples = item.get("examples") or []
+            if isinstance(examples, str):
+                examples = [examples]
+            note = {
+                "title": str(item.get("title") or "").strip(),
+                "explanation": str(item.get("explanation") or item.get("note") or "").strip(),
+                "examples": [str(e).strip() for e in examples if str(e).strip()],
+            }
+        else:
+            continue
+        if note["title"] or note["explanation"]:
+            notes.append(note)
+    return notes
+
+
+def _normalize_vocabulary(raw: Any) -> list[dict[str, str]]:
+    """Coerce to {nl, en} pairs."""
+    vocab: list[dict[str, str]] = []
+    for item in raw or []:
+        if isinstance(item, dict):
+            nl = str(item.get("nl") or item.get("dutch") or "").strip()
+            en = str(item.get("en") or item.get("english") or "").strip()
+        elif isinstance(item, str):
+            for sep in (" - ", " — ", " = ", ": "):
+                if sep in item:
+                    nl, en = (p.strip() for p in item.split(sep, 1))
+                    break
+            else:
+                nl, en = item.strip(), ""
+        else:
+            continue
+        if nl:
+            vocab.append({"nl": nl, "en": en})
+    return vocab
+
+
 def generate_script(
     topic: TopicChoice, language: str = "nl", level: str = "A1A2"
 ) -> dict[str, Any]:
@@ -193,6 +270,12 @@ def generate_script(
     turns = iter_dialogue_turns(script.get("dialogue", []))
     script["dialogue"] = to_compact_dialogue(turns)
     script["script_text"] = _build_script_text(turns)
+
+    # Model output is untrusted: force the list fields into their documented shapes
+    # before any downstream stage indexes into them.
+    script["key_phrases"] = _normalize_key_phrases(script.get("key_phrases"))
+    script["grammar_notes"] = _normalize_grammar_notes(script.get("grammar_notes"))
+    script["vocabulary"] = _normalize_vocabulary(script.get("vocabulary"))
 
     # Inject level and category into script so downstream stages can use them
     script.setdefault("level", effective_level)
@@ -356,18 +439,25 @@ def _generate_script_gemini(prompt: str) -> dict[str, Any]:
         raise ValueError("No Gemini API keys configured. Set GEMINI_API_KEYS in .env")
 
     models_to_try = ["gemini-3.6-flash", "gemini-3.5-flash"]
+    timeout_sec = _GEMINI_REQUEST_TIMEOUT_SEC
+
+    def _generate_with_timeout(client: Any, model_name: str) -> Any:
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(
+                client.models.generate_content,
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                ),
+            )
+            return future.result(timeout=timeout_sec)
 
     for api_key in settings.GEMINI_KEY_ROTATOR.available_keys():
         client = genai.Client(api_key=api_key)
         for model_name in models_to_try:
             try:
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                    ),
-                )
+                response = _generate_with_timeout(client, model_name)
                 model_output = response.text
                 if not model_output:
                     LOGGER.warning(
@@ -379,6 +469,11 @@ def _generate_script_gemini(prompt: str) -> dict[str, Any]:
                     model_name, len(model_output),
                 )
                 return _extract_json(model_output)
+            except FuturesTimeoutError:
+                LOGGER.warning(
+                    "Gemini model %s timed out after %ds", model_name, timeout_sec,
+                )
+                continue
             except Exception as e:
                 if _is_rate_limited(e):
                     LOGGER.warning(
@@ -403,8 +498,18 @@ def _build_speaker_metadata(topic: TopicChoice) -> dict[str, Any] | None:
 
     # Read voice mapping from config so voice_id reflects the actual configured voices
     gemini_voices = settings.PEDAGOGY_CONFIG.get("speech", {}).get("voice_map", {}).get("gemini", {})
-    female_voice = gemini_voices.get("female", "Kore")
-    male_voice = gemini_voices.get("male", "Puck")
+
+    def _first_voice(value: Any, fallback: str) -> str:
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+        if isinstance(value, list):
+            for item in value:
+                if isinstance(item, str) and item.strip():
+                    return item.strip()
+        return fallback
+
+    female_voice = _first_voice(gemini_voices.get("female", "Kore"), "Kore")
+    male_voice = _first_voice(gemini_voices.get("male", "Puck"), "Puck")
 
     gender_to_voice = {
         "female": female_voice,

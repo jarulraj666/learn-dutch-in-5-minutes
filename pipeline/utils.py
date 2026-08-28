@@ -31,7 +31,8 @@ def jaccard_similarity(a: str, b: str) -> float:
 
 
 def content_fingerprint(topic_id: str, title: str, key_phrases: list[str]) -> str:
-    source = f"{topic_id}|{title}|{'|'.join(sorted(key_phrases))}"
+    phrases = sorted(str(p) for p in key_phrases or [])
+    source = f"{topic_id}|{title}|{'|'.join(phrases)}"
     return hashlib.sha256(source.encode("utf-8")).hexdigest()
 
 

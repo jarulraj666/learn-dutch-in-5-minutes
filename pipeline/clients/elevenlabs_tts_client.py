@@ -8,6 +8,7 @@ existing subtitle/render pipeline.
 from __future__ import annotations
 
 import logging
+import random
 import time
 import wave
 from pathlib import Path
@@ -15,7 +16,7 @@ from pathlib import Path
 import requests
 
 from pipeline import settings
-from pipeline.clients.gemini_tts_client import _trim_long_silences, write_wave_file
+from pipeline.clients.gemini_tts_client import write_wave_file
 from pipeline.utils import iter_dialogue_turns
 
 LOGGER = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ class ElevenLabsTTSClient:
     """Client for dialogue TTS generation through ElevenLabs HTTP API."""
 
     provider_name = "elevenlabs"
-    MODEL_ID = "eleven_multilingual_v2"
+    MODEL_ID = "eleven_flash_v2_5"
     SAMPLE_RATE = 24000
     RETRY_DELAYS_SEC = (1.0, 2.0, 4.0)
     MIN_SPEED = 0.7
@@ -35,6 +36,7 @@ class ElevenLabsTTSClient:
         if not api_key:
             raise ValueError("ELEVENLABS_API_KEY is missing.")
         self.api_key = api_key
+        self.model_id = settings.ELEVENLABS_MODEL or self.MODEL_ID
         configured_speed = settings.ELEVENLABS_SPEED
         self.speed = max(self.MIN_SPEED, min(self.MAX_SPEED, configured_speed))
         if self.speed != configured_speed:
@@ -46,33 +48,133 @@ class ElevenLabsTTSClient:
                 self.speed,
             )
 
-    def _voice_map(self) -> tuple[str, str]:
+    def _voice_map(self) -> dict[str, list[str]]:
         speech_cfg = settings.PEDAGOGY_CONFIG.get("speech", {})
         provider_map = speech_cfg.get("voice_map", {}).get("elevenlabs", {})
         if not isinstance(provider_map, dict):
             provider_map = {}
 
-        female_voice = provider_map.get("female", "")
-        male_voice = provider_map.get("male", "")
-
-        if not female_voice or not male_voice:
-            raise ValueError(
-                "speech.voice_map.elevenlabs.female/male must be set with valid ElevenLabs voice IDs."
+        selected_plan = settings.ELEVENLABS_VOICE_PLAN
+        if selected_plan not in ("free", "paid"):
+            LOGGER.warning(
+                "Invalid ELEVENLABS_VOICE_PLAN=%r. Expected 'free' or 'paid'. Falling back to 'free'.",
+                selected_plan,
             )
+            selected_plan = "free"
 
-        return female_voice, male_voice
+        # Preferred shape:
+        # elevenlabs:
+        #   free: {female: [...], male: [...]}
+        #   paid: {female: [...], male: [...]}
+        # Backward compatible shape:
+        # elevenlabs: {female: [...], male: [...]}.
+        plan_map = provider_map.get(selected_plan)
+        if isinstance(plan_map, dict):
+            effective_map = plan_map
+            LOGGER.info("elevenlabs.voice_plan=%s", selected_plan)
+        else:
+            effective_map = provider_map
+            LOGGER.info("elevenlabs.voice_plan=%s (fallback: legacy flat map)", selected_plan)
+
+        voice_map: dict[str, list[str]] = {}
+        for gender in ("female", "male"):
+            configured = effective_map.get(gender, [])
+            if isinstance(configured, str):
+                configured = [configured]
+            if not isinstance(configured, list):
+                configured = []
+            voices = list(dict.fromkeys(
+                voice for voice in configured if isinstance(voice, str) and voice.strip()
+            ))
+            if not voices:
+                raise ValueError(
+                    f"speech.voice_map.elevenlabs.{selected_plan}.{gender} must be set with valid ElevenLabs voice IDs."
+                )
+            voice_map[gender] = voices
+
+        return voice_map
+
+    def _voice_assignments(
+        self,
+        speakers: list[str],
+        speaker_genders: dict[str, str] | None = None,
+    ) -> dict[str, str]:
+        voice_map = self._voice_map()
+        speakers_by_gender: dict[str, list[str]] = {"female": [], "male": []}
+        for speaker in speakers:
+            gender = (speaker_genders or {}).get(speaker, "").lower()
+            if gender not in speakers_by_gender:
+                raise ValueError(
+                    f"No gender mapping found for {speaker!r}. "
+                    "Ensure script 'speakers' contains a valid gender entry for each speaker."
+                )
+            if speaker not in speakers_by_gender[gender]:
+                speakers_by_gender[gender].append(speaker)
+
+        assignments: dict[str, str] = {}
+        for gender, gender_speakers in speakers_by_gender.items():
+            voices = voice_map[gender]
+            if len(gender_speakers) > len(voices):
+                raise ValueError(
+                    f"Not enough distinct ElevenLabs {gender} voices for speakers: "
+                    f"{', '.join(gender_speakers)}. Configure at least "
+                    f"{len(gender_speakers)} distinct voices."
+                )
+            assignments.update(zip(gender_speakers, random.sample(voices, len(gender_speakers))))
+
+        return assignments
+
+    def _speaker_gender_map(
+        self,
+        speakers: list[str],
+        speaker_genders: dict[str, str] | None = None,
+    ) -> dict[str, str]:
+        gender_map: dict[str, str] = {}
+        for speaker in speakers:
+            gender = (speaker_genders or {}).get(speaker, "").lower()
+            if gender not in ("female", "male"):
+                raise ValueError(
+                    f"No gender mapping found for {speaker!r}. "
+                    "Ensure script 'speakers' contains a valid gender entry for each speaker."
+                )
+            gender_map[speaker] = gender
+        return gender_map
+
+    @staticmethod
+    def _is_paid_plan_required_error(err: Exception) -> bool:
+        msg = str(err).lower()
+        return "paid_plan_required" in msg or "payment_required" in msg
+
+    def _choose_fallback_voice(
+        self,
+        speaker: str,
+        voice_assignments: dict[str, str],
+        voice_map: dict[str, list[str]],
+        speaker_gender_map: dict[str, str],
+        blocked_by_speaker: dict[str, set[str]],
+    ) -> str | None:
+        gender = speaker_gender_map[speaker]
+        candidates = [
+            voice
+            for voice in voice_map[gender]
+            if voice not in blocked_by_speaker[speaker]
+        ]
+        if not candidates:
+            return None
+
+        peer_voices = {
+            assigned_voice
+            for other_speaker, assigned_voice in voice_assignments.items()
+            if other_speaker != speaker
+            and speaker_gender_map.get(other_speaker) == gender
+        }
+        distinct_candidates = [voice for voice in candidates if voice not in peer_voices]
+        pool = distinct_candidates or candidates
+        return random.choice(pool)
 
     def _voice_for(self, speaker_id: str, speaker_genders: dict[str, str] | None = None) -> str:
-        female_voice, male_voice = self._voice_map()
-        gender = (speaker_genders or {}).get(speaker_id, "").lower()
-        if gender == "female":
-            return female_voice
-        if gender == "male":
-            return male_voice
-        raise ValueError(
-            f"No gender mapping found for {speaker_id!r}. "
-            "Ensure script 'speakers' contains a valid gender entry for each speaker."
-        )
+        assignments = self._voice_assignments([speaker_id], speaker_genders=speaker_genders)
+        return assignments[speaker_id]
 
     def _synthesize_line(self, text: str, voice_id: str) -> bytes:
         url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream"
@@ -83,7 +185,7 @@ class ElevenLabsTTSClient:
         }
         payload = {
             "text": text,
-            "model_id": self.MODEL_ID,
+            "model_id": self.model_id,
             "voice_settings": {
                 "stability": 0.45,
                 "similarity_boost": 0.8,
@@ -141,7 +243,7 @@ class ElevenLabsTTSClient:
 
             if response.status_code >= 400:
                 raise RuntimeError(
-                    f"ElevenLabs synthesis failed status {response.status_code}: {response.text[:200]}"
+                    f"ElevenLabs synthesis failed voice={voice_id} status {response.status_code}: {response.text[:200]}"
                 )
 
             if not response.content:
@@ -169,20 +271,72 @@ class ElevenLabsTTSClient:
             LOGGER.error("No parsable dialogue turns for ElevenLabs generation.")
             return False
 
-        LOGGER.info("Generating ElevenLabs audio for %d turns (speed=%.2f)", len(turns), self.speed)
+        LOGGER.info(
+            "Generating ElevenLabs audio for %d turns (speed=%.2f, model=%s)",
+            len(turns),
+            self.speed,
+            self.model_id,
+        )
 
         pcm_buffers: list[bytes] = []
         try:
+            speakers = [speaker for speaker, _ in turns]
+            voice_map = self._voice_map()
+            speaker_gender_map = self._speaker_gender_map(
+                speakers,
+                speaker_genders=speaker_genders,
+            )
+            voice_assignments = self._voice_assignments(
+                speakers,
+                speaker_genders=speaker_genders,
+            )
+            for speaker in sorted(voice_assignments.keys()):
+                LOGGER.info(
+                    "elevenlabs.voice_assignment speaker=%s gender=%s voice_id=%s",
+                    speaker,
+                    speaker_gender_map.get(speaker, "unknown"),
+                    voice_assignments[speaker],
+                )
+            blocked_by_speaker = {
+                speaker: set() for speaker in speaker_gender_map
+            }
             for idx, (speaker, line) in enumerate(turns, start=1):
-                voice_id = self._voice_for(speaker, speaker_genders=speaker_genders)
-                LOGGER.debug("elevenlabs turn=%d speaker=%s voice_id=%s", idx, speaker, voice_id)
-                pcm_buffers.append(self._synthesize_line(line, voice_id))
+                while True:
+                    voice_id = voice_assignments[speaker]
+                    LOGGER.debug("elevenlabs turn=%d speaker=%s voice_id=%s", idx, speaker, voice_id)
+                    try:
+                        synthesized_line = self._synthesize_line(line, voice_id)
+                        pcm_buffers.append(synthesized_line)
+                        break
+                    except Exception as err:
+                        if not self._is_paid_plan_required_error(err):
+                            raise
+                        blocked_by_speaker[speaker].add(voice_id)
+                        fallback_voice = self._choose_fallback_voice(
+                            speaker,
+                            voice_assignments,
+                            voice_map,
+                            speaker_gender_map,
+                            blocked_by_speaker,
+                        )
+                        if not fallback_voice:
+                            raise RuntimeError(
+                                f"ElevenLabs paid-plan voice rejected for {speaker}; "
+                                "no eligible fallback voice remains in configured pool."
+                            ) from err
+                        LOGGER.warning(
+                            "elevenlabs.voice_switch turn=%d speaker=%s from=%s to=%s reason=paid_plan_required",
+                            idx,
+                            speaker,
+                            voice_id,
+                            fallback_voice,
+                        )
+                        voice_assignments[speaker] = fallback_voice
         except Exception as err:
             LOGGER.error("ElevenLabs dialogue synthesis failed: %s", err)
             return False
 
         full_pcm = b"".join(pcm_buffers)
-        full_pcm = _trim_long_silences(full_pcm, sample_rate=self.SAMPLE_RATE, max_silence_sec=2.0)
 
         target_file = Path(output_path).with_suffix(".wav")
         write_wave_file(target_file, full_pcm, channels=1, rate=self.SAMPLE_RATE, sample_width=2)
