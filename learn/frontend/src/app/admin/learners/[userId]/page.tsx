@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { learnerSession } from "@/lib/learner-session";
 import { api, ApiError } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 
@@ -25,7 +25,7 @@ type LearnerDetail = {
 };
 
 export default async function LearnerDetailPage({ params }: { params: { userId: string } }) {
-  const session = await auth();
+  const session = await learnerSession();
   if (!session?.user) redirect("/signin");
 
   let data: LearnerDetail;

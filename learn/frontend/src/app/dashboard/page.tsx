@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Layers } from "lucide-react";
-import { auth } from "@/auth";
+import { learnerSession } from "@/lib/learner-session";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import type { Dashboard } from "@/lib/types";
@@ -9,7 +9,7 @@ import type { Dashboard } from "@/lib/types";
 export const metadata = { title: "My learning · Learn Dutch in 5 Minutes" };
 
 export default async function DashboardPage() {
-  const session = await auth();
+  const session = await learnerSession();
   if (!session?.user) redirect("/signin");
 
   const data = await api<Dashboard>("/api/me/dashboard");

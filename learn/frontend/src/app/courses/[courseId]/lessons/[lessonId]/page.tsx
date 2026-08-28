@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { auth } from "@/auth";
+import { learnerSession } from "@/lib/learner-session";
 import { api, ApiError } from "@/lib/api";
 import { LessonTabs } from "@/components/LessonTabs";
 import { PlaylistSidebar } from "@/components/PlaylistSidebar";
@@ -13,7 +13,7 @@ export default async function LessonPage({
 }: {
   params: { courseId: string; lessonId: string };
 }) {
-  const session = await auth();
+  const session = await learnerSession();
 
   let lesson: LessonDetail;
   let course: CourseDetail;

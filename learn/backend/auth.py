@@ -64,3 +64,8 @@ async def admin_user(
 CurrentUser = Annotated[dict[str, Any], Depends(current_user)]
 OptionalUser = Annotated[dict[str, Any] | None, Depends(optional_user)]
 AdminUser = Annotated[dict[str, Any], Depends(admin_user)]
+
+
+async def delete_session(token: str | None) -> None:
+    if token:
+        await db.execute('DELETE FROM sessions WHERE "sessionToken" = %s', (token,))

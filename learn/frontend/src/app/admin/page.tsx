@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { learnerSession } from "@/lib/learner-session";
 import { api, ApiError } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import type { AdminLearner } from "@/lib/types";
@@ -17,7 +17,7 @@ type Stats = {
 };
 
 export default async function AdminPage() {
-  const session = await auth();
+  const session = await learnerSession();
   if (!session?.user) redirect("/signin");
 
   let stats: Stats;

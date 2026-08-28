@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { signIn, signOut } from "next-auth/react";
 import { useState } from "react";
 import clsx from "clsx";
 import { BookOpen, LayoutDashboard, Layers, Menu, User, X } from "lucide-react";
@@ -75,14 +74,14 @@ export function SiteHeader({ user }: Props) {
                 </span>
               </Link>
               <button
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={() => { window.location.href = "/api/auth/logout"; }}
                 className="hidden text-sm text-slate-500 hover:text-slate-800 sm:block"
               >
                 Sign out
               </button>
             </div>
           ) : (
-            <button onClick={() => signIn("google")} className="btn-primary px-5 py-2 text-sm">
+            <button onClick={() => { window.location.href = "/api/auth/google/start?return_to=/dashboard"; }} className="btn-primary px-5 py-2 text-sm">
               Sign in with Google
             </button>
           )}

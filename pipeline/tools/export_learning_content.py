@@ -22,6 +22,7 @@ import argparse
 import json
 import logging
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -293,6 +294,55 @@ def _duration_from_vtt(vtt_text: str) -> int | None:
     return total or None
 
 
+def _media_path(row: dict, artifact: dict) -> Path | None:
+    """Resolve a rendered video path from the publish row or artifact."""
+    candidates = [
+        row.get("video_file_path"),
+        (artifact.get("render") or {}).get("planned_video_file"),
+        (artifact.get("storage") or {}).get("archived_video_file"),
+        artifact.get("video_file"),
+    ]
+    for raw_path in candidates:
+        if not raw_path:
+            continue
+        path = Path(raw_path)
+        if not path.is_absolute():
+            path = ROOT / path
+        try:
+            path = path.resolve()
+            path.relative_to(ROOT.resolve())
+        except (OSError, ValueError):
+            LOGGER.warning("video path outside repo, skipping: %s", raw_path)
+            continue
+        if path.is_file():
+            return path
+    return None
+
+
+def _duration_from_media(path: Path | None) -> int | None:
+    """Read the container duration from a local media file with ffprobe."""
+    if path is None:
+        return None
+    try:
+        result = subprocess.run(
+            [
+                "ffprobe",
+                "-v", "error",
+                "-show_entries", "format=duration",
+                "-of", "default=noprint_wrappers=1:nokey=1",
+                str(path),
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        duration = float(result.stdout.strip())
+    except (FileNotFoundError, OSError, subprocess.CalledProcessError, ValueError):
+        LOGGER.warning("could not read media duration: %s", path)
+        return None
+    return max(1, int(duration + 0.999)) if duration > 0 else None
+
+
 def _read_subtitle(rel_path: str) -> str:
     """Read an SRT file referenced by the artifact and return WebVTT, or '' if unavailable."""
     if not rel_path:
@@ -400,9 +450,11 @@ def build_lesson(row: dict, artifact: dict) -> dict[str, Any] | None:
         for lang, path in _subtitle_paths(subtitles).items()
         if (vtt := _read_subtitle(path))
     }
-    duration_sec = next(
-        (d for d in (_duration_from_vtt(v) for v in subtitle_vtt.values()) if d), None
-    )
+    duration_sec = _duration_from_media(_media_path(row, artifact))
+    if duration_sec is None:
+        duration_sec = next(
+            (d for d in (_duration_from_vtt(v) for v in subtitle_vtt.values()) if d), None
+        )
 
     return {
         "id": topic_id,
@@ -480,8 +532,9 @@ def collect_lessons(level: str | None, category: str | None, topic_id: str | Non
     from pipeline.core.db import get_connection
 
     sql = """
-        SELECT t.id AS topic_id, t.level, t.category, t.title_hint, t.order_index,
-               t.youtube_title, pj.youtube_video_id, pj.published_at, pj.artifact_json
+         SELECT t.id AS topic_id, t.level, t.category, t.title_hint, t.order_index,
+             t.youtube_title, pj.youtube_video_id, pj.published_at,
+             pj.video_file_path, pj.artifact_json
         FROM topics t
         JOIN canonical_scripts cs ON cs.topic_id = t.id
             AND cs.id = (SELECT MAX(id) FROM canonical_scripts WHERE topic_id = t.id)

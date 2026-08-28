@@ -1,6 +1,5 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -13,7 +12,10 @@ function SignInCard() {
       <p className="mt-2 text-sm text-slate-600">
         Sign in to track your progress, take quizzes and earn your certificate. It is free.
       </p>
-      <button onClick={() => signIn("google", { callbackUrl })} className="btn-primary mt-6 w-full">
+      <button
+        onClick={() => { window.location.href = `/api/auth/google/start?return_to=${encodeURIComponent(callbackUrl)}`; }}
+        className="btn-primary mt-6 w-full"
+      >
         Continue with Google
       </button>
       <p className="mt-4 text-xs text-slate-400">

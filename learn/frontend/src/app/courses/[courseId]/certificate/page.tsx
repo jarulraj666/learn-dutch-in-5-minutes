@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { learnerSession } from "@/lib/learner-session";
 import { api } from "@/lib/api";
 import { ClaimButton } from "./ClaimButton";
 import type { CertificateEligibility } from "@/lib/types";
@@ -9,7 +9,7 @@ export default async function CourseCertificatePage({
 }: {
   params: { courseId: string };
 }) {
-  const session = await auth();
+  const session = await learnerSession();
   if (!session?.user) redirect("/signin");
 
   const status = await api<CertificateEligibility>(

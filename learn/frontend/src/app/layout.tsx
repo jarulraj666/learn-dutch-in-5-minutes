@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SessionProvider } from "next-auth/react";
-import { auth } from "@/auth";
+import { learnerSession } from "@/lib/learner-session";
 import { SiteHeader } from "@/components/SiteHeader";
 import { CookieNotice } from "@/components/CookieNotice";
 import "./globals.css";
@@ -14,13 +13,12 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
+  const session = await learnerSession();
 
   return (
     <html lang="en">
       <body className="min-h-screen">
-        <SessionProvider session={session}>
-          <SiteHeader
+        <SiteHeader
             user={
               session?.user
                 ? {
@@ -45,7 +43,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </div>
           </footer>
           <CookieNotice />
-        </SessionProvider>
       </body>
     </html>
   );

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { learnerSession } from "@/lib/learner-session";
 import { api } from "@/lib/api";
 import { SettingsForm } from "./SettingsForm";
 import type { Certificate, UserProfile } from "@/lib/types";
@@ -7,7 +7,7 @@ import type { Certificate, UserProfile } from "@/lib/types";
 export const metadata = { title: "Profile · Learn Dutch in 5 Minutes" };
 
 export default async function ProfilePage() {
-  const session = await auth();
+  const session = await learnerSession();
   if (!session?.user) redirect("/signin");
 
   const profile = await api<UserProfile>("/api/me");
