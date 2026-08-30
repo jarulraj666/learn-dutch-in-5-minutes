@@ -14,13 +14,13 @@ const NAV = [
 ];
 
 type Props = {
-  user: { name: string | null; email: string | null; image: string | null; role: string } | null;
+  user: { name: string | null; email: string | null; image: string | null; role: string; isAdmin: boolean } | null;
 };
 
 export function SiteHeader({ user }: Props) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const navItems = user?.role === "admin"
+  const navItems = user?.isAdmin
     ? [...NAV, { href: "/admin", label: "Admin", icon: ShieldCheck }]
     : NAV;
 

@@ -37,6 +37,11 @@ def _bearer(authorization: str | None) -> str | None:
     return value.strip()
 
 
+def is_admin(user: dict[str, Any]) -> bool:
+    email = (user.get("email") or "").lower()
+    return user.get("role") == "admin" or email in settings.ADMIN_EMAILS
+
+
 async def optional_user(
     authorization: Annotated[str | None, Header()] = None,
 ) -> dict[str, Any] | None:
@@ -55,8 +60,7 @@ async def current_user(
 async def admin_user(
     user: Annotated[dict[str, Any], Depends(current_user)],
 ) -> dict[str, Any]:
-    email = (user.get("email") or "").lower()
-    if user.get("role") != "admin" and email not in settings.ADMIN_EMAILS:
+    if not is_admin(user):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Admin access required")
     return user
 

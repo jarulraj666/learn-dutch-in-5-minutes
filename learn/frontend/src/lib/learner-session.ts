@@ -9,6 +9,7 @@ export type LearnerSession = {
     email: string | null;
     image: string | null;
     role?: string;
+    is_admin?: boolean;
   };
 };
 

@@ -15,7 +15,7 @@ from fastapi.responses import RedirectResponse
 
 import db
 import settings
-from auth import _bearer, delete_session
+from auth import _bearer, delete_session, is_admin
 
 router = APIRouter(prefix="/auth")
 
@@ -128,7 +128,7 @@ async def google_callback(code: str, state: str) -> dict:
 @router.get("/session")
 async def session(request: Request) -> dict | None:
     user = await db.fetch_one(_SESSION_SQL, (_bearer(request.headers.get("authorization")),))
-    return {"user": user} if user else None
+    return {"user": dict(user, is_admin=is_admin(user))} if user else None
 
 
 @router.post("/logout", status_code=204)
