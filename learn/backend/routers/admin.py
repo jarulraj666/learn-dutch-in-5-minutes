@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 import db
 from auth import AdminUser
-from models import AdminLearner
+from models import AdminFeedback, AdminLearner
 
 router = APIRouter()
 
@@ -86,3 +86,43 @@ async def learner_detail(user_id: str, _: AdminUser) -> dict:
             (user_id,),
         ),
     }
+
+
+@router.get("/admin/feedback", response_model=list[AdminFeedback])
+async def admin_feedback(_: AdminUser, status_filter: str | None = Query(default=None, alias="status")) -> list[AdminFeedback]:
+    rows = await db.fetch_all(
+        """
+        SELECT f.id, f.user_id::text AS user_id, COALESCE(f.display_name, u.name) AS name, u.email,
+               f.rating, f.comment, f.status, f.created_at, f.published_at
+        FROM feedback f
+        LEFT JOIN users u ON u.id = f.user_id
+        WHERE %s::text IS NULL OR f.status = %s
+        ORDER BY f.created_at DESC
+        """,
+        (status_filter, status_filter),
+    )
+    return [AdminFeedback(**row) for row in rows]
+
+
+@router.patch("/admin/feedback/{feedback_id}/publish")
+async def publish_feedback(feedback_id: int, _: AdminUser) -> dict:
+    row = await db.fetch_one("SELECT id FROM feedback WHERE id = %s", (feedback_id,))
+    if not row:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Feedback not found")
+    await db.execute(
+        "UPDATE feedback SET status = 'published', published_at = now() WHERE id = %s",
+        (feedback_id,),
+    )
+    return {"ok": True}
+
+
+@router.patch("/admin/feedback/{feedback_id}/reject")
+async def reject_feedback(feedback_id: int, _: AdminUser) -> dict:
+    row = await db.fetch_one("SELECT id FROM feedback WHERE id = %s", (feedback_id,))
+    if not row:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Feedback not found")
+    await db.execute(
+        "UPDATE feedback SET status = 'rejected', published_at = NULL WHERE id = %s",
+        (feedback_id,),
+    )
+    return {"ok": True}

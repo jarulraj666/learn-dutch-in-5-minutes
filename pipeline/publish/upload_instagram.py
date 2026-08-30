@@ -46,6 +46,21 @@ _GRAPH_BASE = "https://graph.facebook.com/v21.0"
 _POLL_INTERVAL_SEC = 5
 _POLL_TIMEOUT_SEC = 300
 
+PROMO_COMMENT_TEXT = (
+    "📚 Free structured Dutch course with progress tracking, quizzes & "
+    "transcripts → learndutchin5minutes.nl 🇳🇱"
+)
+
+
+def _post_promo_comment(media_id: str, access_token: str) -> str | None:
+    """Post the promo comment on a published Reel. Returns comment ID, or None on failure."""
+    try:
+        data = _graph_post(f"{media_id}/comments", access_token, message=PROMO_COMMENT_TEXT)
+        return data.get("id")
+    except Exception as exc:
+        LOGGER.warning("instagram.promo_comment_failed media_id=%s error=%s", media_id, exc)
+        return None
+
 
 # ---------------------------------------------------------------------------
 # Metadata builders
@@ -333,7 +348,10 @@ def upload_short_instagram(
         except Exception as exc:
             LOGGER.warning("instagram.permalink_fetch_failed: %s", exc)
 
+    promo_comment_id = _post_promo_comment(reel_id, access_token) if reel_id else None
+
     return {
         "reel_id": reel_id,
         "permalink": permalink,
+        "promo_comment_id": promo_comment_id,
     }

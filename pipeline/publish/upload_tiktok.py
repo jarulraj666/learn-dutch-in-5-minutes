@@ -45,6 +45,11 @@ _CHUNK_SIZE = 64 * 1024 * 1024  # 64 MB — chunk threshold / size
 _POLL_INTERVAL_SEC = 5
 _POLL_TIMEOUT_SEC = 300
 
+PROMO_CTA_TEXT = (
+    "📚 Free structured Dutch course with progress tracking, quizzes & "
+    "transcripts → learndutchin5minutes.nl 🇳🇱"
+)
+
 
 # ---------------------------------------------------------------------------
 # Token management
@@ -140,6 +145,9 @@ def _build_tiktok_caption(artifact: dict, scene_short: dict) -> str:
         parts.append(title)
     if scene_desc:
         parts.append(scene_desc)
+    # TikTok's Content Posting API has no endpoint to post a comment as the
+    # creator, so the promo CTA is folded into the caption instead.
+    parts.append(PROMO_CTA_TEXT)
     parts.append(
         f"#LearnDutch #Dutch #DutchLesson #Dutch{tag_level} "
         f"#LearnDutch{tag_level} #LanguageLearning #DutchConversation"

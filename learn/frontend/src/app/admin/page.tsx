@@ -36,7 +36,12 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">Admin</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Admin</h1>
+        <Link href="/admin/feedback" className="btn-secondary text-sm">
+          Review feedback
+        </Link>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <Stat label="Learners" value={stats.learners} />

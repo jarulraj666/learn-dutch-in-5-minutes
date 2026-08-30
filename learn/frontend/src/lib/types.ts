@@ -189,3 +189,27 @@ export interface AdminLearner {
   quiz_attempts: number;
   last_active: string | null;
 }
+
+export interface PublicStats {
+  active_learners: number;
+}
+
+export interface FeedbackPublic {
+  id: number;
+  name: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+}
+
+export interface AdminFeedback {
+  id: number;
+  user_id: string | null;
+  name: string | null;
+  email: string | null;
+  rating: number;
+  comment: string;
+  status: "pending" | "published" | "rejected";
+  created_at: string;
+  published_at: string | null;
+}

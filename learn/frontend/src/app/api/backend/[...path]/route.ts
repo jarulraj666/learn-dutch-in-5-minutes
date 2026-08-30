@@ -12,7 +12,9 @@ const ALLOWED: RegExp[] = [
   /^flashcards\/due$/,
   /^flashcards\/review$/,
   /^me\/settings$/,
+  /^me\/export$/,
   /^courses\/[\w.-]+\/certificate$/,
+  /^feedback$/,
 ];
 
 function resolve(segments: string[]): string | null {

@@ -176,4 +176,7 @@ def upload_short_facebook(
         "facebook.upload.done scene=%s video_id=%s post_id=%s",
         scene_short.get("scene"), video_id, post_id,
     )
-    return {"video_id": video_id, "post_id": post_id}
+
+    promo_comment_id = _post_promo_comment(post_id, page_token) if post_id else None
+
+    return {"video_id": video_id, "post_id": post_id, "promo_comment_id": promo_comment_id}

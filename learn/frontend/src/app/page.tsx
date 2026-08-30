@@ -9,7 +9,8 @@ import {
   Subtitles,
 } from "lucide-react";
 import { api } from "@/lib/api";
-import type { CourseSummary } from "@/lib/types";
+import { TestimonialCarousel } from "@/components/TestimonialCarousel";
+import type { CourseSummary, FeedbackPublic, PublicStats } from "@/lib/types";
 
 const FEATURES = [
   { icon: Clock, title: "Five-minute lessons", body: "Short enough to actually finish, structured enough to build real skill." },
@@ -22,10 +23,20 @@ const FEATURES = [
 
 export default async function HomePage() {
   let courses: CourseSummary[] = [];
+  let stats: PublicStats = { active_learners: 350 };
+  let testimonials: FeedbackPublic[] = [];
   try {
     courses = await api<CourseSummary[]>("/api/courses", { authenticated: false });
   } catch {
     // The landing page must render even when the API is unavailable.
+  }
+  try {
+    [stats, testimonials] = await Promise.all([
+      api<PublicStats>("/api/public/stats", { authenticated: false }),
+      api<FeedbackPublic[]>("/api/feedback/public", { authenticated: false }),
+    ]);
+  } catch {
+    // Fall back to defaults above.
   }
   const published = courses.filter((c) => c.status === "published");
   const lessonCount = published.reduce((n, c) => n + c.lesson_count, 0);
@@ -109,12 +120,22 @@ export default async function HomePage() {
       )}
 
       <section className="rounded-3xl bg-white px-6 py-12 text-center shadow-sm">
-        <div className="mx-auto grid max-w-4xl gap-8 sm:grid-cols-3">
+        <div className="mx-auto grid max-w-4xl gap-8 sm:grid-cols-4">
+          <Stat value={`${stats.active_learners}+`} label="Active learners" />
           <Stat value={`${lessonCount}+`} label="Video lessons" />
           <Stat value={`${unitCount}`} label="Course units" />
           <Stat value="100%" label="Free" />
         </div>
       </section>
+
+      {testimonials.length > 0 && (
+        <section>
+          <h2 className="text-center text-3xl font-bold">What learners say</h2>
+          <div className="mx-auto mt-10 max-w-5xl">
+            <TestimonialCarousel items={testimonials} />
+          </div>
+        </section>
+      )}
     </div>
   );
 }

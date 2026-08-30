@@ -23,18 +23,6 @@ export function SettingsForm({ initial }: { initial: Settings }) {
     <section className="card p-6">
       <h2 className="font-semibold">Settings</h2>
 
-      <label className="mt-4 block text-sm">
-        <span className="text-slate-600">Interface language</span>
-        <select
-          value={settings.locale}
-          onChange={(e) => setSettings((s) => ({ ...s, locale: e.target.value }))}
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-        >
-          <option value="en">English</option>
-          <option value="nl">Nederlands</option>
-        </select>
-      </label>
-
       <label className="mt-4 flex items-center gap-2 text-sm text-slate-600">
         <input
           type="checkbox"

@@ -18,6 +18,32 @@ SCOPES = [
     "https://www.googleapis.com/auth/youtube.force-ssl",  # required for captions API
 ]
 
+PROMO_COMMENT_TEXT = (
+    "📚 Want to learn Dutch faster? Get the FULL course for FREE at "
+    "https://learndutchin5minutes.nl — structured lessons, progress tracking, "
+    "quizzes, and transcripts for every episode. Start learning today! 🇳🇱"
+)
+
+
+def post_promo_comment(youtube, video_id: str) -> str | None:
+    """Post the promo comment on a video. Returns the comment thread ID, or None on failure."""
+    try:
+        response = youtube.commentThreads().insert(
+            part="snippet",
+            body={
+                "snippet": {
+                    "videoId": video_id,
+                    "topLevelComment": {
+                        "snippet": {"textOriginal": PROMO_COMMENT_TEXT}
+                    },
+                }
+            },
+        ).execute()
+        return response.get("id")
+    except Exception:
+        LOGGER.exception("youtube.promo_comment_failed video_id=%s", video_id)
+        return None
+
 
 def _sanitize_description(text: str) -> str:
     """Sanitize description for YouTube: remove angle brackets, null bytes, truncate to 5000 chars."""
@@ -234,6 +260,10 @@ def upload_video(artifact: dict, video_file: Path) -> dict:
                     "error": str(exc),
                 })
 
+    promo_comment_id = None
+    if video_id:
+        promo_comment_id = post_promo_comment(youtube, video_id)
+
     return {
         "video_id": video_id,
         "playlist_name": playlist_name,
@@ -241,6 +271,7 @@ def upload_video(artifact: dict, video_file: Path) -> dict:
         "captions_uploaded": captions_uploaded,
         "caption_upload_errors": caption_upload_errors,
         "thumbnail_uploaded": thumbnail_uploaded,
+        "promo_comment_id": promo_comment_id,
     }
 
 

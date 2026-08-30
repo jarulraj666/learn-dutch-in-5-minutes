@@ -223,3 +223,32 @@ class AdminLearner(BaseModel):
     lessons_completed: int
     quiz_attempts: int
     last_active: datetime | None = None
+
+
+class FeedbackSubmission(BaseModel):
+    rating: int = Field(ge=1, le=5)
+    comment: str = Field(min_length=1, max_length=2000)
+
+
+class FeedbackPublic(BaseModel):
+    id: int
+    name: str
+    rating: int
+    comment: str
+    created_at: datetime
+
+
+class PublicStats(BaseModel):
+    active_learners: int
+
+
+class AdminFeedback(BaseModel):
+    id: int
+    user_id: str | None
+    name: str | None
+    email: str | None
+    rating: int
+    comment: str
+    status: str
+    created_at: datetime
+    published_at: datetime | None

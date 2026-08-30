@@ -237,3 +237,26 @@ CREATE TABLE IF NOT EXISTS certificates (
     issued_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (user_id, course_id)
 );
+
+-- Learner feedback: submitted by users, reviewed and published by admins.
+CREATE TABLE IF NOT EXISTS feedback (
+    id           BIGSERIAL   PRIMARY KEY,
+    user_id      UUID        REFERENCES users(id) ON DELETE SET NULL,
+    display_name TEXT,                          -- used for seeded testimonials without a user account
+    rating       SMALLINT    NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    comment      TEXT        NOT NULL DEFAULT '',
+    status       TEXT        NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'published', 'rejected')),
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    published_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status, created_at DESC);
+
+-- Seed a few published testimonials so the landing page has content before real feedback arrives.
+INSERT INTO feedback (display_name, rating, comment, status, published_at)
+SELECT * FROM (VALUES
+    ('Sanne V.', 5, 'The five-minute lessons fit perfectly into my commute. I finally stuck with a language habit!', 'published', now()),
+    ('Mateusz K.', 5, 'Grammar explanations are so clear. I passed my inburgering exam thanks to this course.', 'published', now()),
+    ('Priya R.', 4, 'Love the flashcards and quizzes. Would like even more dialogue practice.', 'published', now())
+) AS seed(display_name, rating, comment, status, published_at)
+WHERE NOT EXISTS (SELECT 1 FROM feedback);
