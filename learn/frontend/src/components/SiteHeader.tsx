@@ -24,6 +24,11 @@ export function SiteHeader({ user }: Props) {
     ? [...NAV, { href: "/admin", label: "Admin", icon: ShieldCheck }]
     : NAV;
 
+  async function signOut() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.assign("/");
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center gap-6 px-4 py-3">
@@ -77,7 +82,7 @@ export function SiteHeader({ user }: Props) {
                 </span>
               </Link>
               <button
-                onClick={() => { window.location.href = "/api/auth/logout"; }}
+                onClick={signOut}
                 className="hidden text-sm text-slate-500 hover:text-slate-800 sm:block"
               >
                 Sign out
