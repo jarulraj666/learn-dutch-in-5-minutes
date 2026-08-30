@@ -38,9 +38,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <nav className="flex gap-6">
                 <Link href="/privacy" className="hover:text-brand-700">Privacy</Link>
                 <Link href="/terms" className="hover:text-brand-700">Terms</Link>
-                <a href="mailto:info@learndutchin5minutes.nl" className="hover:text-brand-700">
-                  Contact
-                </a>
+                <Link href="/contact" className="hover:text-brand-700">Contact</Link>
               </nav>
             </div>
           </footer>

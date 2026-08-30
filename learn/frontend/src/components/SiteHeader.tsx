@@ -5,13 +5,14 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import clsx from "clsx";
-import { BookOpen, LayoutDashboard, Layers, MessageSquareText, Menu, ShieldCheck, User, X } from "lucide-react";
+import { BookOpen, LayoutDashboard, Layers, Mail, MessageSquareText, Menu, ShieldCheck, User, X } from "lucide-react";
 
 const NAV = [
   { href: "/courses", label: "Courses", icon: BookOpen },
   { href: "/dashboard", label: "My learning", icon: LayoutDashboard },
   { href: "/flashcards", label: "Flashcards", icon: Layers },
   { href: "/feedback", label: "Feedback", icon: MessageSquareText },
+  { href: "/contact", label: "Contact", icon: Mail },
 ];
 
 type Props = {
