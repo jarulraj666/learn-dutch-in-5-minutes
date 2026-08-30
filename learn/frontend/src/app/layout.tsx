@@ -25,6 +25,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     name: session.user.name ?? null,
                     email: session.user.email ?? null,
                     image: session.user.image ?? null,
+                    role: session.user.role ?? "learner",
                   }
                 : null
             }

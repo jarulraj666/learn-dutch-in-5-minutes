@@ -321,6 +321,27 @@ media, so the two must never share a process.
 | Database | SQLite `db/content.db` | PostgreSQL |
 | Auth | none | Google sign-in (Auth.js) |
 
+### Start the learner app
+
+After completing the first-time setup below, start the learner backend and frontend in separate terminals:
+
+```bash
+./learn/scripts/start_backend.sh
+# Learner API: http://localhost:8001
+```
+
+```bash
+./learn/scripts/start_frontend.sh
+# Learner app: http://localhost:3001
+```
+
+Open [http://localhost:3001](http://localhost:3001) in your browser. To stop the local services:
+
+```bash
+lsof -ti :8001 | xargs kill -9
+lsof -ti :3001 | xargs kill -9
+```
+
 ### Course structure
 
 The learner course is **not** organised by generation category. Lessons are arranged into
@@ -380,7 +401,7 @@ individually in `UNITS`.
 caffeinate -s python -m pipeline.run_pipeline --level A1A2 --category course_intro --count 2
 ```
 
-### One-time setup
+### First-time setup
 
 **1. Start PostgreSQL** (any instance works — Neon, Supabase, or local Docker):
 ```bash

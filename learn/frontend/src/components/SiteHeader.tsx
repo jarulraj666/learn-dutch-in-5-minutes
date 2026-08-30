@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import clsx from "clsx";
-import { BookOpen, LayoutDashboard, Layers, Menu, User, X } from "lucide-react";
+import { BookOpen, LayoutDashboard, Layers, Menu, ShieldCheck, User, X } from "lucide-react";
 
 const NAV = [
   { href: "/courses", label: "Courses", icon: BookOpen },
@@ -14,12 +14,15 @@ const NAV = [
 ];
 
 type Props = {
-  user: { name: string | null; email: string | null; image: string | null } | null;
+  user: { name: string | null; email: string | null; image: string | null; role: string } | null;
 };
 
 export function SiteHeader({ user }: Props) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const navItems = user?.role === "admin"
+    ? [...NAV, { href: "/admin", label: "Admin", icon: ShieldCheck }]
+    : NAV;
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -37,7 +40,7 @@ export function SiteHeader({ user }: Props) {
         </Link>
 
         <nav className="ml-auto hidden items-center gap-1 md:flex">
-          {NAV.map(({ href, label, icon: Icon }) => (
+          {navItems.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
               href={href}
@@ -98,7 +101,7 @@ export function SiteHeader({ user }: Props) {
 
       {open && (
         <nav className="border-t border-slate-200 bg-white px-4 py-2 md:hidden">
-          {NAV.map(({ href, label, icon: Icon }) => (
+          {navItems.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
               href={href}
