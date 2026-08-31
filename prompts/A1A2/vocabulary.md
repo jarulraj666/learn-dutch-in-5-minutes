@@ -110,13 +110,7 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
     {"Speaker1": "English line repeated as-is"}
   ],
   "vocabulary": [{"nl": "dutch word", "en": "english translation"}],
-  "quiz": [ // Generate 3–5 items testing the vocabulary words. Each item: match the Dutch word to its English meaning or complete a sentence with the correct Dutch word, 4 options, one correct answer.
-    {
-      "question": "What does 'brood' mean in English?",
-      "options": ["milk", "bread", "water", "cheese"],
-      "answer": "bread"
-    }
-  ],
+  "quiz": [], // Always empty here — a dedicated post-processing stage generates the learner-app quiz.
   "grammar_notes": [{"title": "rule", "explanation": "...", "examples": ["ex1", "ex2"]}]
 }
 ```

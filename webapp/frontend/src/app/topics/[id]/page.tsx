@@ -102,21 +102,22 @@ function SceneImageCard({ scene, topicId, onUploaded, cacheBust }: { scene: Scen
 
 const STAGES = [
   { n: 1,  d: 1,  label: "Script (AI regenerate)" },
-  { n: 2,  d: 2,  label: "Expression Tags" },
-  { n: 3,  d: 3,  label: "16:9 Image" },
-  { n: 10, d: 4,  label: "9:16 Image" },
-  { n: 4,  d: 5,  label: "Audio" },
-  { n: 5,  d: 6,  label: "Subtitles" },
-  { n: 6,  d: 7,  label: "Audio QA" },
-  { n: 7,  d: 8,  label: "Subtitle QA" },
-  { n: 8,  d: 9,  label: "Render Video" },
-  { n: 11, d: 10, label: "Render Shorts" },
-  { n: 9,  d: 11, label: "Upload YouTube" },
-  { n: 12, d: 12, label: "Upload Shorts (YT)" },
-  { n: 13, d: 13, label: "Upload Instagram" },
-  { n: 14, d: 14, label: "Upload TikTok" },
-  { n: 15, d: 15, label: "Upload Facebook" },
-  { n: 16, d: 16, label: "Upload Captions" },
+  { n: 18, d: 2,  label: "Generate Quiz" },
+  { n: 2,  d: 3,  label: "Expression Tags" },
+  { n: 3,  d: 4,  label: "16:9 Image" },
+  { n: 10, d: 5,  label: "9:16 Image" },
+  { n: 4,  d: 6,  label: "Audio" },
+  { n: 5,  d: 7,  label: "Subtitles" },
+  { n: 6,  d: 8,  label: "Audio QA" },
+  { n: 7,  d: 9,  label: "Subtitle QA" },
+  { n: 8,  d: 10, label: "Render Video" },
+  { n: 11, d: 11, label: "Render Shorts" },
+  { n: 9,  d: 12, label: "Upload YouTube" },
+  { n: 12, d: 13, label: "Upload Shorts (YT)" },
+  { n: 13, d: 14, label: "Upload Instagram" },
+  { n: 14, d: 15, label: "Upload TikTok" },
+  { n: 15, d: 16, label: "Upload Facebook" },
+  { n: 16, d: 17, label: "Upload Captions" },
 ];
 
 type TabKey = "overview" | "script" | "media" | "pipeline" | "youtube" | "reels" | "instagram" | "tiktok" | "facebook";
@@ -391,6 +392,7 @@ function ScriptTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
+  const [subTab, setSubTab] = useState<"dialogue" | "vocabulary" | "grammar" | "quiz">("dialogue");
 
   useEffect(() => {
     if (!editing) {
@@ -476,7 +478,30 @@ function ScriptTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }
         {saveMsg && <p className="text-xs text-gray-300">{saveMsg}</p>}
       </section>
 
+      {/* Sub-navigation */}
+      <div className="flex gap-2 border-b border-gray-800">
+        {([
+          ["dialogue", "Dialogue"],
+          ["vocabulary", `Vocabulary${script.vocabulary?.length ? ` (${script.vocabulary.length})` : ""}`],
+          ["grammar", `Grammar${script.grammar_notes?.length ? ` (${script.grammar_notes.length})` : ""}`],
+          ["quiz", `Quiz${script.quiz?.length ? ` (${script.quiz.length})` : ""}`],
+        ] as const).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setSubTab(key)}
+            className={`px-3 py-2 text-sm border-b-2 -mb-px ${
+              subTab === key
+                ? "border-sky-500 text-white"
+                : "border-transparent text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* Dialogue */}
+      {subTab === "dialogue" && (
       <section>
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Dialogue</h3>
         <div className="space-y-2">
@@ -497,8 +522,10 @@ function ScriptTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }
           })}
         </div>
       </section>
+      )}
 
       {/* Expressive dialogue */}
+      {subTab === "dialogue" && (
       <section>
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Expressive Dialogue (Stage 2)</h3>
         {ttsDialogue.length > 0 && !hasExpressiveTags && (
@@ -526,9 +553,28 @@ function ScriptTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }
           <p className="text-gray-500 text-sm">No expressive tags yet. Run stage 2 (Expression Tags) to generate tagged TTS dialogue.</p>
         )}
       </section>
+      )}
+
+      {/* Vocabulary */}
+      {subTab === "vocabulary" && (
+        script.vocabulary?.length > 0 ? (
+        <section>
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Vocabulary ({script.vocabulary.length} words)</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {script.vocabulary.map((v: any, i: number) => (
+              <div key={i} className="bg-gray-800/50 border border-gray-700 rounded-lg px-3 py-2 text-sm">
+                <div className="text-white font-medium">{v.nl}</div>
+                <div className="text-gray-400">{v.en}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+        ) : <p className="text-gray-500 text-sm">No vocabulary in this script.</p>
+      )}
 
       {/* Grammar notes */}
-      {script.grammar_notes?.length > 0 && (
+      {subTab === "grammar" && (
+        script.grammar_notes?.length > 0 ? (
         <section>
           <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Grammar Notes</h3>
           {script.grammar_notes.map((g: any, i: number) => (
@@ -538,20 +584,31 @@ function ScriptTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }
             </div>
           ))}
         </section>
+        ) : <p className="text-gray-500 text-sm">No grammar notes in this script.</p>
       )}
 
       {/* Quiz */}
-      {script.quiz?.length > 0 && (
+      {subTab === "quiz" && (
+        script.quiz?.length > 0 ? (
         <section>
           <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Quiz ({script.quiz.length} questions)</h3>
           {script.quiz.map((q: any, i: number) => (
             <div key={i} className="bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 mb-2 text-sm">
               <div className="text-white font-medium">{i + 1}. {q.question}</div>
-              <div className="text-green-400 mt-1">Answer: {q.answer}</div>
-              {q.explanation && <div className="text-gray-500 mt-0.5">{q.explanation}</div>}
+              {Array.isArray(q.options) && (
+                <ul className="mt-1.5 space-y-0.5">
+                  {q.options.map((opt: string, j: number) => (
+                    <li key={j} className={opt === q.answer ? "text-green-400" : "text-gray-400"}>
+                      {opt === q.answer ? "✓ " : "· "}{opt}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {q.explanation && <div className="text-gray-500 mt-1.5">{q.explanation}</div>}
             </div>
           ))}
         </section>
+        ) : <p className="text-gray-500 text-sm">No quiz in this script.</p>
       )}
     </div>
   );
@@ -690,6 +747,7 @@ function PipelineTab({
     if (n === 14) return m.shorts.some((s: any) => s.tiktok?.publish_id) ? "done" : "missing";
     if (n === 15) return m.shorts.some((s: any) => s.facebook?.post_id) ? "done" : "missing";
     if (n === 16) return (topic as any).artifact_youtube_captions ? "done" : "missing";
+    if (n === 18) return ((topic.script as any)?.quiz?.length ?? 0) > 0 ? "done" : "missing";
     return "unknown";
   };
 

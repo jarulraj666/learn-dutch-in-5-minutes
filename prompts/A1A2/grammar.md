@@ -110,13 +110,7 @@ Output **ONLY** valid JSON — no text before or after, no markdown, no code blo
     {"Speaker1": "English translation of Speaker1 line"}
   ],
   "vocabulary": [{"nl": "dutch word", "en": "english translation"}],
-  "quiz": [ // Generate 3–5 items testing the grammar rule. Each item: a fill-in-the-blank or choose-the-correct-form question, 4 options, one correct answer.
-    {
-      "question": "Which word completes the sentence: '___ heet Anna.'?",
-      "options": ["Jij", "Ik", "Hij", "Wij"],
-      "answer": "Ik"
-    }
-  ],
+  "quiz": [], // Always empty here — a dedicated post-processing stage generates the learner-app quiz.
   "grammar_notes": [{"title": "rule", "explanation": "...", "examples": ["ex1", "ex2"]}]
 }
 ```

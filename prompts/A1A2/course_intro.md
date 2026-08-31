@@ -120,7 +120,7 @@ Return strict JSON only, with these root keys: `topic_id`, `topic_title`, `topic
   `[{"title": "The UI sound", "explanation": "...", "examples": ["huis", "buiten"]}]`.
   For pronunciation episodes use one entry per sound. For orientation episodes use them to
   summarise how to use the course.
-- `quiz` — 5 questions checking what was demonstrated. For orientation episodes, ask about how the course works.
+- `quiz` — always an empty array `[]`. A dedicated post-processing stage generates the learner-app quiz afterward.
 
 Getting these shapes wrong fails the run. Strings where objects are expected, or objects where
 strings are expected, are both rejected.
