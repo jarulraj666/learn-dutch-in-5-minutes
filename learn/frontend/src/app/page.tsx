@@ -74,6 +74,12 @@ export default async function HomePage() {
           >
             My learning
           </Link>
+          <Link
+            href="/exam-justification"
+            className="rounded-full border border-white/60 px-8 py-3 font-semibold transition hover:bg-white/10"
+          >
+            Writing coach
+          </Link>
         </div>
       </section>
 

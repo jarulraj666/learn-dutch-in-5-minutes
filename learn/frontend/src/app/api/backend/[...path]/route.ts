@@ -15,6 +15,10 @@ const ALLOWED: RegExp[] = [
   /^me\/export$/,
   /^courses\/[\w.-]+\/certificate$/,
   /^feedback$/,
+  /^exam\/feedback$/,
+  /^exam\/justify$/,
+  /^writing\/feedback$/,
+  /^writing\/justify$/,
 ];
 
 function resolve(segments: string[]): string | null {
@@ -29,13 +33,14 @@ async function forward(req: NextRequest, segments: string[]) {
     return NextResponse.json({ detail: "Not found" }, { status: 404 });
   }
 
+  const requiresAuth = !/^(exam\/|writing\/)/.test(path);
   const token = sessionToken();
-  if (!token) {
+  if (requiresAuth && !token) {
     return NextResponse.json({ detail: "Sign in required" }, { status: 401 });
   }
 
   const headers = new Headers({
-    Authorization: `Bearer ${token}`,
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     "Content-Type": "application/json",
   });
 

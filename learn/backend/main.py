@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import db
 import settings
-from routers import admin, auth, catalog, certificates, feedback, flashcards, health, me, progress, quiz
+from routers import admin, auth, catalog, certificates, exam, feedback, flashcards, health, me, progress, quiz
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
 LOGGER = logging.getLogger(__name__)
@@ -40,5 +40,5 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-for module in (health, auth, catalog, progress, quiz, flashcards, certificates, me, feedback, admin):
+for module in (health, auth, catalog, progress, quiz, flashcards, certificates, me, feedback, exam, admin):
     app.include_router(module.router, prefix="/api")
