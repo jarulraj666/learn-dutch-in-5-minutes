@@ -230,6 +230,21 @@ class FeedbackSubmission(BaseModel):
     comment: str = Field(min_length=1, max_length=2000)
 
 
+class ExamFeedbackRequest(BaseModel):
+    prompt: str = Field(default="", min_length=1, max_length=4000)
+    answer: str = Field(default="", min_length=1, max_length=12000)
+
+
+class ExamFeedbackResult(BaseModel):
+    prompt: str
+    answer: str
+    summary: str
+    justification: str
+    improvement_suggestions: list[str]
+    strengths: list[str]
+    weaknesses: list[str]
+
+
 class FeedbackPublic(BaseModel):
     id: int
     name: str
