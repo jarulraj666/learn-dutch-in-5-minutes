@@ -124,6 +124,64 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
 
 CREATE INDEX IF NOT EXISTS idx_quiz_lesson ON quiz_questions(lesson_id, order_index);
 
+-- A2 mock exams (Staatsexamen NT2 Programma I style). Exported from the
+-- pipeline the same way lessons/quizzes are — see pipeline/core/store_mock_exam.py.
+CREATE TABLE IF NOT EXISTS mock_exams (
+    id                 TEXT PRIMARY KEY,          -- 'a2-<section>-<n>'
+    section            TEXT        NOT NULL CHECK (section IN ('reading', 'listening', 'writing', 'speaking', 'knm')),
+    level              TEXT        NOT NULL DEFAULT 'A2',
+    exam_number        INTEGER     NOT NULL,
+    title              TEXT        NOT NULL,
+    instructions       TEXT        NOT NULL DEFAULT '',
+    time_limit_minutes INTEGER     NOT NULL,
+    total_questions    INTEGER     NOT NULL,
+    parts_count        INTEGER     NOT NULL DEFAULT 1,
+    pass_threshold     INTEGER,                    -- score needed to pass, e.g. 18; NULL where not published (speaking)
+    max_score          INTEGER,                    -- e.g. 25, 37, 40; NULL where not published (speaking)
+    status             TEXT        NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (section, exam_number)
+);
+
+CREATE TABLE IF NOT EXISTS mock_exam_passages (
+    id                  TEXT PRIMARY KEY,
+    exam_id             TEXT    NOT NULL REFERENCES mock_exams(id) ON DELETE CASCADE,
+    order_index         INTEGER NOT NULL DEFAULT 0,
+    part_number         INTEGER,                   -- 1-4 for speaking/writing parts
+    passage_type        TEXT    NOT NULL CHECK (passage_type IN
+                         ('text', 'audio', 'video', 'one_picture', 'two_picture', 'three_picture')),
+    title               TEXT    NOT NULL DEFAULT '',
+    content_nl          TEXT    NOT NULL DEFAULT '',
+    content_en          TEXT,
+    media_urls          JSONB   NOT NULL DEFAULT '[]'::jsonb,   -- [{type, url}, ...]
+    render_manifest_path TEXT,                     -- provenance for regeneration
+    image_prompt        JSONB                       -- prompt(s) used to generate media, for audit/regeneration
+);
+
+CREATE INDEX IF NOT EXISTS idx_mock_passages_exam ON mock_exam_passages(exam_id, order_index);
+
+CREATE TABLE IF NOT EXISTS mock_exam_questions (
+    id              TEXT PRIMARY KEY,              -- '<exam_id>-q<n>'
+    exam_id         TEXT    NOT NULL REFERENCES mock_exams(id) ON DELETE CASCADE,
+    passage_id      TEXT    REFERENCES mock_exam_passages(id) ON DELETE CASCADE,
+    part_number     INTEGER,
+    order_index     INTEGER NOT NULL DEFAULT 0,
+    question_text   TEXT    NOT NULL,
+    question_type   TEXT    NOT NULL CHECK (question_type IN ('multiple_choice', 'open_written', 'open_spoken')),
+    options         JSONB,                          -- required for multiple_choice
+    answer          TEXT,                           -- never sent to non-admin client
+    explanation     TEXT    NOT NULL DEFAULT '',
+    category        TEXT,                           -- KNM topic tag: customs | education | healthcare | housing | history_geography
+    max_score       INTEGER NOT NULL DEFAULT 1,
+    grading_rubric  JSONB,                          -- writing/speaking: [{criterion, max_points}, ...]
+    model_answer    TEXT,                           -- reference answer for QA / future grading
+    year_asked      INTEGER,                        -- real exam year, only if confidently known; else NULL
+    option_image_prompts JSONB,                     -- rare "picture-choice" MC questions: one image prompt per option, admin-only
+    option_media_urls   JSONB                       -- matching uploaded image path per option, null until generated/uploaded
+);
+
+CREATE INDEX IF NOT EXISTS idx_mock_questions_exam ON mock_exam_questions(exam_id, order_index);
+
 -- ---------------------------------------------------------------------------
 -- Auth.js tables (schema required by @auth/pg-adapter)
 -- ---------------------------------------------------------------------------
@@ -213,6 +271,22 @@ CREATE TABLE IF NOT EXISTS quiz_attempts (
 );
 
 CREATE INDEX IF NOT EXISTS idx_attempts_user_lesson ON quiz_attempts(user_id, lesson_id);
+
+CREATE TABLE IF NOT EXISTS mock_exam_attempts (
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    exam_id     TEXT        NOT NULL REFERENCES mock_exams(id) ON DELETE CASCADE,
+    attempt_no  INTEGER     NOT NULL,
+    score       SMALLINT    NOT NULL,
+    total       SMALLINT    NOT NULL,
+    percent     SMALLINT    NOT NULL,
+    label       TEXT        NOT NULL,
+    answers     JSONB       NOT NULL DEFAULT '{}'::jsonb,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (user_id, exam_id, attempt_no)
+);
+
+CREATE INDEX IF NOT EXISTS idx_mock_attempts_user_exam ON mock_exam_attempts(user_id, exam_id);
 
 -- SM-2 spaced repetition over lesson_vocabulary.
 CREATE TABLE IF NOT EXISTS flashcard_reviews (

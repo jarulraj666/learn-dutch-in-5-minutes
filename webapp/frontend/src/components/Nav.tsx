@@ -2,13 +2,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { LayoutDashboard, List, Play, Upload, Settings } from "lucide-react";
+import { LayoutDashboard, List, Play, Upload, Settings, GraduationCap } from "lucide-react";
 
 const LINKS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/topics", label: "Topics", icon: List },
   { href: "/run", label: "Run Pipeline", icon: Play },
   { href: "/publish", label: "Publish Queue", icon: Upload },
+  { href: "/mock-exams", label: "Mock Exams", icon: GraduationCap },
   { href: "/config", label: "Config", icon: Settings },
 ];
 

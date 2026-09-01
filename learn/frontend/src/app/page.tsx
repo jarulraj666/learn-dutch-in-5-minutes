@@ -9,8 +9,10 @@ import {
   Subtitles,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { learnerSession } from "@/lib/learner-session";
 import { TestimonialCarousel } from "@/components/TestimonialCarousel";
-import type { CourseSummary, FeedbackPublic, PublicStats } from "@/lib/types";
+import { MockExamsSection } from "@/components/MockExamsSection";
+import type { CourseSummary, FeedbackPublic, MockExamSummary, PublicStats } from "@/lib/types";
 
 const FEATURES = [
   { icon: Clock, title: "Five-minute lessons", body: "Short enough to actually finish, structured enough to build real skill." },
@@ -21,10 +23,53 @@ const FEATURES = [
   { icon: GraduationCap, title: "Certificate of completion", body: "Finish a level and pass every quiz to earn a shareable certificate." },
 ];
 
+// CEFR proficiency groups (Council of Europe naming), mapped to backend course ids.
+// A1-A2 is inherently one combined course/card; B1/B2 and C1/C2 each get their own card.
+const LEVEL_GROUPS = [
+  {
+    key: "basic",
+    label: "Basic User",
+    subtitle: "A1–A2",
+    description: "Start from zero and build real sentences from day one.",
+    courseIds: ["A1A2"],
+  },
+  {
+    key: "independent-b1",
+    label: "Independent User",
+    subtitle: "B1",
+    description: "Build fluency with richer grammar and wider vocabulary.",
+    courseIds: ["B1"],
+  },
+  {
+    key: "independent-b2",
+    label: "Independent User",
+    subtitle: "B2",
+    description: "Handle nuanced, natural Dutch with confidence.",
+    courseIds: ["B2"],
+  },
+  {
+    key: "proficient-c1",
+    label: "Proficient User",
+    subtitle: "C1",
+    description: "Express yourself fluently and precisely on complex topics.",
+    courseIds: [] as string[],
+  },
+  {
+    key: "proficient-c2",
+    label: "Proficient User",
+    subtitle: "C2",
+    description: "Master nuanced, near-native Dutch for work, study and everyday life.",
+    courseIds: [] as string[],
+  },
+];
+
 export default async function HomePage() {
   let courses: CourseSummary[] = [];
   let stats: PublicStats = { active_learners: 350 };
   let testimonials: FeedbackPublic[] = [];
+  const session = await learnerSession();
+  const isAdmin = session?.user?.is_admin ?? false;
+  let mockExams: MockExamSummary[] = [];
   try {
     courses = await api<CourseSummary[]>("/api/courses", { authenticated: false });
   } catch {
@@ -37,6 +82,13 @@ export default async function HomePage() {
     ]);
   } catch {
     // Fall back to defaults above.
+  }
+  if (isAdmin) {
+    try {
+      mockExams = await api<MockExamSummary[]>("/api/mock-exams");
+    } catch {
+      // Admin-only preview section; hide it rather than break the page.
+    }
   }
   const published = courses.filter((c) => c.status === "published");
   const lessonCount = published.reduce((n, c) => n + c.lesson_count, 0);
@@ -78,6 +130,43 @@ export default async function HomePage() {
       </section>
 
       <section>
+        <h2 className="text-center text-3xl font-bold">Find Your Level, Start Today</h2>
+        <div className="mx-auto mt-10 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-5">
+          {LEVEL_GROUPS.map((group) => {
+            const groupCourses = courses.filter((c) => group.courseIds.includes(c.id));
+            const publishedCourse = groupCourses.find((c) => c.status === "published");
+            const lessonTotal = groupCourses.reduce(
+              (n, c) => n + c.lesson_count + c.optional_lesson_count,
+              0,
+            );
+            return (
+              <article key={group.key} className="card p-6">
+                <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
+                  {group.subtitle}
+                </span>
+                <h3 className="mt-3 text-xl font-semibold">{group.label}</h3>
+                <p className="mt-2 text-sm text-slate-600">
+                  {groupCourses[0]?.description || group.description}
+                </p>
+                {publishedCourse ? (
+                  <Link
+                    href={`/courses/${publishedCourse.id}`}
+                    className="btn-primary mt-4 px-5 py-2 text-sm"
+                  >
+                    {lessonTotal} lessons — open course
+                  </Link>
+                ) : (
+                  <p className="mt-4 text-sm font-medium text-slate-500">Coming soon</p>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      {isAdmin && <MockExamsSection mockExams={mockExams} />}
+
+      <section>
         <h2 className="text-center text-3xl font-bold">Everything in one place</h2>
         <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map(({ icon: Icon, title, body }) => (
@@ -91,33 +180,6 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
-
-      {published.length > 0 && (
-        <section>
-          <h2 className="text-center text-3xl font-bold">Choose your level</h2>
-          <div className="mx-auto mt-10 grid max-w-4xl gap-6 md:grid-cols-2">
-            {courses.map((course) => (
-              <article key={course.id} className="card p-6">
-                <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
-                  {course.subtitle}
-                </span>
-                <h3 className="mt-3 text-xl font-semibold">{course.title}</h3>
-                <p className="mt-2 text-sm text-slate-600">{course.description}</p>
-                {course.status === "published" ? (
-                  <Link
-                    href={`/courses/${course.id}`}
-                    className="btn-primary mt-4 px-5 py-2 text-sm"
-                  >
-                    {course.lesson_count + course.optional_lesson_count} lessons — open course
-                  </Link>
-                ) : (
-                  <p className="mt-4 text-sm font-medium text-slate-500">Coming soon</p>
-                )}
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
 
       <section className="rounded-3xl bg-white px-6 py-12 text-center shadow-sm">
         <div className="mx-auto grid max-w-4xl gap-8 sm:grid-cols-4">

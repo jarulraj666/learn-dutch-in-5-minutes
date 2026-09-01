@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MockExam",
+  "description": "A2 mock exam matching the real Staatsexamen NT2 Programma I structure.",
+  "type": "object",
+  "required": ["section", "exam_number", "title", "time_limit_minutes", "total_questions", "passages", "questions"],
+  "properties": {
+    "section": {"type": "string", "enum": ["reading", "listening", "writing", "speaking", "knm"]},
+    "level": {"type": "string", "default": "A2"},
+    "exam_number": {"type": "integer", "minimum": 1, "maximum": 5},
+    "title": {"type": "string"},
+    "instructions": {"type": "string"},
+    "time_limit_minutes": {"type": "integer"},
+    "total_questions": {"type": "integer"},
+    "parts_count": {"type": "integer", "default": 1},
+    "pass_threshold": {"type": ["integer", "null"]},
+    "max_score": {"type": ["integer", "null"]},
+    "passages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "order_index", "passage_type"],
+        "properties": {
+          "id": {"type": "string"},
+          "order_index": {"type": "integer"},
+          "part_number": {"type": ["integer", "null"]},
+          "passage_type": {
+            "type": "string",
+            "enum": ["text", "audio", "video", "one_picture", "two_picture", "three_picture"]
+          },
+          "title": {"type": "string"},
+          "content_nl": {"type": "string", "description": "Full text/transcript, source of truth for TTS and reading."},
+          "content_en": {"type": "string"},
+          "scene_description": {"type": "string", "description": "Visual scene description, used to build the image/video prompt."},
+          "image_prompt": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["order_index", "question_text", "question_type"],
+        "properties": {
+          "passage_id": {"type": ["string", "null"]},
+          "part_number": {"type": ["integer", "null"]},
+          "order_index": {"type": "integer"},
+          "question_text": {"type": "string"},
+          "question_type": {
+            "type": "string",
+            "enum": ["multiple_choice", "open_written", "open_spoken"]
+          },
+          "options": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 2,
+            "description": "Required for multiple_choice."
+          },
+          "answer": {
+            "type": "string",
+            "description": "Required for multiple_choice; must exactly match one entry in options."
+          },
+          "option_image_prompts": {
+            "type": ["array", "null"],
+            "items": {"type": "string"},
+            "description": "Rare 'picture-choice' MC questions only: one image prompt per option, same order as options, for an admin to generate/upload manually."
+          },
+          "explanation": {"type": "string"},
+          "category": {
+            "type": ["string", "null"],
+            "enum": ["customs", "education", "healthcare", "housing", "history_geography", null],
+            "description": "KNM topic tag only."
+          },
+          "max_score": {"type": "integer", "default": 1},
+          "grading_rubric": {
+            "type": "array",
+            "description": "Writing/speaking only: point-allocation criteria.",
+            "items": {
+              "type": "object",
+              "required": ["criterion", "max_points"],
+              "properties": {
+                "criterion": {"type": "string"},
+                "max_points": {"type": "integer"}
+              }
+            }
+          },
+          "model_answer": {"type": "string", "description": "Writing/speaking only: reference answer for QA."},
+          "year_asked": {
+            "type": ["integer", "null"],
+            "description": "Only set if confidently known to match a real historical exam year; otherwise null."
+          }
+        }
+      }
+    }
+  }
+}

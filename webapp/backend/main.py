@@ -28,11 +28,26 @@ if _env_file.exists():
                 import os
                 os.environ.setdefault(k.strip(), v.strip())
 
+# Reuse the learner app's local database configuration for mock-exam exports.
+# Platform-provided values always take precedence.
+_learner_env_file = ROOT / "learn" / ".env"
+if _learner_env_file.exists():
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(_learner_env_file, override=False)
+    except ImportError:
+        for line in _learner_env_file.read_text().splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, _, v = line.partition("=")
+                import os
+                os.environ.setdefault(k.strip(), v.strip())
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from routers import config, health, media, pipeline, publish, topics
+from routers import config, health, media, mock_exams, pipeline, publish, topics
 
 logging.basicConfig(
     level=logging.INFO,
@@ -263,6 +278,7 @@ app.include_router(pipeline.router, prefix="/api")
 app.include_router(publish.router, prefix="/api")
 app.include_router(media.router, prefix="/api")
 app.include_router(config.router, prefix="/api")
+app.include_router(mock_exams.router, prefix="/api")
 
 # Serve output files (audio, video, images) statically
 output_dir = ROOT / "output"

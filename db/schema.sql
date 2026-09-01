@@ -66,3 +66,20 @@ CREATE TABLE IF NOT EXISTS content_metrics (
 CREATE INDEX IF NOT EXISTS idx_canonical_topic ON canonical_scripts(topic_id);
 CREATE INDEX IF NOT EXISTS idx_publish_scheduled ON publish_jobs(scheduled_at);
 CREATE INDEX IF NOT EXISTS idx_publish_status ON publish_jobs(status);
+
+-- Staging area for A2 mock exams: generated content + media live here (and are
+-- editable/uploadable from the webapp) before pipeline/core/store_mock_exam.py
+-- pushes the finalized artifact into the learner-app Postgres DB.
+CREATE TABLE IF NOT EXISTS mock_exam_jobs (
+  id TEXT PRIMARY KEY,          -- 'a2-<section>-<n>'
+  section TEXT NOT NULL,
+  exam_number INTEGER NOT NULL,
+  level TEXT NOT NULL DEFAULT 'A2',
+  status TEXT NOT NULL DEFAULT 'draft',   -- draft | content_generated | media_generated | exported
+  artifact_json TEXT,
+  exported_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_mock_exam_jobs_section ON mock_exam_jobs(section, exam_number);

@@ -15,6 +15,13 @@ const ALLOWED: RegExp[] = [
   /^me\/export$/,
   /^courses\/[\w.-]+\/certificate$/,
   /^feedback$/,
+  /^mock-exams\/[\w.-]+\/take$/,
+  /^mock-exams\/[\w.-]+\/submit$/,
+  /^mock-exams\/[\w.-]+\/attempts$/,
+  /^mock-exams\/[\w.-]+\/attempts\/\d+$/,
+  /^mock-exams\/media\/image$/,
+  /^mock-exams\/media\/audio$/,
+  /^mock-exams\/media\/video$/,
 ];
 
 function resolve(segments: string[]): string | null {
@@ -43,10 +50,16 @@ async function forward(req: NextRequest, segments: string[]) {
   const url = `${BASE}/api/${path}${req.nextUrl.search}`;
   const res = await fetch(url, { method: req.method, headers, body, cache: "no-store" });
 
+  const contentType = res.headers.get("Content-Type") ?? "application/json";
+  if (contentType.startsWith("image/") || contentType.startsWith("audio/") || contentType.startsWith("video/")) {
+    const buf = await res.arrayBuffer();
+    return new NextResponse(buf, { status: res.status, headers: { "Content-Type": contentType } });
+  }
+
   const text = await res.text();
   return new NextResponse(text || null, {
     status: res.status,
-    headers: { "Content-Type": res.headers.get("Content-Type") ?? "application/json" },
+    headers: { "Content-Type": contentType },
   });
 }
 

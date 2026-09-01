@@ -252,3 +252,128 @@ class AdminFeedback(BaseModel):
     status: str
     created_at: datetime
     published_at: datetime | None
+
+
+class MockExamSummary(BaseModel):
+    id: str
+    section: str
+    level: str
+    exam_number: int
+    title: str
+    time_limit_minutes: int
+    total_questions: int
+    parts_count: int
+    pass_threshold: int | None
+    max_score: int | None
+    status: str
+
+
+class MockExamPassageAdmin(BaseModel):
+    id: str
+    order_index: int
+    part_number: int | None
+    passage_type: str
+    title: str
+    content_nl: str
+    content_en: str | None
+    media_urls: list[dict[str, Any]]
+    image_prompt: Any | None = None
+
+
+class MockExamQuestionAdmin(BaseModel):
+    """Admin-only view — includes the answer, rubric and model answer."""
+    id: str
+    passage_id: str | None
+    part_number: int | None
+    order_index: int
+    question_text: str
+    question_type: str
+    options: list[str] | None
+    answer: str | None
+    explanation: str
+    category: str | None
+    max_score: int
+    grading_rubric: list[dict[str, Any]] | None
+    model_answer: str | None
+    year_asked: int | None
+    option_image_prompts: list[str] | None = None
+    option_media_urls: list[str | None] | None = None
+
+
+class MockExamDetailAdmin(MockExamSummary):
+    instructions: str
+    passages: list[MockExamPassageAdmin]
+    questions: list[MockExamQuestionAdmin]
+
+
+class MockExamPassagePublic(BaseModel):
+    """Learner-facing passage view — media only, no answer-key metadata."""
+    id: str
+    order_index: int
+    part_number: int | None
+    passage_type: str
+    title: str
+    content_nl: str
+    content_en: str | None
+    media_urls: list[dict[str, Any]]
+
+
+class MockExamQuestionPublic(BaseModel):
+    """Learner-facing question view — never carries the answer."""
+    id: str
+    passage_id: str | None
+    part_number: int | None
+    order_index: int
+    question_text: str
+    question_type: str
+    options: list[str] | None
+    option_media_urls: list[str | None] | None = None
+
+
+class MockExamTakeDetail(MockExamSummary):
+    instructions: str
+    passages: list[MockExamPassagePublic]
+    questions: list[MockExamQuestionPublic]
+
+
+class MockExamSubmission(BaseModel):
+    answers: dict[str, str] = Field(default_factory=dict)
+
+
+class WritingFeedback(BaseModel):
+    score: int
+    max_score: int
+    feedback: str
+    possible_answer: str = ""
+    criterion_scores: list[dict[str, Any]] = []
+
+
+class MockExamQuestionResult(BaseModel):
+    id: str
+    question_type: str
+    graded: bool
+    correct: bool | None = None
+    given: str | None = None
+    answer: str | None = None
+    explanation: str | None = None
+    writing_feedback: WritingFeedback | None = None
+
+
+class MockExamAttemptResult(BaseModel):
+    exam_id: str
+    attempt_no: int
+    score: int
+    total: int
+    percent: int
+    label: str
+    created_at: datetime
+    results: list[MockExamQuestionResult]
+
+
+class MockExamAttemptSummary(BaseModel):
+    attempt_no: int
+    score: int
+    total: int
+    percent: int
+    label: str
+    created_at: datetime

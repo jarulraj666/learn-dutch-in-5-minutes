@@ -166,6 +166,20 @@ async def abort_job(job_id: str) -> bool:
     return True
 
 
+async def start_custom_job(cmd: list[str]) -> PipelineJob:
+    """Run an arbitrary command as a tracked job (reuses the same registry/SSE
+    infra as start_pipeline, for tools other than pipeline.run_pipeline)."""
+    job_id = str(uuid.uuid4())[:8]
+    job = PipelineJob(
+        job_id=job_id,
+        args=cmd,
+        started_at=datetime.utcnow().isoformat() + "Z",
+    )
+    _jobs[job_id] = job
+    asyncio.create_task(_run_job(job, cmd))
+    return job
+
+
 async def stream_logs(job_id: str) -> AsyncIterator[str]:
     """Async generator that yields SSE-formatted lines."""
     job = _jobs.get(job_id)
@@ -188,3 +202,4 @@ async def stream_logs(job_id: str) -> AsyncIterator[str]:
                 break
     finally:
         job.unsubscribe(q)
+

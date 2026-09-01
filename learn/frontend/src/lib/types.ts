@@ -1,5 +1,84 @@
 export type CourseStatus = "published" | "coming_soon";
 
+export interface MockExamSummary {
+  id: string;
+  section: "reading" | "listening" | "writing" | "speaking" | "knm";
+  level: string;
+  exam_number: number;
+  title: string;
+  time_limit_minutes: number;
+  total_questions: number;
+  parts_count: number;
+  pass_threshold: number | null;
+  max_score: number | null;
+  status: "draft" | "published";
+}
+
+export interface MockExamPassagePublic {
+  id: string;
+  order_index: number;
+  part_number: number | null;
+  passage_type: "text" | "audio" | "video" | "one_picture" | "two_picture" | "three_picture";
+  title: string;
+  content_nl: string;
+  content_en: string | null;
+  media_urls: { type: string; url: string }[];
+}
+
+export interface MockExamQuestionPublic {
+  id: string;
+  passage_id: string | null;
+  part_number: number | null;
+  order_index: number;
+  question_text: string;
+  question_type: "multiple_choice" | "open_written" | "open_spoken";
+  options: string[] | null;
+  option_media_urls: (string | null)[] | null;
+}
+
+export interface MockExamTakeDetail extends MockExamSummary {
+  instructions: string;
+  passages: MockExamPassagePublic[];
+  questions: MockExamQuestionPublic[];
+}
+
+export interface MockExamQuestionResult {
+  id: string;
+  question_type: string;
+  graded: boolean;
+  correct: boolean | null;
+  given: string | null;
+  answer: string | null;
+  explanation: string | null;
+  writing_feedback: {
+    score: number;
+    max_score: number;
+    feedback: string;
+    possible_answer: string;
+    criterion_scores: { criterion: string; score: number }[];
+  } | null;
+}
+
+export interface MockExamAttemptResult {
+  exam_id: string;
+  attempt_no: number;
+  score: number;
+  total: number;
+  percent: number;
+  label: string;
+  created_at: string;
+  results: MockExamQuestionResult[];
+}
+
+export interface MockExamAttemptSummary {
+  attempt_no: number;
+  score: number;
+  total: number;
+  percent: number;
+  label: string;
+  created_at: string;
+}
+
 export interface CourseSummary {
   id: string;
   title: string;

@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FuturesTimeoutError
 import json
 import logging
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -14,7 +15,7 @@ from pipeline.utils import iter_dialogue_turns, to_compact_dialogue
 
 LOGGER = logging.getLogger(__name__)
 
-_GEMINI_REQUEST_TIMEOUT_SEC = 90
+_GEMINI_REQUEST_TIMEOUT_SEC = int(os.getenv("GEMINI_REQUEST_TIMEOUT_SEC", "300"))
 
 
 def _extract_json(text: str) -> dict[str, Any]:
