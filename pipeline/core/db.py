@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sqlite3
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from uuid import uuid4
 
 from pipeline import settings
 
@@ -15,6 +18,185 @@ def get_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def _latest_publish_job_artifact(conn: sqlite3.Connection, topic_id: str) -> tuple[int, dict] | None:
+    row = conn.execute(
+        """
+        SELECT pj.id, pj.artifact_json
+        FROM canonical_scripts cs
+        JOIN publish_jobs pj ON pj.canonical_script_id = cs.id
+        WHERE cs.topic_id = ? AND pj.artifact_json IS NOT NULL
+        ORDER BY pj.id DESC
+        LIMIT 1
+        """,
+        [topic_id],
+    ).fetchone()
+    if not row:
+        return None
+    try:
+        return row["id"], json.loads(row["artifact_json"])
+    except (TypeError, json.JSONDecodeError):
+        return None
+
+
+def claim_facebook_reel_upload(topic_id: str, scene: int) -> tuple[str, dict, dict] | None:
+    """Atomically reserve a Facebook reel upload, returning its claim and media data.
+
+    Claims expire after two hours so a crashed worker does not block a future retry.
+    """
+    now = datetime.now(timezone.utc)
+    expires_before = (now - timedelta(hours=2)).isoformat()
+    claim_id = uuid4().hex
+    with get_connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        job = _latest_publish_job_artifact(conn, topic_id)
+        if not job:
+            return None
+        job_id, artifact = job
+        shorts = artifact.get("shorts") or []
+        short = next((item for item in shorts if str(item.get("scene")) == str(scene)), None)
+        if short is None or short.get("facebook", {}).get("post_id"):
+            return None
+        existing_claim = short.get("facebook_upload_claim") or {}
+        if existing_claim.get("claimed_at", "") > expires_before:
+            return None
+        short["facebook_upload_claim"] = {"id": claim_id, "claimed_at": now.isoformat()}
+        conn.execute(
+            "UPDATE publish_jobs SET artifact_json = ? WHERE id = ?",
+            [json.dumps(artifact, ensure_ascii=False), job_id],
+        )
+        return claim_id, artifact, short
+
+
+def complete_facebook_reel_upload(topic_id: str, scene: int, claim_id: str, result: dict) -> bool:
+    """Record a Facebook upload result only when it still owns the given claim."""
+    with get_connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        job = _latest_publish_job_artifact(conn, topic_id)
+        if not job:
+            return False
+        job_id, artifact = job
+        short = next((item for item in artifact.get("shorts") or [] if str(item.get("scene")) == str(scene)), None)
+        if not short or short.get("facebook_upload_claim", {}).get("id") != claim_id:
+            return False
+        short["facebook"] = result
+        short.pop("facebook_upload_claim", None)
+        short["facebook_scheduled_at"] = None
+        conn.execute(
+            "UPDATE publish_jobs SET artifact_json = ? WHERE id = ?",
+            [json.dumps(artifact, ensure_ascii=False), job_id],
+        )
+        return True
+
+
+def release_facebook_reel_upload_claim(topic_id: str, scene: int, claim_id: str) -> bool:
+    """Release a failed upload's claim without disturbing a newer worker's claim."""
+    with get_connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        job = _latest_publish_job_artifact(conn, topic_id)
+        if not job:
+            return False
+        job_id, artifact = job
+        short = next((item for item in artifact.get("shorts") or [] if str(item.get("scene")) == str(scene)), None)
+        if not short or short.get("facebook_upload_claim", {}).get("id") != claim_id:
+            return False
+        short.pop("facebook_upload_claim", None)
+        conn.execute(
+            "UPDATE publish_jobs SET artifact_json = ? WHERE id = ?",
+            [json.dumps(artifact, ensure_ascii=False), job_id],
+        )
+        return True
+
+
+def claim_instagram_reel_upload(topic_id: str, scene: int) -> tuple[str, dict, dict] | None:
+    """Atomically reserve an Instagram reel upload, returning its claim and media data."""
+    now = datetime.now(timezone.utc)
+    expires_before = (now - timedelta(hours=2)).isoformat()
+    claim_id = uuid4().hex
+    with get_connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        job = _latest_publish_job_artifact(conn, topic_id)
+        if not job:
+            return None
+        job_id, artifact = job
+        short = next((item for item in artifact.get("shorts") or [] if str(item.get("scene")) == str(scene)), None)
+        if short is None or short.get("instagram", {}).get("reel_id"):
+            return None
+        existing_claim = short.get("instagram_upload_claim") or {}
+        if existing_claim.get("claimed_at", "") > expires_before:
+            return None
+        short["instagram_upload_claim"] = {"id": claim_id, "claimed_at": now.isoformat()}
+        conn.execute(
+            "UPDATE publish_jobs SET artifact_json = ? WHERE id = ?",
+            [json.dumps(artifact, ensure_ascii=False), job_id],
+        )
+        return claim_id, artifact, short
+
+
+def record_instagram_pending_container(topic_id: str, scene: int, claim_id: str, container_id: str) -> bool:
+    """Persist a created media container so a retry republishes it instead of duplicating."""
+    with get_connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        job = _latest_publish_job_artifact(conn, topic_id)
+        if not job:
+            return False
+        job_id, artifact = job
+        short = next((item for item in artifact.get("shorts") or [] if str(item.get("scene")) == str(scene)), None)
+        if not short or short.get("instagram_upload_claim", {}).get("id") != claim_id:
+            return False
+        short["instagram_pending_container"] = {
+            "id": container_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        conn.execute(
+            "UPDATE publish_jobs SET artifact_json = ? WHERE id = ?",
+            [json.dumps(artifact, ensure_ascii=False), job_id],
+        )
+        return True
+
+
+def complete_instagram_reel_upload(topic_id: str, scene: int, claim_id: str, result: dict) -> bool:
+    """Record an Instagram upload result only when it still owns the given claim."""
+    with get_connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        job = _latest_publish_job_artifact(conn, topic_id)
+        if not job:
+            return False
+        job_id, artifact = job
+        short = next((item for item in artifact.get("shorts") or [] if str(item.get("scene")) == str(scene)), None)
+        if not short or short.get("instagram_upload_claim", {}).get("id") != claim_id:
+            return False
+        short["instagram"] = result
+        short["reel_id"] = result.get("reel_id")
+        short["permalink"] = result.get("permalink")
+        short.pop("instagram_upload_claim", None)
+        short.pop("instagram_pending_container", None)
+        short["instagram_scheduled_at"] = None
+        conn.execute(
+            "UPDATE publish_jobs SET artifact_json = ? WHERE id = ?",
+            [json.dumps(artifact, ensure_ascii=False), job_id],
+        )
+        return True
+
+
+def release_instagram_reel_upload_claim(topic_id: str, scene: int, claim_id: str) -> bool:
+    """Release a failed Instagram upload's claim without disturbing another worker."""
+    with get_connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        job = _latest_publish_job_artifact(conn, topic_id)
+        if not job:
+            return False
+        job_id, artifact = job
+        short = next((item for item in artifact.get("shorts") or [] if str(item.get("scene")) == str(scene)), None)
+        if not short or short.get("instagram_upload_claim", {}).get("id") != claim_id:
+            return False
+        short.pop("instagram_upload_claim", None)
+        conn.execute(
+            "UPDATE publish_jobs SET artifact_json = ? WHERE id = ?",
+            [json.dumps(artifact, ensure_ascii=False), job_id],
+        )
+        return True
 
 
 def init_db() -> None:

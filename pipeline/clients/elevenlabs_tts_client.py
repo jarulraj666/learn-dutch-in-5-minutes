@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import random
+import re
 import time
 import wave
 from pathlib import Path
@@ -39,6 +40,7 @@ class ElevenLabsTTSClient:
         self.model_id = settings.ELEVENLABS_MODEL or self.MODEL_ID
         configured_speed = settings.ELEVENLABS_SPEED
         self.speed = max(self.MIN_SPEED, min(self.MAX_SPEED, configured_speed))
+        self.sentence_pause_seconds = settings.ELEVENLABS_SENTENCE_PAUSE_SECONDS
         if self.speed != configured_speed:
             LOGGER.warning(
                 "ELEVENLABS_SPEED %.3f out of range [%.1f, %.1f]; clamped to %.3f",
@@ -253,6 +255,14 @@ class ElevenLabsTTSClient:
 
         raise RuntimeError("Unexpected ElevenLabs retry loop termination.")
 
+    def _sentence_pause_pcm(self) -> bytes:
+        samples = round(self.SAMPLE_RATE * self.sentence_pause_seconds)
+        return b"\x00" * (samples * 2)
+
+    @staticmethod
+    def _sentences(text: str) -> list[str]:
+        return [sentence for sentence in re.split(r"(?<=[.!?])\s+", text.strip()) if sentence]
+
     def generate_dialogue_audio(
         self,
         dialogue: list[dict[str, str]],
@@ -301,37 +311,40 @@ class ElevenLabsTTSClient:
                 speaker: set() for speaker in speaker_gender_map
             }
             for idx, (speaker, line) in enumerate(turns, start=1):
-                while True:
-                    voice_id = voice_assignments[speaker]
-                    LOGGER.debug("elevenlabs turn=%d speaker=%s voice_id=%s", idx, speaker, voice_id)
-                    try:
-                        synthesized_line = self._synthesize_line(line, voice_id)
-                        pcm_buffers.append(synthesized_line)
-                        break
-                    except Exception as err:
-                        if not self._is_paid_plan_required_error(err):
-                            raise
-                        blocked_by_speaker[speaker].add(voice_id)
-                        fallback_voice = self._choose_fallback_voice(
-                            speaker,
-                            voice_assignments,
-                            voice_map,
-                            speaker_gender_map,
-                            blocked_by_speaker,
-                        )
-                        if not fallback_voice:
-                            raise RuntimeError(
-                                f"ElevenLabs paid-plan voice rejected for {speaker}; "
-                                "no eligible fallback voice remains in configured pool."
-                            ) from err
-                        LOGGER.warning(
-                            "elevenlabs.voice_switch turn=%d speaker=%s from=%s to=%s reason=paid_plan_required",
-                            idx,
-                            speaker,
-                            voice_id,
-                            fallback_voice,
-                        )
-                        voice_assignments[speaker] = fallback_voice
+                for sentence in self._sentences(line):
+                    if pcm_buffers:
+                        pcm_buffers.append(self._sentence_pause_pcm())
+                    while True:
+                        voice_id = voice_assignments[speaker]
+                        LOGGER.debug("elevenlabs turn=%d speaker=%s voice_id=%s", idx, speaker, voice_id)
+                        try:
+                            synthesized_line = self._synthesize_line(sentence, voice_id)
+                            pcm_buffers.append(synthesized_line)
+                            break
+                        except Exception as err:
+                            if not self._is_paid_plan_required_error(err):
+                                raise
+                            blocked_by_speaker[speaker].add(voice_id)
+                            fallback_voice = self._choose_fallback_voice(
+                                speaker,
+                                voice_assignments,
+                                voice_map,
+                                speaker_gender_map,
+                                blocked_by_speaker,
+                            )
+                            if not fallback_voice:
+                                raise RuntimeError(
+                                    f"ElevenLabs paid-plan voice rejected for {speaker}; "
+                                    "no eligible fallback voice remains in configured pool."
+                                ) from err
+                            LOGGER.warning(
+                                "elevenlabs.voice_switch turn=%d speaker=%s from=%s to=%s reason=paid_plan_required",
+                                idx,
+                                speaker,
+                                voice_id,
+                                fallback_voice,
+                            )
+                            voice_assignments[speaker] = fallback_voice
         except Exception as err:
             LOGGER.error("ElevenLabs dialogue synthesis failed: %s", err)
             return False

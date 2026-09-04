@@ -134,6 +134,7 @@ class KeyRotator:
         self._state_file = state_file
         # hash -> expiry datetime (UTC)
         self._cooldowns: dict[str, datetime] = {}
+        self._next_key_index = 0
         self._load_state()
 
     # ------------------------------------------------------------------
@@ -165,6 +166,13 @@ class KeyRotator:
             len(self._keys),
         )
         yield from available
+
+    def next_key_cycle(self) -> Iterator[str]:
+        """Yield available keys starting with the next key in round-robin order."""
+        available = list(self.available_keys())
+        start = self._next_key_index % len(available)
+        self._next_key_index = (start + 1) % len(available)
+        yield from available[start:] + available[:start]
 
     def mark_rate_limited(self, key: str, exc: Exception | None = None) -> None:
         """Mark *key* as rate-limited.

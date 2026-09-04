@@ -151,6 +151,8 @@ CREATE TABLE IF NOT EXISTS mock_exam_passages (
     passage_type        TEXT    NOT NULL CHECK (passage_type IN
                          ('text', 'audio', 'video', 'one_picture', 'two_picture', 'three_picture')),
     title               TEXT    NOT NULL DEFAULT '',
+    display_prompt_nl   TEXT    NOT NULL DEFAULT '',     -- learner-facing scenario/instruction; content_nl remains the audio script
+    scene_description   TEXT    NOT NULL DEFAULT '',     -- visual/image script used to generate still/video media
     content_nl          TEXT    NOT NULL DEFAULT '',
     content_en          TEXT,
     media_urls          JSONB   NOT NULL DEFAULT '[]'::jsonb,   -- [{type, url}, ...]
@@ -167,16 +169,20 @@ CREATE TABLE IF NOT EXISTS mock_exam_questions (
     part_number     INTEGER,
     order_index     INTEGER NOT NULL DEFAULT 0,
     question_text   TEXT    NOT NULL,
+    question_audio_url TEXT,
+    question_options_audio_url TEXT,
+    option_audio_cues JSONB,                       -- listening combined audio: [{option_index, start, end}, ...]
     question_type   TEXT    NOT NULL CHECK (question_type IN ('multiple_choice', 'open_written', 'open_spoken')),
     options         JSONB,                          -- required for multiple_choice
     answer          TEXT,                           -- never sent to non-admin client
     explanation     TEXT    NOT NULL DEFAULT '',
-    category        TEXT,                           -- KNM topic tag: customs | education | healthcare | housing | history_geography
+    category        TEXT,                           -- KNM theme tag: customs | work_income | education | healthcare | housing | institutions | government | history_geography
     max_score       INTEGER NOT NULL DEFAULT 1,
     grading_rubric  JSONB,                          -- writing/speaking: [{criterion, max_points}, ...]
     model_answer    TEXT,                           -- reference answer for QA / future grading
     year_asked      INTEGER,                        -- real exam year, only if confidently known; else NULL
     option_image_prompts JSONB,                     -- rare "picture-choice" MC questions: one image prompt per option, admin-only
+    option_audio_urls   JSONB,                      -- listening MC questions: one generated audio path per option
     option_media_urls   JSONB                       -- matching uploaded image path per option, null until generated/uploaded
 );
 
@@ -281,12 +287,29 @@ CREATE TABLE IF NOT EXISTS mock_exam_attempts (
     total       SMALLINT    NOT NULL,
     percent     SMALLINT    NOT NULL,
     label       TEXT        NOT NULL,
+    status      TEXT        NOT NULL DEFAULT 'completed',
     answers     JSONB       NOT NULL DEFAULT '{}'::jsonb,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (user_id, exam_id, attempt_no)
 );
 
 CREATE INDEX IF NOT EXISTS idx_mock_attempts_user_exam ON mock_exam_attempts(user_id, exam_id);
+
+ALTER TABLE mock_exam_attempts ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'completed';
+
+CREATE TABLE IF NOT EXISTS mock_exam_speaking_recordings (
+    id          UUID        PRIMARY KEY,
+    user_id     UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    exam_id     TEXT        NOT NULL REFERENCES mock_exams(id) ON DELETE CASCADE,
+    question_id TEXT        NOT NULL REFERENCES mock_exam_questions(id) ON DELETE CASCADE,
+    attempt_id  BIGINT      REFERENCES mock_exam_attempts(id) ON DELETE CASCADE,
+    storage_path TEXT       NOT NULL,
+    feedback_label TEXT,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (user_id, exam_id, question_id, attempt_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_speaking_recordings_attempt ON mock_exam_speaking_recordings(attempt_id);
 
 -- SM-2 spaced repetition over lesson_vocabulary.
 CREATE TABLE IF NOT EXISTS flashcard_reviews (

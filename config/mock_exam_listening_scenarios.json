@@ -1,0 +1,2395 @@
+{
+  "version": 1,
+  "description": "Approved A2 listening exam plans. Each passage content_nl is the audio script. Content generation uses this file directly for listed exams so reruns do not create duplicate or drifting questions.",
+  "source": "Generated from staged a2-listening-1..3 artifacts on 2026-09-04.",
+  "exams": {
+    "1": {
+      "section": "listening",
+      "exam_number": 1,
+      "level": "A2",
+      "title": "Luisteren - Oefenexamen 1",
+      "instructions": "Luister naar de fragmenten en beantwoord de vragen.",
+      "time_limit_minutes": 45,
+      "total_questions": 25,
+      "parts_count": 1,
+      "pass_threshold": 18,
+      "max_score": 25,
+      "passages": [
+        {
+          "id": "p1",
+          "order_index": 1,
+          "passage_type": "audio",
+          "title": "Afspraak bij de tandarts",
+          "content_nl": "Goedemorgen, u spreekt met de assistent van tandartspraktijk De Glimlach. Dit is een herinnering voor meneer Bakker. U heeft morgen, woensdag 12 oktober, een afspraak om kwart over tien in de ochtend. Vergeet niet uw verzekeringspasje mee te nemen. Als u de afspraak wilt afzeggen, bel ons dan voor vier uur vanmiddag. Tot morgen!",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "/Users/aruljen/ArulJen/Vscode_workspace/learn-dutch-in-5-minutes/output/mock_exams/audio/a2-listening-1/a2-listening-1-p1.wav"
+            },
+            {
+              "type": "image",
+              "url": "output/mock_exams/visuals/a2-listening-1/a2-listening-1-p1.jpeg"
+            }
+          ],
+          "display_prompt_nl": "U hoort een fragment: Afspraak bij de tandarts.\n\nLees eerst de vraag.\nLuister daarna naar het fragment.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Goedemorgen, u spreekt met de assistent van tandartspraktijk De Glimlach. Dit is een herinnering voor meneer Bakker. U heeft morgen, woensdag 12 oktober, een afspraak om kwart over tien in de ochtend. Vergeet niet uw verzekeringspasje mee te nemen. Als u de afspraak wilt afzeggen, bel ons dan voor vier uur vanmiddag. Tot morgen!\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p2",
+          "order_index": 2,
+          "passage_type": "audio",
+          "title": "Bij de apotheek",
+          "content_nl": "Goedendag. Ik kom deze oogdruppels ophalen voor mijn dochter. - Goedemiddag. Heeft u een recept van de dokter? - Ja, hier is het recept. Hoe vaak moet ze de druppels gebruiken? - Ze moet drie keer per dag twee druppels in elk oog doen: 's morgens, 's middags en 's avonds. En bewaar de fles in de koelkast. - Dank u wel. Kan ik ook meteen pinnen? - Ja hoor, dat kan bij het apparaat rechts.",
+          "content_en": null,
+          "scene_description": "A man speaks with a female pharmacist behind the counter in a modern pharmacy.",
+          "media_urls": [
+            {
+              "type": "image",
+              "url": "output/mock_exams/visuals/a2-listening-1/a2-listening-1-p2.jpeg"
+            },
+            {
+              "type": "audio",
+              "url": "output/mock_exams/audio/a2-listening-1/a2-listening-1-p2.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een gesprek: Bij de apotheek.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: A man speaks with a female pharmacist behind the counter in a modern pharmacy.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p3",
+          "order_index": 3,
+          "passage_type": "audio",
+          "title": "Omroepbericht op het station",
+          "content_nl": "Beste reizigers, attentie alstublieft. De intercity naar Utrecht Centraal van twaalf uur dertien rijdt vandaag niet vanaf spoor vier, maar vanaf spoor zeven. Deze trein heeft een vertraging van ongeveer vijftien minuten vanwege een storing aan de bovenleiding. Reizigers naar Amsterdam Centraal kunnen overstappen op de stoptrein van twaalf uur twintig op spoor twee. Onze excuses voor het ongemak.",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "/Users/aruljen/ArulJen/Vscode_workspace/learn-dutch-in-5-minutes/output/mock_exams/audio/a2-listening-1/a2-listening-1-p3.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een bericht: Omroepbericht op het station.\n\nLees eerst de vraag.\nLuister daarna naar het bericht.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Beste reizigers, attentie alstublieft. De intercity naar Utrecht Centraal van twaalf uur dertien rijdt vandaag niet vanaf spoor vier, maar vanaf spoor zeven. Deze trein heeft een vertraging van ongeveer vijftien minuten vanwege een storing aan de bovenleiding. Reizigers naar Amsterdam Centraal kunnen overstappen op de stoptrein van twaalf uur twintig op spoor twee. Onze excuses voor het ongemak.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p4",
+          "order_index": 4,
+          "passage_type": "audio",
+          "title": "In de kledingwinkel",
+          "content_nl": "Hallo, kan ik u ergens mee helpen? - Ja, graag. Ik zoek deze blauwe jas, maar ik zie alleen maat S en M in het rek hangen. Heeft u deze ook in maat L? - Ik ga even in het magazijn achter kijken. Een ogenblikje alstublieft... Ja, we hebben er nog één in maat L! - Wat fijn. Mag ik hem even passen? - Natuurlijk, de paskamers zijn daar achterin bij de spiegels. Als de jas niet past, hebben we hem ook nog in het groen.",
+          "content_en": null,
+          "scene_description": "A male customer in a clothing shop asks a female shop assistant for help finding a jacket in another size.",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "output/mock_exams/audio/a2-listening-1/a2-listening-1-p4.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een gesprek: In de kledingwinkel.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: A male customer in a clothing shop asks a female shop assistant for help finding a jacket in another size.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p5",
+          "order_index": 5,
+          "passage_type": "audio",
+          "title": "Bericht van de basisschool",
+          "content_nl": "Beste ouders en verzorgers, dit is een bericht van basisschool De Bron. Aanstaande vrijdag 24 mei vieren we ons jaarlijkse zomerfeest op het schoolplein. Het feest begint om twee uur 's middags en eindigt om vijf uur. Alle kinderen mogen verkleed naar school komen. Vergeet niet om iets te eten of te drinken mee te nemen voor de grote picknick. Bij slecht weer gaat het feest door in de sporthal. Tot vrijdag!",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "/Users/aruljen/ArulJen/Vscode_workspace/learn-dutch-in-5-minutes/output/mock_exams/audio/a2-listening-1/a2-listening-1-p5.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een bericht: Bericht van de basisschool.\n\nLees eerst de vraag.\nLuister daarna naar het bericht.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Beste ouders en verzorgers, dit is een bericht van basisschool De Bron. Aanstaande vrijdag 24 mei vieren we ons jaarlijkse zomerfeest op het schoolplein. Het feest begint om twee uur 's middags en eindigt om vijf uur. Alle kinderen mogen verkleed naar school komen. Vergeet niet om iets te eten of te drinken mee te nemen voor de grote picknick. Bij slecht weer gaat het feest door in de sporthal. Tot vrijdag!\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p6",
+          "order_index": 6,
+          "passage_type": "audio",
+          "title": "Lunchpauze op het werk",
+          "content_nl": "Hoi Sanne, ga je mee lunchen? - Ja, gezellig! Ik neem vandaag een soepje en een broodje kaas. Wat neem jij? - Ik heb mijn eigen salade meegebracht van huis. Zeg, weet jij wanneer de vergadering van vanmiddag begint? Op de kalender staat twee uur, maar ik hoorde dat het veranderd is. - Klopt, de manager is wat later. De vergadering begint nu pas om half drie in kamer 104.",
+          "content_en": null,
+          "scene_description": "Two office colleagues, a man and a woman, are sitting together at a lunch table in an office cafeteria.",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "output/mock_exams/audio/a2-listening-1/a2-listening-1-p6.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een gesprek: Lunchpauze op het werk.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Two office colleagues, a man and a woman, are sitting together at a lunch table in an office cafeteria.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p7",
+          "order_index": 7,
+          "passage_type": "audio",
+          "title": "Voicemail van een vriendin",
+          "content_nl": "Hoi Lisa, met Karin! Ik bel over onze afspraak om te fitnessen. Je vroeg of we woensdagavond konden gaan, maar dan moet ik overwerken. Kunnen we in plaats daarvan op donderdagavond gaan om zeven uur? We kunnen daarna samen een kop thee drinken bij mij thuis. Laat me even weten of dat schikt. Doeg!",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "/Users/aruljen/ArulJen/Vscode_workspace/learn-dutch-in-5-minutes/output/mock_exams/audio/a2-listening-1/a2-listening-1-p7.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een bericht: Voicemail van een vriendin.\n\nLees eerst de vraag.\nLuister daarna naar het bericht.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Hoi Lisa, met Karin! Ik bel over onze afspraak om te fitnessen. Je vroeg of we woensdagavond konden gaan, maar dan moet ik overwerken. Kunnen we in plaats daarvan op donderdagavond gaan om zeven uur? We kunnen daarna samen een kop thee drinken bij mij thuis. Laat me even weten of dat schikt. Doeg!\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p8",
+          "order_index": 8,
+          "passage_type": "audio",
+          "title": "Aan de balie van het OV-loket",
+          "content_nl": "Goedemiddag, ik wil graag een abonnement kopen voor de bus. Ik reis elke dag van Utrecht naar Zeist voor mijn werk. - Goedemiddag. Reist u in het weekend of alleen op werkdagen? - Alleen van maandag tot en met vrijdag. - Dan is het Dal Vrij abonnement voor de werkdagen het goedkoopst. Dat kost vijfenveertig euro per maand. Neem wel een pasfoto en uw identiteitskaart mee als u het online aanvraagt. - Prima, bedankt voor het advies!",
+          "content_en": null,
+          "scene_description": "A young woman stands at a public transport customer service desk talking to an employee behind the counter.",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "output/mock_exams/audio/a2-listening-1/a2-listening-1-p8.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een gesprek: Aan de balie van het OV-loket.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: A young woman stands at a public transport customer service desk talking to an employee behind the counter.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "passage_id": "p1",
+          "part_number": null,
+          "order_index": 1,
+          "question_text": "Hoe laat is de afspraak van meneer Bakker?",
+          "question_type": "multiple_choice",
+          "options": [
+            "16.00 uur",
+            "10.45 uur",
+            "12.00 uur",
+            "10.15 uur"
+          ],
+          "answer": "10.15 uur",
+          "explanation": "The assistant states the appointment is at 'kwart over tien in de ochtend' (10:15 AM).",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "question_audio_url": "output/mock_exams/audio/a2-listening-1/questions_fast/a2-listening-1-q1.wav",
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q2",
+          "passage_id": "p1",
+          "part_number": null,
+          "order_index": 2,
+          "question_text": "Wat moet meneer Bakker meenemen naar de afspraak?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Geld voor de behandeling",
+            "Zijn verzekeringspasje",
+            "Zijn afsprakenkaart",
+            "Zijn identiteitsbewijs"
+          ],
+          "answer": "Zijn verzekeringspasje",
+          "explanation": "The assistant explicitly asks the patient not to forget his insurance card ('verzekeringspasje').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q3",
+          "passage_id": "p1",
+          "part_number": null,
+          "order_index": 3,
+          "question_text": "Tot wanneer kan meneer Bakker de afspraak nog afzeggen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Tot vanmiddag vier uur",
+            "Tot morgenmiddag twaalf uur",
+            "Tot vanavond zes uur",
+            "Tot morgenochtend acht uur"
+          ],
+          "answer": "Tot vanmiddag vier uur",
+          "explanation": "The voicemail mentions that cancellations must be made 'voor vier uur vanmiddag'.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q4",
+          "passage_id": "p2",
+          "part_number": null,
+          "order_index": 4,
+          "question_text": "Voor wie zijn de oogdruppels bedoeld?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Voor de dokter",
+            "Voor de dochter van de man",
+            "Voor de apotheker",
+            "Voor de man zelf"
+          ],
+          "answer": "Voor de dochter van de man",
+          "explanation": "The customer states he is picking up the drops for his daughter ('voor mijn dochter').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q5",
+          "passage_id": "p2",
+          "part_number": null,
+          "order_index": 5,
+          "question_text": "Waar moeten de oogdruppels bewaard worden?",
+          "question_type": "multiple_choice",
+          "options": [
+            "In de koelkast",
+            "In een donkere kast",
+            "Op een droge plek",
+            "In de tas"
+          ],
+          "answer": "In de koelkast",
+          "explanation": "The pharmacist instructs the customer to keep the bottle in the fridge ('in de koelkast').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q6",
+          "passage_id": "p2",
+          "part_number": null,
+          "order_index": 6,
+          "question_text": "Hoe vaak per dag moeten de druppels gebruikt worden?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Twee keer per dag",
+            "Vier keer per dag",
+            "Vijf keer per dag",
+            "Drie keer per dag"
+          ],
+          "answer": "Drie keer per dag",
+          "explanation": "The pharmacist tells him to use them three times a day: morning, afternoon, and evening.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q7",
+          "passage_id": "p3",
+          "part_number": null,
+          "order_index": 7,
+          "question_text": "Vanaf welk spoor vertrekt de intercity naar Utrecht?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Spoor 4",
+            "Spoor 7",
+            "Spoor 2",
+            "Spoor 15"
+          ],
+          "answer": "Spoor 7",
+          "explanation": "The announcement states the train leaves from platform 7 instead of platform 4 ('vanaf spoor zeven').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q8",
+          "passage_id": "p3",
+          "part_number": null,
+          "order_index": 8,
+          "question_text": "Hoeveel vertraging heeft de trein naar Utrecht?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Vijf minuten",
+            "Tien minuten",
+            "Twaalf minuten",
+            "Vijftien minuten"
+          ],
+          "answer": "Vijftien minuten",
+          "explanation": "The announcement specifies a delay of about 15 minutes ('ongeveer vijftien minuten').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q9",
+          "passage_id": "p3",
+          "part_number": null,
+          "order_index": 9,
+          "question_text": "Wat is de reden van de vertraging?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een kapotte trein op het spoor",
+            "Werkzaamheden aan het spoor",
+            "Een storing aan de bovenleiding",
+            "Slecht weer"
+          ],
+          "answer": "Een storing aan de bovenleiding",
+          "explanation": "The announcement mentions the delay is due to an overhead line failure ('storing aan de bovenleiding').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q10",
+          "passage_id": "p4",
+          "part_number": null,
+          "order_index": 10,
+          "question_text": "Welke maat zoekt de klant?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Maat XL",
+            "Maat S",
+            "Maat M",
+            "Maat L"
+          ],
+          "answer": "Maat L",
+          "explanation": "The customer asks if the jacket is available in size L ('in maat L').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q11",
+          "passage_id": "p4",
+          "part_number": null,
+          "order_index": 11,
+          "question_text": "Waar gaat de winkelmedewerker zoeken voor de juiste maat?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Bij de paskamers",
+            "In het kledingrek",
+            "Bij de kassa",
+            "In het magazijn"
+          ],
+          "answer": "In het magazijn",
+          "explanation": "The assistant says she will check in the stockroom ('in het magazijn achter kijken').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q12",
+          "passage_id": "p4",
+          "part_number": null,
+          "order_index": 12,
+          "question_text": "In welke andere kleur is de jas ook op voorraad?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Groen",
+            "Blauw",
+            "Rood",
+            "Zwart"
+          ],
+          "answer": "Groen",
+          "explanation": "The shop assistant mentions that the jacket is also available in green ('ook nog in het groen').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q13",
+          "passage_id": "p5",
+          "part_number": null,
+          "order_index": 13,
+          "question_text": "Op welke dag is het zomerfeest van de basisschool?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Volgende week maandag",
+            "Volgende week vrijdag",
+            "Aanstaande zaterdag",
+            "Aanstaande vrijdag"
+          ],
+          "answer": "Aanstaande vrijdag",
+          "explanation": "The announcement states the summer party takes place 'aanstaande vrijdag 24 mei'.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q14",
+          "passage_id": "p5",
+          "part_number": null,
+          "order_index": 14,
+          "question_text": "Wat moeten de kinderen meenemen naar het feest?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Eten of drinken voor de picknick",
+            "Een paraplu",
+            "Sportkleding",
+            "Een cadeau"
+          ],
+          "answer": "Eten of drinken voor de picknick",
+          "explanation": "Parents are reminded to bring food or drink for the grand picnic ('eten of drinken mee te nemen').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q15",
+          "passage_id": "p5",
+          "part_number": null,
+          "order_index": 15,
+          "question_text": "Waar vindt het feest plaats als het regent?",
+          "question_type": "multiple_choice",
+          "options": [
+            "In het klaslokaal",
+            "Op het schoolplein",
+            "In de sporthal",
+            "Het feest wordt afgelast"
+          ],
+          "answer": "In de sporthal",
+          "explanation": "In case of bad weather, the event moves to the sports hall ('in de sporthal').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q16",
+          "passage_id": "p6",
+          "part_number": null,
+          "order_index": 16,
+          "question_text": "Wat eet Sanne als lunch?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een salade van huis",
+            "Een fruitmand",
+            "Soep en een broodje kaas",
+            "Alleen een kop koffie"
+          ],
+          "answer": "Soep en een broodje kaas",
+          "explanation": "Sanne says she is taking a soup and a cheese sandwich ('een soepje en een broodje kaas').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q17",
+          "passage_id": "p6",
+          "part_number": null,
+          "order_index": 17,
+          "question_text": "Hoe laat begint de vergadering nu?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Om 15.00 uur",
+            "Om 14.00 uur",
+            "Om 14.30 uur",
+            "Om 13.30 uur"
+          ],
+          "answer": "Om 14.30 uur",
+          "explanation": "Sanne explains the meeting has been postponed to 14:30 ('om half drie').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q18",
+          "passage_id": "p6",
+          "part_number": null,
+          "order_index": 18,
+          "question_text": "Waarom is de vergadering verplaatst?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Er was geen lunch meer",
+            "De manager is later",
+            "Kamer 104 was bezet",
+            "Iedereen was te laat"
+          ],
+          "answer": "De manager is later",
+          "explanation": "Sanne clarifies that the meeting is delayed because the manager is running late ('de manager is wat later').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q19",
+          "passage_id": "p7",
+          "part_number": null,
+          "order_index": 19,
+          "question_text": "Wat wil Karin aan de afspraak veranderen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De dag van de afspraak",
+            "De tijd van het theedrinking",
+            "De locatie van de sportschool",
+            "De sport die ze gaan doen"
+          ],
+          "answer": "De dag van de afspraak",
+          "explanation": "Karin calls to change the workout day from Wednesday to Thursday.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q20",
+          "passage_id": "p7",
+          "part_number": null,
+          "order_index": 20,
+          "question_text": "Waarom kan Karin niet op woensdagavond?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Ze moet overwerken",
+            "Ze is ziek",
+            "Ze heeft een familiefeest",
+            "Ze moet naar de dokter"
+          ],
+          "answer": "Ze moet overwerken",
+          "explanation": "Karin explains she cannot make Wednesday because she has to work overtime ('moet ik overwerken').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q21",
+          "passage_id": "p7",
+          "part_number": null,
+          "order_index": 21,
+          "question_text": "Op welke dag wil Karin nu gaan fitnessen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Op vrijdag",
+            "Op donderdag",
+            "Op zaterdag",
+            "Op woensdag"
+          ],
+          "answer": "Op donderdag",
+          "explanation": "She suggests Thursday evening instead ('op donderdagavond gaan').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q22",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 22,
+          "question_text": "Waar reist de klant elke dag naartoe voor haar werk?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Van Zeist naar Utrecht",
+            "Naar Amsterdam",
+            "Van Utrecht naar Zeist",
+            "Binnen de stad Utrecht"
+          ],
+          "answer": "Van Utrecht naar Zeist",
+          "explanation": "The customer states she travels daily from Utrecht to Zeist ('van Utrecht naar Zeist').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q23",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 23,
+          "question_text": "Op welke dagen reist de klant?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Alleen op woensdag en vrijdag",
+            "Alle dagen van de week",
+            "Alleen in het weekend",
+            "Van maandag tot en met vrijdag"
+          ],
+          "answer": "Van maandag tot en met vrijdag",
+          "explanation": "The customer confirms she only travels Monday through Friday ('maandag tot en met vrijdag').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q24",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 24,
+          "question_text": "Hoeveel kost het aanbevolen abonnement per maand?",
+          "question_type": "multiple_choice",
+          "options": [
+            "50 euro",
+            "35 euro",
+            "40 euro",
+            "45 euro"
+          ],
+          "answer": "45 euro",
+          "explanation": "The employee states that the subscription costs 45 euros per month ('vijfenveertig euro per maand').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q25",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 25,
+          "question_text": "Wat heeft de klant nodig bij de online aanvraag van het abonnement?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een bankpas en rijbewijs",
+            "Een pasfoto en identiteitskaart",
+            "Alleen een e-mailadres",
+            "Een werkgeversverklaring"
+          ],
+          "answer": "Een pasfoto en identiteitskaart",
+          "explanation": "The desk agent mentions bringing a passport photo and ID card for online registration ('pasfoto en uw identiteitskaart').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "2": {
+      "section": "listening",
+      "exam_number": 2,
+      "level": "A2",
+      "title": "Luisteren - Oefenexamen 2",
+      "instructions": "Luister naar de fragmenten en beantwoord de vragen.",
+      "time_limit_minutes": 45,
+      "total_questions": 25,
+      "parts_count": 1,
+      "pass_threshold": 18,
+      "max_score": 25,
+      "passages": [
+        {
+          "id": "p1",
+          "order_index": 1,
+          "passage_type": "audio",
+          "title": "Bericht van de autogarage",
+          "content_nl": "Goedemiddag mevrouw De Jong, u spreekt met Peter van Garage De Ster. Ik bel u over uw auto. De APK-keuring is klaar. De auto is goedgekeurd, maar we hebben wel twee nieuwe voorbanden moeten plaatsen. De totale kosten zijn honderdnegentig euro. U kunt de auto vandaag ophalen tot vijf uur, of morgen vanaf half negen. Vergeet niet uw kentekenbewijs mee te nemen als u de sleutel komt halen. Fijne dag nog!",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "/Users/aruljen/ArulJen/Vscode_workspace/learn-dutch-in-5-minutes/output/mock_exams/audio/a2-listening-2/a2-listening-2-p1.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een bericht: Bericht van de autogarage.\n\nLees eerst de vraag.\nLuister daarna naar het bericht.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Goedemiddag mevrouw De Jong, u spreekt met Peter van Garage De Ster. Ik bel u over uw auto. De APK-keuring is klaar. De auto is goedgekeurd, maar we hebben wel twee nieuwe voorbanden moeten plaatsen. De totale kosten zijn honderdnegentig euro. U kunt de auto vandaag ophalen tot vijf uur, of morgen vanaf half negen. Vergeet niet uw kentekenbewijs mee te nemen als u de sleutel komt halen. Fijne dag nog!\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p2",
+          "order_index": 2,
+          "passage_type": "audio",
+          "title": "Bij de klantenservice van de winkel",
+          "content_nl": "Goedemiddag, kan ik deze boormachine nog terugbrengen? - Goedemiddag. Ja hoor, dat kan. Is het apparaat kapot? - Nee, het werkt prima, maar mijn man blijkt al precies dezelfde boormachine te hebben. - Ah, ik begrijp het. Heeft u de kassabon nog bij u? - Ja, hier is de bon. Ik heb de boormachine vorige week dinsdag gekocht. - Heel goed. Omdat het binnen veertien dagen is, krijgt u gewoon uw geld terug. Mocht u liever een cadeaubon willen, dan kan dat ook. - Nee hoor, ik wil graag het geld terug op mijn bankrekening. - Prima, als u uw pinpas even op het apparaat wilt leggen, dan storten we het bedrag direct terug.",
+          "content_en": null,
+          "scene_description": "A customer stands at a hardware store service desk talking to an employee about returning an electric drill.",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "output/mock_exams/audio/a2-listening-2/a2-listening-2-p2.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een gesprek: Bij de klantenservice van de winkel.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: A customer stands at a hardware store service desk talking to an employee about returning an electric drill.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p3",
+          "order_index": 3,
+          "passage_type": "audio",
+          "title": "Aankondiging van de bibliotheek",
+          "content_nl": "Beste bezoekers van bibliotheek Centrum. Wij willen u graag herinneren aan onze speciale boekenmarkt aanstaande zaterdag 15 juni. Vanaf tien uur 's morgens tot vier uur 's middags verkopen wij tweedehands boeken voor slechts één euro per stuk. Er zijn kinderboeken, romans en kookboeken. De opbrengst van deze markt gebruiken we voor het kopen van nieuwe spelletjes voor de jeugdafdeling. Let op: u kunt zaterdag alleen met pin betalen, er is geen contant geld aanwezig. Graag tot zaterdag!",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "/Users/aruljen/ArulJen/Vscode_workspace/learn-dutch-in-5-minutes/output/mock_exams/audio/a2-listening-2/a2-listening-2-p3.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een fragment: Aankondiging van de bibliotheek.\n\nLees eerst de vraag.\nLuister daarna naar het fragment.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Beste bezoekers van bibliotheek Centrum. Wij willen u graag herinneren aan onze speciale boekenmarkt aanstaande zaterdag 15 juni. Vanaf tien uur 's morgens tot vier uur 's middags verkopen wij tweedehands boeken voor slechts één euro per stuk. Er zijn kinderboeken, romans en kookboeken. De opbrengst van deze markt gebruiken we voor het kopen van nieuwe spelletjes voor de jeugdafdeling. Let op: u kunt zaterdag alleen met pin betalen, er is geen contant geld aanwezig. Graag tot zaterdag!\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p4",
+          "order_index": 4,
+          "passage_type": "audio",
+          "title": "Gesprek over een verjaardagscadeau",
+          "content_nl": "Hoi Mark, weet jij dat Sarah volgende week donderdag vijftig jaar wordt? - Zo, vijftig alweer! Gaan we met het team een cadeau voor haar kopen? - Ja, dat is het plan. Ik dacht aan een cadeaubon voor een diner voor twee personen, want ze houdt erg van lekker eten. - Dat is een erg leuk idee! Hoeveel geld verzamelen we per persoon? - Vijf euro per collega. Als iedereen meedoet, hebben we precies genoeg voor een mooi diner. - Is goed. Tot wanneer verzamel jij het geld? - Tot aanstaande dinsdag, want op woensdag ga ik de bon kopen in de winkel.",
+          "content_en": null,
+          "scene_description": "Two colleagues sit at a breakroom table with coffee cups, discussing a gift collection for a colleague.",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "output/mock_exams/audio/a2-listening-2/a2-listening-2-p4.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een gesprek: Gesprek over een verjaardagscadeau.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Two colleagues sit at a breakroom table with coffee cups, discussing a gift collection for a colleague.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p5",
+          "order_index": 5,
+          "passage_type": "audio",
+          "title": "Telefoonbericht van de zwemschool",
+          "content_nl": "Goedemiddag meneer Yilmaz, u spreekt met Karin van zwemschool De Plons. Ik bel u over de zwemles voor uw zoon Lucas. Er is een plekje vrijgekomen in de groep op zaterdagochtend om negen uur. De lessen beginnen volgende week zaterdag, op 8 september. Een les duurt vierenveertig minuten. Wilt u mij vóór donderdag vijf uur terugbellen om te laten weten of Lucas wil meedoen? Als ik niks hoor, geven we de plek aan iemand anders op de wachtlijst. Alvast bedankt en fijne dag!",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "/Users/aruljen/ArulJen/Vscode_workspace/learn-dutch-in-5-minutes/output/mock_exams/audio/a2-listening-2/a2-listening-2-p5.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een fragment: Telefoonbericht van de zwemschool.\n\nLees eerst de vraag.\nLuister daarna naar het fragment.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Goedemiddag meneer Yilmaz, u spreekt met Karin van zwemschool De Plons. Ik bel u over de zwemles voor uw zoon Lucas. Er is een plekje vrijgekomen in de groep op zaterdagochtend om negen uur. De lessen beginnen volgende week zaterdag, op 8 september. Een les duurt vierenveertig minuten. Wilt u mij vóór donderdag vijf uur terugbellen om te laten weten of Lucas wil meedoen? Als ik niks hoor, geven we de plek aan iemand anders op de wachtlijst. Alvast bedankt en fijne dag!\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p6",
+          "order_index": 6,
+          "passage_type": "audio",
+          "title": "Aan de balie bij de gemeente",
+          "content_nl": "Goedemorgen, ik kom mijn nieuwe rijbewijs ophalen. Mijn naam is Thomas Berg. - Goedemorgen meneer Berg. Laat me even kijken in het systeem. Ja, het rijbewijs ligt klaar. Mag ik uw oude rijbewijs zien? - Jazeker, alstublieft. - Dank u wel. U moet nog wel even de kosten betalen. Dat is vierenveertig euro en vijftig cent. - Kan ik hier met contant geld betalen? - Nee, helaas. Bij onze balies kunt u alleen nog pinnen. - Oh, geen probleem, ik heb mijn pinpas bij me. - Heel goed. Als u hier uw handtekening zet op het scherm, geef ik u direct uw nieuwe rijbewijs mee.",
+          "content_en": null,
+          "scene_description": "A citizen talks to a staff member at a municipal service counter regarding picking up a driving license.",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "output/mock_exams/audio/a2-listening-2/a2-listening-2-p6.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een gesprek: Aan de balie bij de gemeente.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: A citizen talks to a staff member at a municipal service counter regarding picking up a driving license.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p7",
+          "order_index": 7,
+          "passage_type": "audio",
+          "title": "Omroepbericht in het winkelcentrum",
+          "content_nl": "Attentie, beste bezoekers van winkelcentrum De Passage. Wij willen u erop attenderen dat het winkelcentrum vandaag om zes uur 's avonds sluit in plaats van acht uur, vanwege onderhoudswerkzaamheden aan het elektriciteitsnet. De supermarkt blijft wel open tot zeven uur. Vanaf morgenochtend negen uur zijn alle winkels weer volgens de normale openingstijden geopend. Wij danken u voor uw begrip en wensen u nog een prettige middag.",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "/Users/aruljen/ArulJen/Vscode_workspace/learn-dutch-in-5-minutes/output/mock_exams/audio/a2-listening-2/a2-listening-2-p7.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een bericht: Omroepbericht in het winkelcentrum.\n\nLees eerst de vraag.\nLuister daarna naar het bericht.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Attentie, beste bezoekers van winkelcentrum De Passage. Wij willen u erop attenderen dat het winkelcentrum vandaag om zes uur 's avonds sluit in plaats van acht uur, vanwege onderhoudswerkzaamheden aan het elektriciteitsnet. De supermarkt blijft wel open tot zeven uur. Vanaf morgenochtend negen uur zijn alle winkels weer volgens de normale openingstijden geopend. Wij danken u voor uw begrip en wensen u nog een prettige middag.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p8",
+          "order_index": 8,
+          "passage_type": "audio",
+          "title": "Een uitstapje plannen",
+          "content_nl": "Hey Sophie, zullen we dit weekend naar het Spoorwegmuseum in Utrecht gaan? - Leuk idee! Ik heb gehoord dat er een nieuwe tentoonstelling is over oude stoomtreinen. Gaan we zaterdag of zondag? - Zaterdag voorspellen ze veel regen, dus zondag lijkt me beter. - Goed plan. Als we via de website van het museum kaartjes kopen, krijgen we twee euro korting per kaartje. Normaal kost een kaartje vijftien euro, dus dan betalen we dertien euro. - Oh, dat scheelt weer! Hoe gaan we er naartoe? Met de auto of met de trein? - Utrecht Centraal is erg dichtbij het museum, maar vanaf het station kun je ook met een speciale pendeltrein rechtstreeks naar het museum rijden. Dat is echt super leuk! - Geweldig, laten we de trein nemen. Dan vertrekken we zondag om tien uur vanaf het station.",
+          "content_en": null,
+          "scene_description": "Two friends sit together on a sofa looking at a tablet, planning a day trip.",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "output/mock_exams/audio/a2-listening-2/a2-listening-2-p8.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een gesprek: Een uitstapje plannen.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Two friends sit together on a sofa looking at a tablet, planning a day trip.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "passage_id": "p1",
+          "part_number": null,
+          "order_index": 1,
+          "question_text": "Wat is er gedaan aan de auto?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Twee nieuwe voorbanden geplaatst",
+            "Een nieuwe accu geïnstalleerd",
+            "De motor is gerepareerd",
+            "De remmen zijn vervangen"
+          ],
+          "answer": "Twee nieuwe voorbanden geplaatst",
+          "explanation": "Peter states they had to replace two front tires during the inspection.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q2",
+          "passage_id": "p1",
+          "part_number": null,
+          "order_index": 2,
+          "question_text": "Hoeveel moet mevrouw De Jong betalen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "300 euro",
+            "190 euro",
+            "90 euro",
+            "250 euro"
+          ],
+          "answer": "190 euro",
+          "explanation": "The speaker mentions the total costs are 190 euros.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q3",
+          "passage_id": "p1",
+          "part_number": null,
+          "order_index": 3,
+          "question_text": "Wat moet mevrouw De Jong meenemen wanneer ze de auto ophaalt?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een bankpas",
+            "De oude autosleutel",
+            "Haar kentekenbewijs",
+            "Haar paspoort"
+          ],
+          "answer": "Haar kentekenbewijs",
+          "explanation": "The garage owner asks her to bring her vehicle registration certificate (kentekenbewijs).",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q4",
+          "passage_id": "p2",
+          "part_number": null,
+          "order_index": 4,
+          "question_text": "Waarom wil de klant de boormachine terugbrengen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De boormachine was te duur.",
+            "Haar man heeft er al een.",
+            "De boormachine is kapot.",
+            "Ze wil liever een andere kleur."
+          ],
+          "answer": "Haar man heeft er al een.",
+          "explanation": "The customer mentions her husband already owns the exact same drill.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q5",
+          "passage_id": "p2",
+          "part_number": null,
+          "order_index": 5,
+          "question_text": "Binnen hoeveel dagen kan de klant haar geld terugkrijgen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Binnen een week",
+            "Binnen 14 dagen",
+            "Binnen twee maanden",
+            "Binnen 30 dagen"
+          ],
+          "answer": "Binnen 14 dagen",
+          "explanation": "The store employee clarifies that refunds are granted within 14 days.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q6",
+          "passage_id": "p2",
+          "part_number": null,
+          "order_index": 6,
+          "question_text": "Hoe wil de klant haar geld terugontvangen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Contant geld",
+            "Op haar bankrekening",
+            "Als korting op een nieuw product",
+            "Als cadeaubon"
+          ],
+          "answer": "Op haar bankrekening",
+          "explanation": "The customer states she wants the refund directly on her bank account.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q7",
+          "passage_id": "p3",
+          "part_number": null,
+          "order_index": 7,
+          "question_text": "Hoeveel kosten de boeken op de boekenmarkt?",
+          "question_type": "multiple_choice",
+          "options": [
+            "1 euro per stuk",
+            "50 eurocent",
+            "2 euro per stuk",
+            "50 cent per stuk"
+          ],
+          "answer": "1 euro per stuk",
+          "explanation": "The announcement states second-hand books are sold for 1 euro each.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q8",
+          "passage_id": "p3",
+          "part_number": null,
+          "order_index": 8,
+          "question_text": "Waar wordt het geld van de markt voor gebruikt?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Voor een personeelsfeestje",
+            "Voor het kopen van nieuwe romans",
+            "Voor het herstellen van het gebouw",
+            "Voor nieuwe spelletjes voor de jeugdafdeling"
+          ],
+          "answer": "Voor nieuwe spelletjes voor de jeugdafdeling",
+          "explanation": "The proceeds will be spent on buying new games for the youth department.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q9",
+          "passage_id": "p3",
+          "part_number": null,
+          "order_index": 9,
+          "question_text": "Hoe kunnen bezoekers betalen op de boekenmarkt?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Met een bibliotheekkaart",
+            "Alleen met contant geld",
+            "Alleen met pin",
+            "Met pin en contant geld"
+          ],
+          "answer": "Alleen met pin",
+          "explanation": "The speaker notes that visitors can only pay with a debit card (pin).",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q10",
+          "passage_id": "p4",
+          "part_number": null,
+          "order_index": 10,
+          "question_text": "Wat wil het team als cadeau kopen voor Sarah?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een cadeaubon voor een diner",
+            "Een kookboek",
+            "Een horloge",
+            "Een grote bos bloemen"
+          ],
+          "answer": "Een cadeaubon voor een diner",
+          "explanation": "The colleague suggests getting a gift card for a dinner for two.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q11",
+          "passage_id": "p4",
+          "part_number": null,
+          "order_index": 11,
+          "question_text": "Hoeveel geld legt elke collega in?",
+          "question_type": "multiple_choice",
+          "options": [
+            "10 euro",
+            "2 euro",
+            "5 euro",
+            "2,50 euro"
+          ],
+          "answer": "5 euro",
+          "explanation": "They collect 5 euros per colleague for the gift.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q12",
+          "passage_id": "p4",
+          "part_number": null,
+          "order_index": 12,
+          "question_text": "Tot wanneer kan Mark het geld inleveren?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Tot donderdag",
+            "Tot woensdag",
+            "Tot aanstaande dinsdag",
+            "Tot maandag"
+          ],
+          "answer": "Tot aanstaande dinsdag",
+          "explanation": "Money is collected until next Tuesday.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q13",
+          "passage_id": "p5",
+          "part_number": null,
+          "order_index": 13,
+          "question_text": "Op welk dagdeel is er een plek vrijgekomen voor zwemles?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Op vrijdagavond",
+            "Op zaterdagochtend",
+            "Op woensdagmiddag",
+            "Op zaterdagmiddag"
+          ],
+          "answer": "Op zaterdagochtend",
+          "explanation": "The caller states a spot opened up in the Saturday morning group.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q14",
+          "passage_id": "p5",
+          "part_number": null,
+          "order_index": 14,
+          "question_text": "Wanneer beginnen de zwemlessen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Op 8 september",
+            "Aanstaande maandag",
+            "Eind deze maand",
+            "Over twee weken"
+          ],
+          "answer": "Op 8 september",
+          "explanation": "The caller specifies that the lessons start on September 8th.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q15",
+          "passage_id": "p5",
+          "part_number": null,
+          "order_index": 15,
+          "question_text": "Wat moet meneer Yilmaz doen als hij de plek wil accepteren?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Langs komen bij de zwemschool",
+            "Een e-mail sturen",
+            "Vóór donderdag vijf uur terugbellen",
+            "Geld overmaken"
+          ],
+          "answer": "Vóór donderdag vijf uur terugbellen",
+          "explanation": "He is instructed to call back before Thursday 5:00 PM.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q16",
+          "passage_id": "p6",
+          "part_number": null,
+          "order_index": 16,
+          "question_text": "Wat komt meneer Berg ophalen bij de gemeente?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Zijn paspoort",
+            "Zijn identiteitskaart",
+            "Zijn nieuwe rijbewijs",
+            "Een uittreksel van de gemeente"
+          ],
+          "answer": "Zijn nieuwe rijbewijs",
+          "explanation": "Thomas Berg comes to collect his new driver's license.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q17",
+          "passage_id": "p6",
+          "part_number": null,
+          "order_index": 17,
+          "question_text": "Wat moet meneer Berg laten zien aan de medewerker?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Zijn brief van de afspraak",
+            "Zijn oude rijbewijs",
+            "Zijn huurcontract",
+            "Zijn zorgpas"
+          ],
+          "answer": "Zijn oude rijbewijs",
+          "explanation": "The staff member asks to see his old driving license.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q18",
+          "passage_id": "p6",
+          "part_number": null,
+          "order_index": 18,
+          "question_text": "Waarom kan meneer Berg niet contant betalen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Hij heeft niet genoeg geld bij zich.",
+            "Bij de balies kan alleen met pin betaald worden.",
+            "Het systeem is offline.",
+            "De kassa is kapot."
+          ],
+          "answer": "Bij de balies kan alleen met pin betaald worden.",
+          "explanation": "The employee mentions that payments at municipal counters are debit-card only.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q19",
+          "passage_id": "p7",
+          "part_number": null,
+          "order_index": 19,
+          "question_text": "Hoe laat sluit het winkelcentrum vandaag?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Om 20.00 uur",
+            "Om 17.00 uur",
+            "Om 18.00 uur",
+            "Om 19.00 uur"
+          ],
+          "answer": "Om 18.00 uur",
+          "explanation": "The announcement states the shopping center closes at 6:00 PM (18.00 uur) today.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q20",
+          "passage_id": "p7",
+          "part_number": null,
+          "order_index": 20,
+          "question_text": "Waarom sluit het winkelcentrum eerder?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Vanwege onderhoud aan het elektriciteitsnet",
+            "Vanwege personeelstekort",
+            "Vanwege slecht weer",
+            "Vanwege een feestdag"
+          ],
+          "answer": "Vanwege onderhoud aan het elektriciteitsnet",
+          "explanation": "The reason given is maintenance work on the electrical network.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q21",
+          "passage_id": "p7",
+          "part_number": null,
+          "order_index": 21,
+          "question_text": "Tot hoe laat is de supermarkt vandaag open?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Tot 21.00 uur",
+            "Tot 18.00 uur",
+            "Tot 20.00 uur",
+            "Tot 19.00 uur"
+          ],
+          "answer": "Tot 19.00 uur",
+          "explanation": "The speaker mentions that the supermarket stays open until 7:00 PM (19.00 uur).",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q22",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 22,
+          "question_text": "Waarom kiezen de vrienden voor zondag in plaats van zaterdag?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Ze moeten op zaterdag werken.",
+            "De kaartjes zijn op zondag goedkoper.",
+            "Het museum is op zaterdag gesloten.",
+            "Er wordt op zaterdag veel regen voorspeld."
+          ],
+          "answer": "Er wordt op zaterdag veel regen voorspeld.",
+          "explanation": "They pick Sunday because a lot of rain is forecasted for Saturday.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q23",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 23,
+          "question_text": "Hoeveel kost een museumkaartje als ze het online kopen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "15 euro",
+            "10 euro",
+            "13 euro",
+            "12 euro"
+          ],
+          "answer": "13 euro",
+          "explanation": "Online tickets receive a 2-euro discount on the regular price of 15 euros, coming to 13 euros.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q24",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 24,
+          "question_text": "Hoe reizen de vrienden naar het museum?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Met de bus",
+            "Met de fiets",
+            "Met de trein",
+            "Met de auto"
+          ],
+          "answer": "Met de trein",
+          "explanation": "They decide to take the train to Utrecht.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q25",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 25,
+          "question_text": "Hoe laat vertrekken ze op zondag vanaf het station?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Om 10.30 uur",
+            "Om 9.30 uur",
+            "Om 9.00 uur",
+            "Om 10.00 uur"
+          ],
+          "answer": "Om 10.00 uur",
+          "explanation": "Sophie proposes leaving at 10:00 AM from the station.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "3": {
+      "section": "listening",
+      "exam_number": 3,
+      "level": "A2",
+      "title": "Luisteren - Oefenexamen 3",
+      "instructions": "Luister naar de fragmenten en beantwoord de vragen.",
+      "time_limit_minutes": 45,
+      "total_questions": 25,
+      "parts_count": 1,
+      "pass_threshold": 18,
+      "max_score": 25,
+      "passages": [
+        {
+          "id": "p1",
+          "order_index": 1,
+          "passage_type": "audio",
+          "title": "Dierenartspraktijk De Molen",
+          "content_nl": "Goedemiddag mevrouw Visser, u spreekt met de assistent van dierenartspraktijk De Molen. Ik bel u over uw hond Max. Hij moet zijn jaarlijkse prik tegen hondenziekte hebben. De afspraak staat gepland voor aanstaande dinsdag 18 november om kwart over drie in de middag. Wilt u het inentingsboekje van Max niet vergeten mee te nemen? Als de datum u niet schikt, kunt u ons tot maandag twaalf uur bellen om af te zeggen. Tot dinsdag!",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "/Users/aruljen/ArulJen/Vscode_workspace/learn-dutch-in-5-minutes/output/mock_exams/audio/a2-listening-3/a2-listening-3-p1.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een fragment: Dierenartspraktijk De Molen.\n\nLees eerst de vraag.\nLuister daarna naar het fragment.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Goedemiddag mevrouw Visser, u spreekt met de assistent van dierenartspraktijk De Molen. Ik bel u over uw hond Max. Hij moet zijn jaarlijkse prik tegen hondenziekte hebben. De afspraak staat gepland voor aanstaande dinsdag 18 november om kwart over drie in de middag. Wilt u het inentingsboekje van Max niet vergeten mee te nemen? Als de datum u niet schikt, kunt u ons tot maandag twaalf uur bellen om af te zeggen. Tot dinsdag!\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p2",
+          "order_index": 2,
+          "passage_type": "audio",
+          "title": "In de sportschool",
+          "content_nl": "Goedemorgen! Ik wil graag weer beginnen met sporten. Bieden jullie ook groepslessen aan? - Zeker! We hebben spinning, yoga en zumba. - Ik wil graag meedoen met zumba. Op welke dagen is die les? - Zumba is elke donderdagavond om zeven uur. Een les duurt een uur. - En wat kost een maandabonnement bij jullie? - Een maandabonnement voor alle lessen kost vijfendertig euro. U kunt vandaag gratis een proefles meedoen als u wilt. - Dat klinkt goed, ik doe vanavond meteen mee!",
+          "content_en": null,
+          "scene_description": "A man asks a female fitness trainer about group exercise classes at a gym reception desk.",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "output/mock_exams/audio/a2-listening-3/a2-listening-3-p2.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een gesprek: In de sportschool.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: A man asks a female fitness trainer about group exercise classes at a gym reception desk.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p3",
+          "order_index": 3,
+          "passage_type": "audio",
+          "title": "Bericht van Kapsalon Stijl",
+          "content_nl": "Hallo meneer Jansen, met Sander van Kapsalon Stijl. Ik bel u over uw afspraak voor morgenochtend om negen uur. Helaas is onze kapster ziek geworden. Zou u in plaats daarvan morgenmiddag om twee uur kunnen komen? Dan helpt mijn collega u. Omdat we de afspraak moeten verzetten, krijgt u van ons tien procent korting op de knipbeurt. Bel ons alstublieft even terug om te laten weten of twee uur schikt. Dank u wel!",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "/Users/aruljen/ArulJen/Vscode_workspace/learn-dutch-in-5-minutes/output/mock_exams/audio/a2-listening-3/a2-listening-3-p3.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een bericht: Bericht van Kapsalon Stijl.\n\nLees eerst de vraag.\nLuister daarna naar het bericht.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Hallo meneer Jansen, met Sander van Kapsalon Stijl. Ik bel u over uw afspraak voor morgenochtend om negen uur. Helaas is onze kapster ziek geworden. Zou u in plaats daarvan morgenmiddag om twee uur kunnen komen? Dan helpt mijn collega u. Omdat we de afspraak moeten verzetten, krijgt u van ons tien procent korting op de knipbeurt. Bel ons alstublieft even terug om te laten weten of twee uur schikt. Dank u wel!\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p4",
+          "order_index": 4,
+          "passage_type": "audio",
+          "title": "Bij de bakker",
+          "content_nl": "Goedemorgen! Wat kan ik voor u inpakken? - Goedemorgen. Ik wil graag een volkorenbrood en vier krentenbollen. - Komt voor elkaar. Zoekt u verder nog iets? - Ja, mijn zoon is morgen jarig. Welke taarten heeft u vandaag? - We hebben appelgebak en slagroomtaart. - Doe dan maar een slagroomtaart voor acht personen. - Prima. Dat wordt samen achttien euro en vijftig cent. - Kan ik pinnen? - Ja hoor, graag zelfs!",
+          "content_en": null,
+          "scene_description": "A customer orders bread and pastries from a baker standing behind a bakery display counter.",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "output/mock_exams/audio/a2-listening-3/a2-listening-3-p4.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een gesprek: Bij de bakker.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: A customer orders bread and pastries from a baker standing behind a bakery display counter.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p5",
+          "order_index": 5,
+          "passage_type": "audio",
+          "title": "Omroepbericht op het busstation",
+          "content_nl": "Beste reizigers, attentie alstublieft. Dit is een bericht voor de passagiers van bus 80 richting Arnhem. Vanwege werkzaamheden aan de weg rijdt bus 80 vandaag een andere route. Halte Centrum en halte Parkstraat komen te vervallen. Reizigers voor het centrum kunnen opstappen bij tijdelijke halte Station-Zuid. Bus 80 vertrekt elke twintig minuten vanaf perron B. Onze excuses voor het ongemak.",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "/Users/aruljen/ArulJen/Vscode_workspace/learn-dutch-in-5-minutes/output/mock_exams/audio/a2-listening-3/a2-listening-3-p5.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een bericht: Omroepbericht op het busstation.\n\nLees eerst de vraag.\nLuister daarna naar het bericht.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Beste reizigers, attentie alstublieft. Dit is een bericht voor de passagiers van bus 80 richting Arnhem. Vanwege werkzaamheden aan de weg rijdt bus 80 vandaag een andere route. Halte Centrum en halte Parkstraat komen te vervallen. Reizigers voor het centrum kunnen opstappen bij tijdelijke halte Station-Zuid. Bus 80 vertrekt elke twintig minuten vanaf perron B. Onze excuses voor het ongemak.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p6",
+          "order_index": 6,
+          "passage_type": "audio",
+          "title": "In het tuincentrum",
+          "content_nl": "Goedemiddag! Kan ik u ergens mee helpen? - Ja, graag! Ik zoek een mooie plant voor in mijn woonkamer. Maar er is niet heel veel zonlicht in die kamer. - Dan adviseer ik u deze groene schaduwplant. Die heeft weinig licht nodig. - Dat is fijn! En hoe vaak moet ik deze plant water geven? - Eén keer per week is genoeg. Zorg wel dat de grond niet te nat blijft. - Mooi. Ik neem deze plant mee. En hebt u ook nog zakken potgrond? - Ja hoor, die liggen bij de uitgang aan de linkerkant.",
+          "content_en": null,
+          "scene_description": "A customer consults a staff member among green house plants in a garden center.",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "output/mock_exams/audio/a2-listening-3/a2-listening-3-p6.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een gesprek: In het tuincentrum.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: A customer consults a staff member among green house plants in a garden center.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p7",
+          "order_index": 7,
+          "passage_type": "audio",
+          "title": "Vrijwilligersmarkt op de radio",
+          "content_nl": "Zoekt u leuk en zinvol werk in uw vrije tijd? Kom dan aanstaande zaterdag 10 mei naar de jaarlijkse Vrijwilligersmarkt in wijkcentrum Het Anker! Tussen elf uur 's morgens en drie uur 's middags presenteren meer dan twintig organisaties zich. Denk aan werk in het buurthuis, de bibliotheek of de dierenopvang. De toegang is helemaal gratis en alle bezoekers krijgen een kopje koffie of thee aangeboden. Tot zaterdag!",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "/Users/aruljen/ArulJen/Vscode_workspace/learn-dutch-in-5-minutes/output/mock_exams/audio/a2-listening-3/a2-listening-3-p7.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een fragment: Vrijwilligersmarkt op de radio.\n\nLees eerst de vraag.\nLuister daarna naar het fragment.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Zoekt u leuk en zinvol werk in uw vrije tijd? Kom dan aanstaande zaterdag 10 mei naar de jaarlijkse Vrijwilligersmarkt in wijkcentrum Het Anker! Tussen elf uur 's morgens en drie uur 's middags presenteren meer dan twintig organisaties zich. Denk aan werk in het buurthuis, de bibliotheek of de dierenopvang. De toegang is helemaal gratis en alle bezoekers krijgen een kopje koffie of thee aangeboden. Tot zaterdag!\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p8",
+          "order_index": 8,
+          "passage_type": "audio",
+          "title": "Samen koken",
+          "content_nl": "Hoi Tim! Zullen we afspreken wat we vanavond gaan koken voor het eten? - Prima idee! Wat dacht je van verse pasta met tomatensaus en groenten? - Lekker! Laat me even kijken wat we al in huis hebben. We hebben al pasta en uien in de kast liggen. - Oké, dan moeten we nog tomaten, paprika en kaas kopen. - Klopt! Wie gaat de boodschappen doen? - Ik ga wel even naar de supermarkt om de hoek. Dan kun jij alvast de tafel dekken. - Is goed. Onze vrienden komen om zeven uur eten, dus we hebben genoeg tijd.",
+          "content_en": null,
+          "scene_description": "Two friends stand in a brightly lit kitchen looking at a recipe book and making a shopping list.",
+          "media_urls": [
+            {
+              "type": "audio",
+              "url": "output/mock_exams/audio/a2-listening-3/a2-listening-3-p8.wav"
+            }
+          ],
+          "display_prompt_nl": "U hoort een gesprek: Samen koken.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Two friends stand in a brightly lit kitchen looking at a recipe book and making a shopping list.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "passage_id": "p1",
+          "part_number": null,
+          "order_index": 1,
+          "question_text": "Waarom moet de hond Max naar de dierenartspraktijk?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Voor zijn jaarlijkse inenting",
+            "Voor een operatie aan zijn maag",
+            "Omdat hij een wondje aan zijn poot heeft",
+            "Voor een controle van zijn tanden"
+          ],
+          "answer": "Voor zijn jaarlijkse inenting",
+          "explanation": "The assistant mentions Max needs his annual vaccination (jaarlijkse prik).",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q2",
+          "passage_id": "p1",
+          "part_number": null,
+          "order_index": 2,
+          "question_text": "Op welke dag en tijd is de afspraak?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Dinsdag om 18.00 uur",
+            "Dinsdag om 15.15 uur",
+            "Maandag om 12.00 uur",
+            "Woensdag om 15.15 uur"
+          ],
+          "answer": "Dinsdag om 15.15 uur",
+          "explanation": "The assistant specifies Tuesday 18 November at 15:15 (kwart over drie).",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q3",
+          "passage_id": "p1",
+          "part_number": null,
+          "order_index": 3,
+          "question_text": "Wat moet mevrouw Visser meenemen naar de praktijk?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een nieuwe riem voor Max",
+            "Contant geld",
+            "Een muilkorf",
+            "Het inentingsboekje van Max"
+          ],
+          "answer": "Het inentingsboekje van Max",
+          "explanation": "The caller reminds her to bring Max's vaccination booklet (inentingsboekje).",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q4",
+          "passage_id": "p2",
+          "part_number": null,
+          "order_index": 4,
+          "question_text": "Welke groepsles wil de man gaan volgen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Spinning",
+            "Yoga",
+            "Zumba",
+            "Fitness"
+          ],
+          "answer": "Zumba",
+          "explanation": "The man states he would like to participate in the zumba class.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q5",
+          "passage_id": "p2",
+          "part_number": null,
+          "order_index": 5,
+          "question_text": "Op welke dag is de zumba-les?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Donderdag",
+            "Zondag",
+            "Zaterdag",
+            "Vrijdag"
+          ],
+          "answer": "Donderdag",
+          "explanation": "The trainer says zumba takes place every Thursday evening.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q6",
+          "passage_id": "p2",
+          "part_number": null,
+          "order_index": 6,
+          "question_text": "Hoeveel kost een maandabonnement bij de sportschool?",
+          "question_type": "multiple_choice",
+          "options": [
+            "50 euro",
+            "45 euro",
+            "25 euro",
+            "35 euro"
+          ],
+          "answer": "35 euro",
+          "explanation": "The trainer states a monthly subscription costs 35 euros.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q7",
+          "passage_id": "p3",
+          "part_number": null,
+          "order_index": 7,
+          "question_text": "Waarom belt de kapper meneer Jansen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Om een rekening te sturen",
+            "Om een product aan te bevelen",
+            "Om de afspraak te verzetten",
+            "Om de salon te heropenen"
+          ],
+          "answer": "Om de afspraak te verzetten",
+          "explanation": "The hairdresser calls to move the morning appointment due to a sick colleague.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q8",
+          "passage_id": "p3",
+          "part_number": null,
+          "order_index": 8,
+          "question_text": "Hoe laat kan meneer Jansen morgen komen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Om 13.00 uur",
+            "Om 09.00 uur",
+            "Om 11.00 uur",
+            "Om 14.00 uur"
+          ],
+          "answer": "Om 14.00 uur",
+          "explanation": "The hairdresser suggests coming at 14:00 (twee uur in de middag).",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q9",
+          "passage_id": "p3",
+          "part_number": null,
+          "order_index": 9,
+          "question_text": "Wat krijgt meneer Jansen vanwege de verandering?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een cadeaubon van vijf euro",
+            "Tien procent korting op de knipbeurt",
+            "Een gratis extra behandeling",
+            "Een gratis shampoo"
+          ],
+          "answer": "Tien procent korting op de knipbeurt",
+          "explanation": "The caller offers a ten percent discount on the haircut as compensation.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q10",
+          "passage_id": "p4",
+          "part_number": null,
+          "order_index": 10,
+          "question_text": "Hoeveel krentenbollen koopt de klant?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Twee",
+            "Zes",
+            "Acht",
+            "Vier"
+          ],
+          "answer": "Vier",
+          "explanation": "The customer specifically asks for four raisin buns (vier krentenbollen).",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q11",
+          "passage_id": "p4",
+          "part_number": null,
+          "order_index": 11,
+          "question_text": "Welke taart koopt de klant voor de verjaardag van haar zoon?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Appeltaart",
+            "Chocoladetaart",
+            "Slagroomtaart",
+            "Vruchtentaart"
+          ],
+          "answer": "Slagroomtaart",
+          "explanation": "The customer decides to take a cream cake (slagroomtaart).",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q12",
+          "passage_id": "p4",
+          "part_number": null,
+          "order_index": 12,
+          "question_text": "Hoe betaalt de klant in de winkel?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Met de pinpas",
+            "Via een tikkie",
+            "Met contant geld",
+            "Met een cadeaubon"
+          ],
+          "answer": "Met de pinpas",
+          "explanation": "The customer asks if she can pay by card (pinnen) and the baker agrees.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q13",
+          "passage_id": "p5",
+          "part_number": null,
+          "order_index": 13,
+          "question_text": "Naar welke stad gaat bus 80?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Arnhem",
+            "Utrecht",
+            "Nijmegen",
+            "Ede"
+          ],
+          "answer": "Arnhem",
+          "explanation": "The announcement states bus 80 travels towards Arnhem.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q14",
+          "passage_id": "p5",
+          "part_number": null,
+          "order_index": 14,
+          "question_text": "Waarom rijdt de bus een andere route?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Vanwege een verkeersongeluk",
+            "Vanwege werkzaamheden aan de weg",
+            "Vanwege het slechte weer",
+            "Vanwege een drukke markt"
+          ],
+          "answer": "Vanwege werkzaamheden aan de weg",
+          "explanation": "The announcer cites roadworks (werkzaamheden aan de weg) as the reason for the detour.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q15",
+          "passage_id": "p5",
+          "part_number": null,
+          "order_index": 15,
+          "question_text": "Waar moeten reizigers voor het centrum nu opstappen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Bij het hoofdstation",
+            "Bij halte Station-Zuid",
+            "Bij halte Parkstraat",
+            "Bij perron A"
+          ],
+          "answer": "Bij halte Station-Zuid",
+          "explanation": "Passengers going to the center are told to board at temporary stop Station-Zuid.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q16",
+          "passage_id": "p6",
+          "part_number": null,
+          "order_index": 16,
+          "question_text": "Waar zoekt de klant een plant voor?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Voor in de keuken",
+            "Voor in de woonkamer",
+            "Voor op het balkon",
+            "Voor in de tuin"
+          ],
+          "answer": "Voor in de woonkamer",
+          "explanation": "The customer explains she is looking for a plant for her living room.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q17",
+          "passage_id": "p6",
+          "part_number": null,
+          "order_index": 17,
+          "question_text": "Hoe vaak moet de gekozen plant water krijgen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Elke dag",
+            "Om de dag",
+            "Twee keer per week",
+            "Eén keer per week"
+          ],
+          "answer": "Eén keer per week",
+          "explanation": "The employee advises watering the plant once a week (één keer per week).",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q18",
+          "passage_id": "p6",
+          "part_number": null,
+          "order_index": 18,
+          "question_text": "Wat gaat de klant ook nog kopen in het tuincentrum?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Potgrond",
+            "Een plantenpot",
+            "Bloemvoeding",
+            "Een gieter"
+          ],
+          "answer": "Potgrond",
+          "explanation": "The customer asks where to find potting soil (potgrond).",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q19",
+          "passage_id": "p7",
+          "part_number": null,
+          "order_index": 19,
+          "question_text": "Waar wordt de vrijwilligersmarkt gehouden?",
+          "question_type": "multiple_choice",
+          "options": [
+            "In de bibliotheek",
+            "In het stadhuis",
+            "Op het stadsplein",
+            "In wijkcentrum Het Anker"
+          ],
+          "answer": "In wijkcentrum Het Anker",
+          "explanation": "The radio spot mentions the market is held in community center Het Anker.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q20",
+          "passage_id": "p7",
+          "part_number": null,
+          "order_index": 20,
+          "question_text": "Tot hoe laat duurt de vrijwilligersmarkt?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Tot 13.00 uur",
+            "Tot 14.00 uur",
+            "Tot 15.00 uur",
+            "Tot 11.00 uur"
+          ],
+          "answer": "Tot 15.00 uur",
+          "explanation": "The spot says the event runs until 15:00 (drie uur 's middags).",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q21",
+          "passage_id": "p7",
+          "part_number": null,
+          "order_index": 21,
+          "question_text": "Wat krijgen bezoekers gratis op de markt?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een kopje koffie of thee",
+            "Een gratis boek",
+            "Een tas met kado's",
+            "Een lunchbon"
+          ],
+          "answer": "Een kopje koffie of thee",
+          "explanation": "The announcement states all visitors receive a free cup of coffee or tea.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q22",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 22,
+          "question_text": "Wat gaan de vrienden 's avonds koken?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een verse salade",
+            "Rijst met kip",
+            "Pasta met tomatensaus",
+            "Soep met stokbrood"
+          ],
+          "answer": "Pasta met tomatensaus",
+          "explanation": "Tim suggests preparing fresh pasta with tomato sauce.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q23",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 23,
+          "question_text": "Welk ingrediënt hebben de vrienden al thuis?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Kaas",
+            "Uien",
+            "Tomaten",
+            "Paprika"
+          ],
+          "answer": "Uien",
+          "explanation": "The speaker confirms they already have pasta and onions (uien) in the cupboard.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q24",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 24,
+          "question_text": "Wie gaat de boodschappen halen in de supermarkt?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De vriendin die de tafel dekt",
+            "Beide vrienden samen",
+            "Tim",
+            "Geen van beiden, ze laten het bezorgen"
+          ],
+          "answer": "Tim",
+          "explanation": "Tim says he will go to the local supermarket himself.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q25",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 25,
+          "question_text": "Hoe laat komen de gasten eten?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Om 19.00 uur",
+            "Om 18.30 uur",
+            "Om 18.00 uur",
+            "Om 20.00 uur"
+          ],
+          "answer": "Om 19.00 uur",
+          "explanation": "The speaker mentions their friends arrive to eat at 19:00 (zeven uur).",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        }
+      ]
+    }
+  }
+}

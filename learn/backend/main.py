@@ -17,6 +17,7 @@ import settings
 from routers import admin, auth, catalog, certificates, feedback, flashcards, health, me, mock_exams, progress, quiz
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
+logging.getLogger("httpx").setLevel(logging.WARNING)
 LOGGER = logging.getLogger(__name__)
 
 

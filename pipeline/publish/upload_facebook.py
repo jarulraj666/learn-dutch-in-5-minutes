@@ -91,6 +91,35 @@ def _graph_post(path: str, token: str, **params) -> dict:
     return data
 
 
+def _find_published_reel(page_id: str, token: str, title: str, description: str) -> dict | None:
+    """Return an already-published Reel matching *title*/*description*, else None.
+
+    Guards against duplicate posts when a previous attempt succeeded but its HTTP
+    response was lost (timeout / connection reset).
+    """
+    try:
+        resp = requests.get(
+            f"{_GRAPH_BASE}/{page_id}/video_reels",
+            params={
+                "access_token": token,
+                "fields": "id,post_id,title,description",
+                "limit": 50,
+            },
+            timeout=60,
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+    except Exception as exc:
+        LOGGER.warning("facebook.dedupe_lookup_failed error=%s", exc)
+        return None
+    for item in payload.get("data") or []:
+        if (item.get("title") or "").strip() == title.strip() and (
+            item.get("description") or ""
+        ).strip() == description.strip():
+            return {"video_id": item.get("id", ""), "post_id": item.get("post_id", "")}
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Public upload function
 # ---------------------------------------------------------------------------
@@ -126,6 +155,14 @@ def upload_short_facebook(
     video_size = len(video_bytes)
     title = artifact.get("script", {}).get("topic_title_en", artifact.get("title_slug", ""))
     description = _build_reel_description(artifact, scene_short)
+
+    already = _find_published_reel(page_id, page_token, title[:100], description)
+    if already:
+        LOGGER.warning(
+            "facebook.already_published scene=%s post_id=%s (skipping duplicate upload)",
+            scene_short.get("scene"), already.get("post_id"),
+        )
+        return {**already, "promo_comment_id": None, "deduplicated": True}
 
     LOGGER.info(
         "facebook.upload.start scene=%s page=%s video=%s size=%d bytes",

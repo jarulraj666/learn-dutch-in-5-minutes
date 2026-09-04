@@ -60,11 +60,7 @@ export default async function MockExamSectionPage({ params }: { params: { sectio
           {exams.map((exam, i) => {
             const best = bestAttempts[i];
             return (
-              <Link
-                key={exam.id}
-                href={`/mock-exams/${section}/${exam.id}`}
-                className="card block p-5 transition hover:-translate-y-0.5"
-              >
+              <div key={exam.id} className="card p-5">
                 <h3 className="font-semibold">{exam.title}</h3>
                 <p className="mt-2 text-sm text-slate-600">
                   {exam.total_questions} questions · {exam.time_limit_minutes} min
@@ -75,10 +71,13 @@ export default async function MockExamSectionPage({ params }: { params: { sectio
                     Best score: {best.score}/{best.total} ({best.percent}%) — {best.label}
                   </p>
                 )}
-                <span className="btn-primary mt-4 inline-block px-5 py-2 text-sm">
+                <Link href={`/mock-exams/${section}/${exam.id}`} className="btn-primary mt-4 inline-block px-5 py-2 text-sm">
                   {best ? "Reattempt" : "Start exam"}
-                </span>
-              </Link>
+                </Link>
+                <Link href={`/mock-exams/${section}/${exam.id}/attempts`} className="mt-4 block text-sm font-semibold text-brand-700 hover:underline">
+                  View attempts
+                </Link>
+              </div>
             );
           })}
         </div>

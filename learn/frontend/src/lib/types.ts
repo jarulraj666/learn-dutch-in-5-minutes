@@ -20,6 +20,7 @@ export interface MockExamPassagePublic {
   part_number: number | null;
   passage_type: "text" | "audio" | "video" | "one_picture" | "two_picture" | "three_picture";
   title: string;
+  display_prompt_nl: string;
   content_nl: string;
   content_en: string | null;
   media_urls: { type: string; url: string }[];
@@ -31,8 +32,13 @@ export interface MockExamQuestionPublic {
   part_number: number | null;
   order_index: number;
   question_text: string;
+  question_audio_url: string | null;
+  question_options_audio_url: string | null;
+  option_audio_cues: { option_index: number; start: number; end: number }[] | null;
   question_type: "multiple_choice" | "open_written" | "open_spoken";
   options: string[] | null;
+  category: string | null;
+  option_audio_urls: (string | null)[] | null;
   option_media_urls: (string | null)[] | null;
 }
 
@@ -57,6 +63,12 @@ export interface MockExamQuestionResult {
     possible_answer: string;
     criterion_scores: { criterion: string; score: number }[];
   } | null;
+  speaking_feedback: {
+    label: string;
+    spoken_text: string;
+    feedback: string;
+    possible_answer: string;
+  } | null;
 }
 
 export interface MockExamAttemptResult {
@@ -66,6 +78,7 @@ export interface MockExamAttemptResult {
   total: number;
   percent: number;
   label: string;
+  status: "processing" | "completed" | "failed";
   created_at: string;
   results: MockExamQuestionResult[];
 }
@@ -76,6 +89,7 @@ export interface MockExamAttemptSummary {
   total: number;
   percent: number;
   label: string;
+  status: "processing" | "completed" | "failed";
   created_at: string;
 }
 

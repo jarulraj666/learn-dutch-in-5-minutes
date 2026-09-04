@@ -8,6 +8,8 @@ topic pipeline:
     media   — generate audio/image/video for a previously-generated exam's
               passages, update the staged artifact. Requires Gemini
               image/TTS keys and ffmpeg.
+    question_audio — voice only the per-question audio of a listening/KNM exam
+              (Gemini TTS); leaves passage media untouched.
     export  — push the staged artifact into the learner-app Postgres tables
               (mock_exams / mock_exam_passages / mock_exam_questions).
 
@@ -87,6 +89,30 @@ def run_media(section: str | None, exam_number: int | None, dry_run: bool) -> in
     return 0 if ok else 1
 
 
+def run_question_audio(section: str | None, exam_number: int | None, dry_run: bool, overwrite: bool) -> int:
+    from pipeline.generate.generate_mock_exam import generate_mock_exam_question_audio
+    from pipeline.core.store_mock_exam import load_mock_exam_job, save_mock_exam_job
+
+    ok = 0
+    for sec, num in _exam_targets(section, exam_number):
+        if sec not in ("knm", "listening"):
+            continue
+        exam_id = f"a2-{sec}-{num}"
+        job = load_mock_exam_job(exam_id)
+        if not job or not job.get("artifact"):
+            LOGGER.warning("question_audio stage: no staged content for %s (run --stage content first)", exam_id)
+            continue
+
+        artifact = job["artifact"]
+        voiced = generate_mock_exam_question_audio(artifact, overwrite=overwrite)
+        print(f"{exam_id}: audio ready for {voiced}/{len(artifact.get('questions', []))} question(s)")
+        if not dry_run:
+            save_mock_exam_job(exam_id, sec, num, artifact["level"], artifact, status="media_generated")
+        ok += 1
+    print(f"question_audio stage: {ok} exam(s) processed")
+    return 0 if ok else 1
+
+
 def run_export(section: str | None, exam_number: int | None, database_url: str, dry_run: bool) -> int:
     from pipeline.core.store_mock_exam import (
         load_mock_exam_job, mark_mock_exam_job_exported, push_mock_exam_to_postgres,
@@ -117,8 +143,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Generate and export A2 mock exams")
     parser.add_argument("--section", choices=["reading", "listening", "writing", "speaking", "knm"])
     parser.add_argument("--exam-number", type=int, choices=range(1, 6))
-    parser.add_argument("--stage", choices=["content", "media", "export"], required=True)
+    parser.add_argument("--stage", choices=["content", "media", "question_audio", "export"], required=True)
     parser.add_argument("--dry-run", action="store_true", help="Report only; no writes")
+    parser.add_argument("--overwrite", action="store_true", help="Re-voice questions that already have audio")
     parser.add_argument("--database-url", default=os.environ.get("DATABASE_URL", ""))
     args = parser.parse_args()
 
@@ -126,6 +153,8 @@ def main() -> int:
         return run_content(args.section, args.exam_number, args.dry_run)
     if args.stage == "media":
         return run_media(args.section, args.exam_number, args.dry_run)
+    if args.stage == "question_audio":
+        return run_question_audio(args.section, args.exam_number, args.dry_run, args.overwrite)
     return run_export(args.section, args.exam_number, args.database_url, args.dry_run)
 
 

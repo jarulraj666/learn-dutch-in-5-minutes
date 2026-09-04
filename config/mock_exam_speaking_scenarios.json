@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "description": "Approved A2 speaking scenario plan. Part 1 has a personal two-part video response; Part 2 has a one-picture context plus two linked tasks; Part 3 has a two-picture choice plus a reason or personal detail; Part 4 uses all three pictures. Part 1 script becomes content_nl; Parts 2-4 script becomes question_text.",
+  "exams": {
+    "1": {
+      "parts": {
+        "1": [
+          {"pattern": "personal_routine", "scenario": "A woman watches television in her living room.", "script": "Ik kijk elke avond naar de televisie. Hoe vaak kijkt u televisie? Vertel ook naar welke programma's u graag kijkt.", "required_answer": "Give frequency and favourite programmes."},
+          {"pattern": "personal_routine", "scenario": "A man relaxes in a park after work.", "script": "Ik ga na mijn werk graag naar het park. Wat doet u graag na uw werk of school? Vertel met wie u dat doet.", "required_answer": "Give activity and companion."},
+          {"pattern": "personal_routine", "scenario": "A commuter cycles to work and asks the learner about their routine.", "script": "Ik ga elke dag met de fiets naar mijn werk. Hoe reist u naar werk of school? Vertel ook waarom.", "required_answer": "Give transport method and reason."},
+          {"pattern": "personal_routine", "scenario": "A woman cooks at home at the weekend and asks the learner about their routine.", "script": "Ik kook graag in het weekend. Wat doet u graag in het weekend? Vertel met wie u dat doet.", "required_answer": "Give activity and companion."}
+        ],
+        "2": [
+          {"pattern": "one_picture_named_people", "scenario": "Noah and his grandmother read together in a library.", "script": "Dit zijn Noah en zijn oma. Vertel wat Noah en zijn oma in de bibliotheek doen. Vertel ook wat u graag leest.", "required_answer": "Describe the people and activity, then say what you like to read."},
+          {"pattern": "one_picture_event_next_action", "scenario": "Sofia has received a parcel with a crushed corner.", "script": "Sofia heeft een kapot pakketje ontvangen. Vertel wat er is gebeurd. Vertel ook wat Sofia nu kan doen.", "required_answer": "Describe the event and give a sensible next action."},
+          {"pattern": "one_picture_observation", "scenario": "A student arrives late at school.", "script": "Kijk naar het plaatje. Een leerling komt te laat op school. Waarom komt de leerling te laat? Vertel ook wat de leerling nu moet doen.", "required_answer": "Give a likely reason for arriving late and a practical next action."},
+          {"pattern": "one_picture_observation", "scenario": "A customer needs help at a self-checkout.", "script": "Kijk naar het plaatje. De kassa werkt niet voor deze klant. Vertel wat er aan de hand is. Vertel ook wat de klant nu kan doen.", "required_answer": "Describe the problem and give a practical solution."}
+        ],
+        "3": [
+          {"pattern": "two_picture_choice", "scenario": "Two school buildings: a modern large building and a smaller traditional building.", "script": "U volgt een opleiding. In welk gebouw hebt u liever les? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose a school building and explain why."},
+          {"pattern": "two_picture_choice", "scenario": "Two shops: a busy supermarket and a small clothing shop.", "script": "U zoekt werk in een winkel. In welke winkel werkt u liever? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose a shop to work in and explain why."},
+          {"pattern": "two_picture_choice", "scenario": "Two drinks: a cup of coffee and a glass of fruit juice.", "script": "Kijk naar de plaatjes. Wat drinkt u liever? Vertel ook wanneer u dit graag drinkt. Kies een van de plaatjes.", "required_answer": "Choose a drink and say when you like to drink it."},
+          {"pattern": "two_picture_choice", "scenario": "Two cycling holiday routes: a coastal path and a forest route.", "script": "U gaat op vakantie met de fiets. Waar fietst u liever? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose a cycling route and explain why."}
+        ],
+        "4": [
+          {"pattern": "three_picture_situation", "scenario": "Classroom items: a whiteboard, a laptop, and course books.", "script": "Deze spullen zijn in een leslokaal. Vertel wat voor spullen dat zijn. Vertel ook wat cursisten met de spullen kunnen doen. Gebruik alle plaatjes.", "required_answer": "Name the items and explain what students can do with them."},
+          {"pattern": "three_picture_sequence", "scenario": "A barber washes a customer's hair, cuts it, and dries it.", "script": "Karim werkt als kapper. Kijk naar de plaatjes. Vertel wat Karim doet. Vertel iets over alle plaatjes.", "required_answer": "Describe the barber's actions in all three pictures."},
+          {"pattern": "three_picture_sequence", "scenario": "A person washes hands: turns on the tap, uses soap, and dries hands.", "script": "Meryem gaat haar handen schoonmaken. Kijk naar de plaatjes. Vertel wat Meryem doet. Vertel iets over alle plaatjes.", "required_answer": "Describe every hand-washing step."},
+          {"pattern": "three_picture_situation", "scenario": "Shopping items: a backpack, a lunch box, and a water bottle.", "script": "Nora heeft deze spullen gekocht. Vertel welke spullen dat zijn. Vertel ook wat Nora erin kan doen. Gebruik alle plaatjes.", "required_answer": "Name the items and explain what Nora can put in them."}
+        ]
+      }
+    },
+    "2": {
+      "parts": {
+        "1": [
+          {"pattern": "personal_routine", "scenario": "A man cooks dinner in his kitchen.", "script": "Ik kook bijna elke dag thuis. Hoe vaak kookt u? Vertel ook wat u graag maakt.", "required_answer": "Give frequency and favourite food."},
+          {"pattern": "personal_routine", "scenario": "A woman reads a book during a work break.", "script": "Ik lees graag in mijn pauze op het werk. Leest u ook graag? Vertel welk boek of tijdschrift u kiest.", "required_answer": "Give preference and reading choice."},
+          {"pattern": "personal_routine", "scenario": "A worker travels by train and asks the learner about their routine.", "script": "Ik reis elke dag met de trein naar mijn werk. Hoe gaat u meestal naar werk of school? Vertel ook waarom.", "required_answer": "Give transport method and reason."},
+          {"pattern": "personal_routine", "scenario": "A woman listens to news on her phone and asks the learner about their routine.", "script": "Ik luister elke ochtend naar het nieuws. Hoe vaak volgt u het nieuws? Vertel ook waarom.", "required_answer": "Give frequency and reason."}
+        ],
+        "2": [
+          {"pattern": "one_picture_event_next_action", "scenario": "Rachid has spilled coffee on his work shirt.", "script": "Rachid heeft koffie op zijn shirt gemorst. Vertel wat er is gebeurd. Vertel ook wat Rachid nu kan doen.", "required_answer": "Describe the event and give a sensible next action."},
+          {"pattern": "one_picture_observation", "scenario": "A pharmacist explains medicine to a customer.", "script": "Kijk naar het plaatje. De klant krijgt medicijnen. Vertel welke vraag hij aan de apotheker kan stellen. Vertel ook wanneer hij de medicijnen moet gebruiken.", "required_answer": "Ask a practical medicine question and say when the medicine is used."},
+          {"pattern": "one_picture_named_people", "scenario": "Mila and her father arrive at daycare.", "script": "Dit zijn Mila en haar vader. Vertel wat Mila en haar vader bij de opvang doen. Vertel ook wie u naar school of de opvang brengt.", "required_answer": "Describe the people and activity, then say who brings you to school or daycare."},
+          {"pattern": "one_picture_observation", "scenario": "A waiter serves a meal at a restaurant.", "script": "Kijk naar het plaatje. In het restaurant krijgt een klant eten. Vertel wat de ober doet. Vertel ook wat u graag in een restaurant eet.", "required_answer": "Describe the action and say what you like to eat at a restaurant."}
+        ],
+        "3": [
+          {"pattern": "two_picture_choice", "scenario": "A direct bus route and a train route with a transfer.", "script": "U reist naar uw werk. Welke route kiest u liever? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose a route and explain why."},
+          {"pattern": "two_picture_choice", "scenario": "An online computer course and an in-person language course.", "script": "U wilt iets nieuws leren. Welke cursus kiest u liever? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose a course and explain why."},
+          {"pattern": "two_picture_choice", "scenario": "A one-day holiday request and a full week holiday request.", "script": "U wilt vrij vragen van uw werk. Welke mogelijkheid kiest u liever? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose a leave option and explain why."},
+          {"pattern": "two_picture_choice", "scenario": "A low-data phone plan and an unlimited-data plan.", "script": "U kiest een telefoonabonnement. Welk abonnement kiest u liever? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose a phone plan and explain why."}
+        ],
+        "4": [
+          {"pattern": "three_picture_sequence", "scenario": "A new worker arrives, meets colleagues, and starts a task.", "script": "Sam heeft zijn eerste werkdag. Kijk naar de plaatjes. Vertel wat Sam doet. Vertel iets over alle plaatjes.", "required_answer": "Describe the new worker's actions in all three pictures."},
+          {"pattern": "three_picture_situation", "scenario": "Safety items: a helmet, work gloves, and safety shoes.", "script": "Deze spullen zijn voor veilig werken. Vertel welke spullen dat zijn. Vertel ook wanneer u deze spullen gebruikt. Gebruik alle plaatjes.", "required_answer": "Name the safety items and say when they are used."},
+          {"pattern": "three_picture_sequence", "scenario": "A late delivery: a worker checks the package, calls the client, and delivers it.", "script": "Een bestelling komt te laat. Kijk naar de plaatjes. Vertel wat de werknemer doet. Vertel iets over alle plaatjes.", "required_answer": "Describe the worker's actions in all three pictures."},
+          {"pattern": "three_picture_sequence", "scenario": "A patient calls a dentist, selects a time, and attends an appointment.", "script": "Mina maakt een afspraak bij de tandarts. Kijk naar de plaatjes. Vertel wat Mina doet. Vertel iets over alle plaatjes.", "required_answer": "Describe every step of the dental appointment."}
+        ]
+      }
+    },
+    "3": {
+      "parts": {
+        "1": [
+          {"pattern": "personal_routine", "scenario": "A man calls his family from home.", "script": "Ik bel mijn familie elke zondag. Hoe vaak belt u uw familie? Vertel ook met wie u dan praat.", "required_answer": "Give frequency and family member."},
+          {"pattern": "personal_routine", "scenario": "A woman shops for fruit at a market.", "script": "Ik koop graag fruit op de markt. Koopt u daar ook graag eten? Vertel wat u dan koopt.", "required_answer": "Give preference and food choice."},
+          {"pattern": "personal_routine", "scenario": "A woman exercises in a park and asks the learner about their routine.", "script": "Ik sport graag buiten in het park. Hoe vaak sport u? Vertel ook waarom.", "required_answer": "Give frequency and reason."},
+          {"pattern": "personal_routine", "scenario": "A woman has lunch with family and asks the learner about their routine.", "script": "Ik eet graag samen met mijn familie. Met wie eet u graag? Vertel wat u dan het liefst eet.", "required_answer": "Give companion and preference."}
+        ],
+        "2": [
+          {"pattern": "one_picture_event_next_action", "scenario": "Fatima has dropped her shopping bag and fruit is on the pavement.", "script": "Fatima heeft haar boodschappen laten vallen. Vertel wat er is gebeurd. Vertel ook wat Fatima nu kan doen.", "required_answer": "Describe the event and give a sensible next action."},
+          {"pattern": "one_picture_named_people", "scenario": "Yara and her aunt prepare a birthday table.", "script": "Dit zijn Yara en haar tante. Vertel wat Yara en haar tante doen. Vertel ook wat u doet als iemand jarig is.", "required_answer": "Describe the activity and say what you do for someone's birthday."},
+          {"pattern": "one_picture_observation", "scenario": "A parent talks with a school interpreter.", "script": "Kijk naar het plaatje. Een ouder heeft een gesprek op school. Leg uit waarom een tolk kan helpen. Vertel ook wanneer u zelf hulp met taal vraagt.", "required_answer": "Give a practical reason for an interpreter and say when you ask for language help."},
+          {"pattern": "one_picture_observation", "scenario": "A parent and child cross at a zebra crossing.", "script": "Kijk naar het plaatje. Een ouder steekt met een kind over. Vertel wat zij veilig moeten doen. Vertel ook hoe u veilig oversteekt.", "required_answer": "State safe actions and say how you cross safely."}
+        ],
+        "3": [
+          {"pattern": "two_picture_choice", "scenario": "A daytime language class and an evening language class.", "script": "U wilt Nederlands leren. In welke cursus hebt u liever les? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose a course time and explain why."},
+          {"pattern": "two_picture_choice", "scenario": "Swimming and gentle cycling after an injury.", "script": "U wilt sporten na een blessure. Welke activiteit kiest u liever? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose an activity and explain why."},
+          {"pattern": "two_picture_choice", "scenario": "A parent sends an absence message by phone or visits school.", "script": "Een kind is ziek. Hoe informeert u de school liever? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose a contact method and explain why."},
+          {"pattern": "two_picture_choice", "scenario": "A friend helps move boxes or assemble furniture.", "script": "U gaat verhuizen en vraagt hulp. Welke hulp kiest u liever? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose help and explain why."}
+        ],
+        "4": [
+          {"pattern": "three_picture_sequence", "scenario": "A cyclist falls, someone calls for help, and the cyclist receives care.", "script": "Ibrahim valt van zijn fiets. Kijk naar de plaatjes. Vertel wat Ibrahim doet. Vertel iets over alle plaatjes.", "required_answer": "Describe the events in all three pictures."},
+          {"pattern": "three_picture_situation", "scenario": "Lunch items: fruit, bread, and a bottle of water.", "script": "Deze spullen zijn voor een gezonde lunch. Vertel welke spullen dat zijn. Vertel ook wanneer u deze spullen eet of drinkt. Gebruik alle plaatjes.", "required_answer": "Name the lunch items and say when you eat or drink them."},
+          {"pattern": "three_picture_sequence", "scenario": "A family buys a card, gives a present, and celebrates a birthday.", "script": "Ayla viert een verjaardag. Kijk naar de plaatjes. Vertel wat Ayla doet. Vertel iets over alle plaatjes.", "required_answer": "Describe the birthday activities in all three pictures."},
+          {"pattern": "three_picture_sequence", "scenario": "A patient receives a prescription, goes to the pharmacy, and collects medicine.", "script": "Rachid haalt medicijnen op. Kijk naar de plaatjes. Vertel wat Rachid doet. Vertel iets over alle plaatjes.", "required_answer": "Describe each step of collecting medicine."}
+        ]
+      }
+    },
+    "4": {
+      "parts": {
+        "1": [
+          {"pattern": "personal_routine", "scenario": "A man plans a holiday at home with a suitcase.", "script": "Ik ga graag op vakantie naar de zee. Waar gaat u graag op vakantie heen? Vertel waarom.", "required_answer": "Give holiday destination and reason."},
+          {"pattern": "personal_routine", "scenario": "A woman rides her bicycle in a city street.", "script": "Ik fiets bijna elke dag door de stad. Fietst u ook vaak? Vertel wanneer u de fiets gebruikt.", "required_answer": "Give frequency and situation."},
+          {"pattern": "personal_routine", "scenario": "A woman plans a weekend walk and asks the learner about free time.", "script": "Ik wandel graag buiten in mijn vrije tijd. Wat doet u het liefst? Vertel met wie u dat doet.", "required_answer": "Give activity and companion."},
+          {"pattern": "personal_routine", "scenario": "A man reads travel news on a phone and asks the learner about their routine.", "script": "Ik lees vaak nieuws op mijn telefoon. Hoe vaak gebruikt u internet voor nieuws? Vertel ook waarom.", "required_answer": "Give frequency and reason."}
+        ],
+        "2": [
+          {"pattern": "one_picture_named_people", "scenario": "Omar and his neighbour wait for a bus in the rain.", "script": "Dit zijn Omar en zijn buurvrouw. Vertel wat Omar en zijn buurvrouw doen. Vertel ook wat u doet als het regent.", "required_answer": "Describe the people and activity, then say what you do when it rains."},
+          {"pattern": "one_picture_event_next_action", "scenario": "David has missed the bus while going to the cinema.", "script": "David heeft de bus gemist. Vertel wat er is gebeurd. Vertel ook wat David nu kan doen.", "required_answer": "Describe the event and give a sensible next action."},
+          {"pattern": "one_picture_observation", "scenario": "A resident asks at the municipality counter about parking.", "script": "Kijk naar het plaatje. Deze bewoner wil parkeren bij zijn huis. Leg uit wat hij kan vragen. Vertel ook waar u uw auto of fiets parkeert.", "required_answer": "Ask a practical question and say where you park your car or bicycle."},
+          {"pattern": "one_picture_observation", "scenario": "A tourist asks a passer-by for directions.", "script": "Kijk naar het plaatje. Een toerist zoekt de weg. Vertel wat de persoon kan doen om te helpen. Vertel ook hoe u iemand de weg wijst.", "required_answer": "Give simple directions or help and say how you direct someone."}
+        ],
+        "3": [
+          {"pattern": "two_picture_choice", "scenario": "A campsite cabin and a hotel room.", "script": "U gaat op vakantie. Waar slaapt u liever? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose accommodation and explain why."},
+          {"pattern": "two_picture_choice", "scenario": "A one-day festival ticket and a weekend festival ticket.", "script": "U wilt naar een festival. Welk kaartje kiest u liever? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose a ticket and explain why."},
+          {"pattern": "two_picture_choice", "scenario": "Helping in a garden or helping at a food bank.", "script": "U wilt vrijwilligerswerk doen. Welke activiteit kiest u liever? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose an activity and explain why."},
+          {"pattern": "two_picture_choice", "scenario": "A neighbour collects mail or feeds a cat.", "script": "U bent op reis. Welke hulp vraagt u liever aan uw buur? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose help and explain why."}
+        ],
+        "4": [
+          {"pattern": "three_picture_sequence", "scenario": "A traveller misses a bus, checks a phone, and takes a later train.", "script": "David reist naar zijn werk. Kijk naar de plaatjes. Vertel wat David doet. Vertel iets over alle plaatjes.", "required_answer": "Describe the travel problem and actions in all three pictures."},
+          {"pattern": "three_picture_sequence", "scenario": "A visitor follows a map, crosses a street, and arrives at a public building.", "script": "Sofia zoekt een openbaar gebouw. Kijk naar de plaatjes. Vertel wat Sofia doet. Vertel iets over alle plaatjes.", "required_answer": "Describe the route actions in all three pictures."},
+          {"pattern": "three_picture_sequence", "scenario": "A colleague receives a message, meets friends, and plays football at the weekend.", "script": "Omar heeft een afspraak met vrienden. Kijk naar de plaatjes. Vertel wat Omar doet. Vertel iets over alle plaatjes.", "required_answer": "Describe the weekend activities in all three pictures."},
+          {"pattern": "three_picture_sequence", "scenario": "A person chooses a book, borrows it, and reads it at home.", "script": "Lina leent een boek in de bibliotheek. Kijk naar de plaatjes. Vertel wat Lina doet. Vertel iets over alle plaatjes.", "required_answer": "Describe each library step in all three pictures."}
+        ]
+      }
+    },
+    "5": {
+      "parts": {
+        "1": [
+          {"pattern": "personal_routine", "scenario": "A woman waters plants in her apartment.", "script": "Ik geef mijn planten elke week water. Heeft u planten thuis? Vertel hoe u voor planten zorgt.", "required_answer": "Give preference and routine."},
+          {"pattern": "personal_routine", "scenario": "A man cleans his apartment with a vacuum cleaner.", "script": "Ik maak mijn huis altijd op zaterdag schoon. Wanneer maakt u uw huis schoon? Vertel wat u dan doet.", "required_answer": "Give time and cleaning activity."},
+          {"pattern": "personal_routine", "scenario": "A woman cooks vegetables at home and asks the learner about their routine.", "script": "Ik kook vaak met groenten thuis. Hoe vaak kookt u thuis? Vertel ook waarom.", "required_answer": "Give frequency and reason."},
+          {"pattern": "personal_routine", "scenario": "A man buys shoes with a friend and asks the learner about their routine.", "script": "Ik ga graag samen winkelen. Met wie winkelt u graag? Vertel wat u dan koopt.", "required_answer": "Give companion and preference."}
+        ],
+        "2": [
+          {"pattern": "one_picture_named_people", "scenario": "Lina and her brother paint a bedroom wall.", "script": "Dit zijn Lina en haar broer. Vertel wat Lina en haar broer doen. Vertel ook welke kleur u mooi vindt voor een kamer.", "required_answer": "Describe the activity and say which room colour you like."},
+          {"pattern": "one_picture_event_next_action", "scenario": "Murat has received a bill that he cannot pay today.", "script": "Murat heeft een rekening gekregen die hij niet kan betalen. Vertel wat er is gebeurd. Vertel ook wat Murat nu kan doen.", "required_answer": "Describe the event and give a sensible next action."},
+          {"pattern": "one_picture_observation", "scenario": "An insurance worker looks at water damage in a home.", "script": "Kijk naar het plaatje. Er is waterschade in deze woning. Leg uit wat de bewoner aan de verzekering kan vertellen. Vertel ook wat hij eerst moet doen.", "required_answer": "Describe the problem and give a practical first action."},
+          {"pattern": "one_picture_observation", "scenario": "Residents collect litter in a neighbourhood.", "script": "Kijk naar het plaatje. Deze buren maken hun straat schoon. Vertel wat zij doen. Vertel ook hoe u uw straat schoon houdt.", "required_answer": "Describe the activity and say how you keep your street clean."}
+        ],
+        "3": [
+          {"pattern": "two_picture_choice", "scenario": "A cheap slow internet plan and a faster expensive plan.", "script": "U kiest internet voor thuis. Welk abonnement kiest u liever? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose an internet plan and explain why."},
+          {"pattern": "two_picture_choice", "scenario": "A compact sofa bed and a large sofa for a small apartment.", "script": "U richt een kleine woning in. Welk meubel kiest u liever? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose furniture and explain why."},
+          {"pattern": "two_picture_choice", "scenario": "A cat indoors and a dog being walked outside.", "script": "U wilt een huisdier. Welk dier kiest u liever? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose a pet and explain why."},
+          {"pattern": "two_picture_choice", "scenario": "A savings account and a monthly savings jar.", "script": "U wilt geld sparen. Welke manier kiest u liever? Vertel ook waarom. Kies een van de plaatjes.", "required_answer": "Choose a saving method and explain why."}
+        ],
+        "4": [
+          {"pattern": "three_picture_sequence", "scenario": "A washing machine leaks, a repairer visits, and the machine works again.", "script": "De wasmachine van Murat is kapot. Kijk naar de plaatjes. Vertel wat Murat doet. Vertel iets over alle plaatjes.", "required_answer": "Describe the problem and solution in all three pictures."},
+          {"pattern": "three_picture_situation", "scenario": "Tools: a screwdriver, a hammer, and a measuring tape.", "script": "Deze spullen zijn om een kast in elkaar te zetten. Vertel welke spullen dat zijn. Vertel ook wat u met de spullen kunt doen. Gebruik alle plaatjes.", "required_answer": "Name the tools and explain what they are used for."},
+          {"pattern": "three_picture_sequence", "scenario": "A friend sends an invitation, the person checks a calendar, and sends a polite refusal.", "script": "Meryem krijgt een uitnodiging, maar zij kan niet. Kijk naar de plaatjes. Vertel wat Meryem doet. Vertel iets over alle plaatjes.", "required_answer": "Describe the invitation and refusal actions in all three pictures."},
+          {"pattern": "three_picture_sequence", "scenario": "A resident completes a form, reports a move online, and receives confirmation.", "script": "Nora verhuist naar een nieuw adres. Kijk naar de plaatjes. Vertel wat Nora doet. Vertel iets over alle plaatjes.", "required_answer": "Describe each address-change step in all three pictures."}
+        ]
+      }
+    }
+  }
+}

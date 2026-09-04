@@ -32,6 +32,7 @@
           "content_nl": {"type": "string", "description": "Full text/transcript, source of truth for TTS and reading."},
           "content_en": {"type": "string"},
           "scene_description": {"type": "string", "description": "Visual scene description, used to build the image/video prompt."},
+          "presenter_gender": {"type": "string", "enum": ["female", "male"], "description": "Speaking video presenter gender, used for the image prompt and voice selection."},
           "image_prompt": {"type": "array", "items": {"type": "string"}}
         }
       }
@@ -68,7 +69,7 @@
           "explanation": {"type": "string"},
           "category": {
             "type": ["string", "null"],
-            "enum": ["customs", "education", "healthcare", "housing", "history_geography", null],
+            "enum": ["customs", "work_income", "education", "healthcare", "housing", "institutions", "government", "history_geography", null],
             "description": "KNM topic tag only."
           },
           "max_score": {"type": "integer", "default": 1},

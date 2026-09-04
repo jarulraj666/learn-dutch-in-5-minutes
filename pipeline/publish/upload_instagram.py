@@ -44,7 +44,8 @@ LOGGER = logging.getLogger(__name__)
 
 _GRAPH_BASE = "https://graph.facebook.com/v21.0"
 _POLL_INTERVAL_SEC = 5
-_POLL_TIMEOUT_SEC = 300
+_POLL_TIMEOUT_SEC = int(os.getenv("INSTAGRAM_CONTAINER_TIMEOUT_SEC", "1800"))
+_HTTP_TIMEOUT_SEC = int(os.getenv("INSTAGRAM_HTTP_TIMEOUT_SEC", "300"))
 
 PROMO_COMMENT_TEXT = (
     "📚 Free structured Dutch course with progress tracking, quizzes & "
@@ -227,7 +228,7 @@ def _public_video_url(video_path: Path) -> str:
 
 def _graph_post(path: str, token: str, **params) -> dict:
     url = f"{_GRAPH_BASE}/{path}"
-    resp = requests.post(url, params={"access_token": token, **params}, timeout=60)
+    resp = requests.post(url, params={"access_token": token, **params}, timeout=_HTTP_TIMEOUT_SEC)
     data: dict = resp.json()
     if "error" in data:
         raise RuntimeError(f"Instagram API error: {data['error']}")
@@ -236,18 +237,46 @@ def _graph_post(path: str, token: str, **params) -> dict:
 
 def _graph_get(path: str, token: str, **params) -> dict:
     url = f"{_GRAPH_BASE}/{path}"
-    resp = requests.get(url, params={"access_token": token, **params}, timeout=30)
+    resp = requests.get(url, params={"access_token": token, **params}, timeout=_HTTP_TIMEOUT_SEC)
     data: dict = resp.json()
     if "error" in data:
         raise RuntimeError(f"Instagram API error: {data['error']}")
     return data
 
 
+def _find_published_reel(account_id: str, token: str, caption: str) -> dict | None:
+    """Return an already-published Reel whose caption matches *caption*, else None.
+
+    Guards against duplicate posts when a previous attempt published successfully but
+    the HTTP response was lost (timeout / connection reset).
+    """
+    wanted = (caption or "").strip()
+    if not wanted:
+        return None
+    try:
+        data = _graph_get(
+            f"{account_id}/media", token, fields="id,caption,permalink", limit=50
+        )
+    except Exception as exc:
+        LOGGER.warning("instagram.dedupe_lookup_failed error=%s", exc)
+        return None
+    for item in data.get("data") or []:
+        if (item.get("caption") or "").strip() == wanted:
+            return {"reel_id": item.get("id", ""), "permalink": item.get("permalink", "")}
+    return None
+
+
 def _poll_container(container_id: str, token: str) -> None:
     """Block until the media container reports ``FINISHED`` processing."""
     deadline = time.time() + _POLL_TIMEOUT_SEC
     while time.time() < deadline:
-        result = _graph_get(container_id, token, fields="status_code,status")
+        try:
+            result = _graph_get(container_id, token, fields="status_code,status")
+        except requests.RequestException as exc:
+            # Transient network blip — keep polling rather than restarting the upload.
+            LOGGER.warning("instagram.poll_transient container=%s error=%s", container_id, exc)
+            time.sleep(_POLL_INTERVAL_SEC)
+            continue
         status_code = result.get("status_code", "")
         LOGGER.debug("instagram.poll container=%s status=%s", container_id, status_code)
         if status_code == "FINISHED":
@@ -270,12 +299,18 @@ def _poll_container(container_id: str, token: str) -> None:
 def upload_short_instagram(
     artifact: dict,
     scene_short: dict,
+    pending_container_id: str = "",
+    on_container_created=None,
 ) -> dict:
     """Upload one Short clip to Instagram as a Reel.
 
     Args:
         artifact:    Full episode artifact dict.
         scene_short: One entry from ``artifact["shorts"]``.
+        pending_container_id: Container created by a previous failed attempt; reused
+            instead of creating a new one so retries cannot produce duplicate Reels.
+        on_container_created: Optional callback invoked with a freshly created
+            container id so the caller can persist it before the slow publish steps.
 
     Returns:
         Dict with ``reel_id`` and ``permalink``.
@@ -295,27 +330,47 @@ def upload_short_instagram(
         raise FileNotFoundError(f"Short video not found: {video_file}")
 
     caption = _build_reel_caption(artifact, scene_short)
-    video_url = _public_video_url(video_file)
-
-    LOGGER.info(
-        "instagram.upload.start scene=%d video=%s",
-        scene_short.get("scene"), video_file,
-    )
 
     private_mode = os.getenv("INSTAGRAM_UPLOAD_PRIVATE", "").lower() in ("1", "true", "yes")
 
-    # Step 1: Create media container
-    container_data = _graph_post(
-        f"{account_id}/media",
-        access_token,
-        media_type="REELS",
-        video_url=video_url,
-        caption=caption,
-    )
-    container_id: str = container_data.get("id", "")
-    if not container_id:
-        raise RuntimeError(f"No container ID returned: {container_data}")
-    LOGGER.info("instagram.container_created container_id=%s", container_id)
+    if not private_mode:
+        already = _find_published_reel(account_id, access_token, caption)
+        if already:
+            LOGGER.warning(
+                "instagram.already_published scene=%s reel_id=%s (skipping duplicate upload)",
+                scene_short.get("scene"), already["reel_id"],
+            )
+            return {**already, "promo_comment_id": None, "deduplicated": True}
+
+    container_id = pending_container_id or ""
+    if container_id:
+        LOGGER.info(
+            "instagram.container_reused scene=%s container_id=%s",
+            scene_short.get("scene"), container_id,
+        )
+    else:
+        video_url = _public_video_url(video_file)
+        LOGGER.info(
+            "instagram.upload.start scene=%d video=%s",
+            scene_short.get("scene"), video_file,
+        )
+        # Step 1: Create media container
+        container_data = _graph_post(
+            f"{account_id}/media",
+            access_token,
+            media_type="REELS",
+            video_url=video_url,
+            caption=caption,
+        )
+        container_id = container_data.get("id", "")
+        if not container_id:
+            raise RuntimeError(f"No container ID returned: {container_data}")
+        LOGGER.info("instagram.container_created container_id=%s", container_id)
+        if on_container_created:
+            try:
+                on_container_created(container_id)
+            except Exception as exc:
+                LOGGER.warning("instagram.container_persist_failed error=%s", exc)
 
     # Step 2: Wait for processing
     _poll_container(container_id, access_token)
@@ -331,12 +386,22 @@ def upload_short_instagram(
         }
 
     # Step 3: Publish
-    publish_data = _graph_post(
-        f"{account_id}/media_publish",
-        access_token,
-        creation_id=container_id,
-    )
-    reel_id: str = publish_data.get("id", "")
+    try:
+        publish_data = _graph_post(
+            f"{account_id}/media_publish",
+            access_token,
+            creation_id=container_id,
+        )
+        reel_id: str = publish_data.get("id", "")
+    except Exception as exc:
+        # The publish may have succeeded server-side before the response was lost.
+        LOGGER.warning("instagram.publish_call_failed container_id=%s error=%s", container_id, exc)
+        time.sleep(15)
+        recovered = _find_published_reel(account_id, access_token, caption)
+        if not recovered:
+            raise
+        LOGGER.info("instagram.publish_recovered reel_id=%s", recovered["reel_id"])
+        reel_id = recovered["reel_id"]
     LOGGER.info("instagram.upload.done scene=%d reel_id=%s", scene_short.get("scene"), reel_id)
 
     # Fetch permalink

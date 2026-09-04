@@ -72,6 +72,7 @@ def _pending_platforms(short: dict, enabled: list[str]) -> list[str]:
 # ---------------------------------------------------------------------------
 
 def _upload_reel(
+    topic_id: str,
     artifact: dict,
     artifact_path: Path,
     short: dict,
@@ -88,15 +89,29 @@ def _upload_reel(
         return results
 
     if "instagram" in platforms:
-        try:
-            from pipeline.stages import stage_upload_short_instagram
-            ig_result = stage_upload_short_instagram(artifact, short)
-            artifact["shorts"][short_index]["instagram"] = ig_result
-            results["platforms"]["instagram"] = ig_result
-            LOGGER.info("reels.instagram.ok scene=%d reel_id=%s", scene, ig_result.get("reel_id"))
-        except Exception as exc:
-            LOGGER.warning("reels.instagram.failed scene=%d error=%s", scene, exc)
-            results["platforms"]["instagram"] = {"error": str(exc)}
+        from pipeline.core.db import (
+            claim_instagram_reel_upload,
+            complete_instagram_reel_upload,
+            release_instagram_reel_upload_claim,
+        )
+        claimed = claim_instagram_reel_upload(topic_id, scene)
+        if not claimed:
+            results["platforms"]["instagram"] = {"skipped": "already uploaded or being uploaded"}
+        else:
+            claim_id, claimed_artifact, claimed_short = claimed
+            try:
+                from pipeline.stages import stage_upload_short_instagram
+                ig_result = stage_upload_short_instagram(claimed_artifact, claimed_short)
+                if complete_instagram_reel_upload(topic_id, scene, claim_id, ig_result):
+                    artifact["shorts"][short_index]["instagram"] = ig_result
+                    results["platforms"]["instagram"] = ig_result
+                    LOGGER.info("reels.instagram.ok scene=%d reel_id=%s", scene, ig_result.get("reel_id"))
+                else:
+                    results["platforms"]["instagram"] = {"skipped": "upload claim was superseded"}
+            except Exception as exc:
+                release_instagram_reel_upload_claim(topic_id, scene, claim_id)
+                LOGGER.warning("reels.instagram.failed scene=%d error=%s", scene, exc)
+                results["platforms"]["instagram"] = {"error": str(exc)}
 
     if "tiktok" in platforms:
         try:
@@ -110,13 +125,27 @@ def _upload_reel(
             results["platforms"]["tiktok"] = {"error": str(exc)}
 
     if "facebook" in platforms:
+        from pipeline.core.db import (
+            claim_facebook_reel_upload,
+            complete_facebook_reel_upload,
+            release_facebook_reel_upload_claim,
+        )
+        claimed = claim_facebook_reel_upload(topic_id, scene)
+        if not claimed:
+            results["platforms"]["facebook"] = {"skipped": "already uploaded or being uploaded"}
+            return results
+        claim_id, claimed_artifact, claimed_short = claimed
         try:
             from pipeline.stages import stage_upload_short_facebook
-            fb_result = stage_upload_short_facebook(artifact, short)
+            fb_result = stage_upload_short_facebook(claimed_artifact, claimed_short)
+            if not complete_facebook_reel_upload(topic_id, scene, claim_id, fb_result):
+                results["platforms"]["facebook"] = {"skipped": "upload claim was superseded"}
+                return results
             artifact["shorts"][short_index]["facebook"] = fb_result
             results["platforms"]["facebook"] = fb_result
             LOGGER.info("reels.facebook.ok scene=%d post_id=%s", scene, fb_result.get("post_id"))
         except Exception as exc:
+            release_facebook_reel_upload_claim(topic_id, scene, claim_id)
             LOGGER.warning("reels.facebook.failed scene=%d error=%s", scene, exc)
             results["platforms"]["facebook"] = {"error": str(exc)}
 
@@ -183,7 +212,7 @@ def process_pending_reels(
                 "reels.due topic=%s scene=%d platforms=%s dry_run=%s",
                 tid, short.get("scene", idx), pending, dry_run,
             )
-            result = _upload_reel(artifact, None, short, idx, pending, dry_run)
+            result = _upload_reel(tid, artifact, None, short, idx, pending, dry_run)
             result["topic_id"] = tid
             all_results.append(result)
             artifact_changed = True

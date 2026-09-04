@@ -93,6 +93,7 @@ GEMINI_TTS_API_KEYS: list[str] = _raw_tts_keys if _raw_tts_keys else GEMINI_API_
 
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
 ELEVENLABS_SPEED = get_env_float("ELEVENLABS_SPEED", 0.7)
+ELEVENLABS_SENTENCE_PAUSE_SECONDS = max(0.0, get_env_float("ELEVENLABS_SENTENCE_PAUSE_SECONDS", 0.5))
 ELEVENLABS_VOICE_PLAN = (_env_clean("ELEVENLABS_VOICE_PLAN") or "free").lower()
 ELEVENLABS_MODEL = _env_clean("ELEVENLABS_MODEL") or "eleven_flash_v2_5"
 

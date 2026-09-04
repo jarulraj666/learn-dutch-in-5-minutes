@@ -8,10 +8,12 @@ You are writing **mock exam #{exam_number} of 5** for the **KNM (Kennis van de N
 
 ## Rules
 
-- Produce **exactly 40 questions**, tagged with `category` — **exactly 8 questions per category**: `customs`, `education`, `healthcare`, `housing`, `history_geography`.
-- Group questions under short scenario passages (`passage_type: "text"`, 4-8 questions can share one passage, or use one question per passage — whichever reads naturally) describing a real-life situation (e.g. "Je kind wordt 4 jaar oud." / "Je hebt griep en wilt naar de dokter.").
-- Exactly 4 options per question, exactly one correct. `answer` must exactly match one option.
-- **Distribute the correct answer evenly across option positions 1-4.** Across the 40 questions, the correct answer should land roughly 10 times in each of positions 1, 2, 3 and 4 — never cluster it mostly in one position. Deliberately plan the correct-answer position before writing distractors for each question.
+- Produce **exactly 40 questions**, tagged with `category` — **exactly 5 questions per theme** for the 8 official KNM themes: `customs` (omgangsvormen, waarden en normen), `work_income` (werk en inkomen), `education` (onderwijs en opvoeding), `healthcare` (gezondheid en gezondheidszorg), `housing` (wonen), `institutions` (instanties), `government` (staatsinrichting en rechtsstaat), `history_geography` (geschiedenis en geografie). Keep each theme in one uninterrupted block of 5, because the player shows a theme screen before each block.
+- **One passage per question** (`passage_type: "text"`), because the real exam shows one situation photo per question. Write every question so it stands on its own and leave `content_nl` empty; only add a short situation sentence there when the question cannot be understood without it. Always give the passage a `scene_description` for that question's photo. `scene_description` is handed directly to a media creator: write it as a complete, copy-ready English prompt naming the people, visible action, objects, and setting, and end it with "Naturalistic educational assessment still, landscape 16:9, eye-level medium-wide shot, realistic daylight, clear uncluttered composition, no readable text, labels, logos, speech bubbles or watermarks."
+- Write questions in the real exam's pattern: a short **named-person situation** of one to three very short sentences, each on its own line, followed by the actual question on the last line. Example: `"Ramish is verhuisd.\nHoe krijgt hij een huisarts in zijn nieuwe woonplaats?"`. Use varied first names from different backgrounds. Roughly a quarter of the questions may be plain factual questions without a situation (e.g. "Wat is de hoofdstad van Nederland?"). Use the polite "u"-form instead of a name when the answer options are written in the "u"-form.
+- Name concrete Dutch institutions and terms where the real exam does: DigiD, BSN, Belastingdienst, UWV, KvK, Juridisch Loket, consultatiebureau, huisartsenpost, eigen risico, statiegeld, woningcorporatie, makelaar, notaris.
+- Exactly 3 options per question, exactly one correct. `answer` must exactly match one option. Keep options short — usually a single noun phrase or short sentence ending in a full stop.
+- **Distribute the correct answer evenly across option positions 1-3** — never cluster it mostly in one position. Deliberately plan the correct-answer position before writing distractors for each question.
 - **Factual accuracy matters most in this section** — only state facts about Dutch laws, institutions, customs, geography and history that you are confident are correct (e.g. the role of the huisarts as gatekeeper to specialist care, primary school starting age, the housing corporation/social housing system, well-known Dutch holidays and historical facts). If unsure of a specific number/rule, phrase the question around a more general, safely-correct fact instead of guessing a precise figure.
 - Write scenarios and questions **in Dutch** (matching the real exam).
 - `explanation` (English, admin QA only): 1 short sentence stating the real-world fact that makes the answer correct.
@@ -40,7 +42,8 @@ Return **strict JSON only** — no markdown, no commentary — matching this sha
       "order_index": 1,
       "passage_type": "text",
       "title": "Naar de huisarts",
-      "content_nl": "Je hebt griep en wilt naar de dokter."
+      "content_nl": "Je hebt griep en wilt naar de dokter.",
+      "scene_description": "A patient sitting in a Dutch general practitioner's waiting room."
     }
   ],
   "questions": [
@@ -49,7 +52,7 @@ Return **strict JSON only** — no markdown, no commentary — matching this sha
       "order_index": 1,
       "question_text": "Naar wie ga je eerst als je ziek bent?",
       "question_type": "multiple_choice",
-      "options": ["De huisarts", "Het ziekenhuis", "De apotheek", "De tandarts"],
+      "options": ["De huisarts", "Het ziekenhuis", "De apotheek"],
       "answer": "De huisarts",
       "explanation": "In the Dutch healthcare system, the huisarts (GP) is the first point of contact and gatekeeper to specialist care.",
       "category": "healthcare",

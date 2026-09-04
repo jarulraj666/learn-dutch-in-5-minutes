@@ -223,10 +223,17 @@ def stage_upload_short(
 def stage_upload_short_instagram(
     artifact: dict,
     scene_short: dict,
+    pending_container_id: str = "",
+    on_container_created=None,
 ) -> dict:
     """Upload one rendered Short to Instagram as a Reel."""
     from pipeline.publish.upload_instagram import upload_short_instagram
-    return upload_short_instagram(artifact, scene_short)
+    return upload_short_instagram(
+        artifact,
+        scene_short,
+        pending_container_id=pending_container_id,
+        on_container_created=on_container_created,
+    )
 
 
 def stage_upload_short_tiktok(

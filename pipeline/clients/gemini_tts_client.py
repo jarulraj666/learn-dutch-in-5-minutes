@@ -718,7 +718,9 @@ class RotatingGeminiTTSClient:
             LOGGER.error("Empty dialogue provided.")
             return False
 
-        available_keys = list(self._rotator.available_keys())
+        # Advance the preferred key for every audio request. Fallback keys retain
+        # their original order when the preferred key is rate-limited.
+        available_keys = list(self._rotator.next_key_cycle())
 
         # Use first key for setup: chunking, speech config, prompt building.
         setup_client = GeminiTTSClient(available_keys[0])

@@ -192,7 +192,7 @@ async def mark_youtube_uploaded(topic_id: str, video_id: str):
     Use this when the video was uploaded outside the pipeline.
     """
     from fastapi import HTTPException
-    from services.artifact import load_artifact_from_db, save_artifact
+    from services.artifact import load_artifact_from_db
     from services.db import get_connection
 
     artifact = load_artifact_from_db(topic_id)
@@ -320,7 +320,7 @@ async def mark_instagram_scene_uploaded(
 async def upload_instagram_scene(topic_id: str, scene: int):
     """Upload a single scene's short to Instagram immediately."""
     from fastapi import HTTPException
-    from services.artifact import load_artifact_from_db, save_artifact
+    from services.artifact import load_artifact_from_db
 
     artifact = load_artifact_from_db(topic_id)
     if not artifact:
@@ -331,21 +331,23 @@ async def upload_instagram_scene(topic_id: str, scene: int):
     if idx is None:
         raise HTTPException(status_code=404, detail=f"Scene {scene} not found in shorts")
 
-    short = shorts[idx]
-    if short.get("instagram", {}).get("reel_id"):
-        raise HTTPException(status_code=409, detail="Scene already uploaded to Instagram")
+    from pipeline.core.db import claim_instagram_reel_upload
+    claimed = claim_instagram_reel_upload(topic_id, scene)
+    if not claimed:
+        raise HTTPException(status_code=409, detail="Scene is already uploaded or being uploaded to Instagram")
 
     from pipeline.stages import stage_upload_short_instagram
-    artifact_file = save_artifact(topic_id, artifact)  # ensure disk copy exists for upload stage
+    claim_id, claimed_artifact, claimed_short = claimed
     try:
-        ig_result = stage_upload_short_instagram(artifact, short)
+        ig_result = stage_upload_short_instagram(claimed_artifact, claimed_short)
     except Exception as exc:
+        from pipeline.core.db import release_instagram_reel_upload_claim
+        release_instagram_reel_upload_claim(topic_id, scene, claim_id)
         raise HTTPException(status_code=500, detail=str(exc))
 
-    artifact["shorts"][idx]["instagram"] = ig_result
-    artifact["shorts"][idx]["reel_id"] = ig_result.get("reel_id")
-    artifact["shorts"][idx]["permalink"] = ig_result.get("permalink")
-    save_artifact(topic_id, artifact)
+    from pipeline.core.db import complete_instagram_reel_upload
+    if not complete_instagram_reel_upload(topic_id, scene, claim_id, ig_result):
+        raise HTTPException(status_code=409, detail="Instagram upload claim was superseded")
     return ig_result
 
 
@@ -420,18 +422,23 @@ async def upload_facebook_scene(topic_id: str, scene: int):
     idx = next((i for i, s in enumerate(shorts) if str(s.get("scene")) == str(scene)), None)
     if idx is None:
         raise HTTPException(status_code=404, detail=f"Scene {scene} not found in shorts")
-    if artifact["shorts"][idx].get("facebook", {}).get("post_id"):
-        raise HTTPException(status_code=409, detail="Scene already uploaded to Facebook")
+    from pipeline.core.db import claim_facebook_reel_upload
+    claimed = claim_facebook_reel_upload(topic_id, scene)
+    if not claimed:
+        raise HTTPException(status_code=409, detail="Scene is already uploaded or being uploaded to Facebook")
 
     from pipeline.stages import stage_upload_short_facebook
-    artifact_file = save_artifact(topic_id, artifact)
+    claim_id, claimed_artifact, claimed_short = claimed
     try:
-        fb_result = stage_upload_short_facebook(artifact, shorts[idx])
+        fb_result = stage_upload_short_facebook(claimed_artifact, claimed_short)
     except Exception as exc:
+        from pipeline.core.db import release_facebook_reel_upload_claim
+        release_facebook_reel_upload_claim(topic_id, scene, claim_id)
         raise HTTPException(status_code=500, detail=str(exc))
 
-    artifact["shorts"][idx]["facebook"] = fb_result
-    save_artifact(topic_id, artifact)
+    from pipeline.core.db import complete_facebook_reel_upload
+    if not complete_facebook_reel_upload(topic_id, scene, claim_id, fb_result):
+        raise HTTPException(status_code=409, detail="Facebook upload claim was superseded")
     return fb_result
 
 

@@ -88,6 +88,26 @@ def list_mock_exam_jobs(section: str | None = None) -> list[dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
+def list_mock_exam_artifacts(section: str, exclude_exam_id: str | None = None) -> list[dict[str, Any]]:
+    """Return staged artifacts for one section, excluding the exam being regenerated."""
+    from pipeline.core.db import get_connection
+
+    query = "SELECT id, exam_number, artifact_json FROM mock_exam_jobs WHERE section = ? AND artifact_json IS NOT NULL"
+    params: tuple = (section,)
+    if exclude_exam_id:
+        query += " AND id != ?"
+        params += (exclude_exam_id,)
+    query += " ORDER BY exam_number"
+
+    with get_connection() as conn:
+        _ensure_mock_exam_jobs_table(conn)
+        rows = conn.execute(query, params).fetchall()
+    return [
+        {"id": row["id"], "exam_number": row["exam_number"], "artifact": json.loads(row["artifact_json"])}
+        for row in rows
+    ]
+
+
 def mark_mock_exam_job_exported(exam_id: str) -> None:
     from pipeline.core.db import get_connection
 
@@ -139,11 +159,12 @@ def upsert_mock_exam(cur, artifact: dict[str, Any]) -> None:
 
     cur.executemany(
         "INSERT INTO mock_exam_passages (id, exam_id, order_index, part_number, passage_type, "
-        "title, content_nl, content_en, media_urls, render_manifest_path, image_prompt) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        "title, display_prompt_nl, scene_description, content_nl, content_en, media_urls, render_manifest_path, image_prompt) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
         [
             (p["id"], exam_id, p["order_index"], p.get("part_number"), p["passage_type"],
-             p.get("title", ""), p.get("content_nl", ""), p.get("content_en"),
+             p.get("title", ""), p.get("display_prompt_nl", ""), p.get("scene_description", ""),
+             p.get("content_nl", ""), p.get("content_en"),
              Jsonb(p.get("media_urls") or []), p.get("render_manifest_path"),
              Jsonb(p["image_prompt"]) if p.get("image_prompt") else None)
             for p in artifact.get("passages", [])
@@ -151,17 +172,20 @@ def upsert_mock_exam(cur, artifact: dict[str, Any]) -> None:
     )
     cur.executemany(
         "INSERT INTO mock_exam_questions (id, exam_id, passage_id, part_number, order_index, "
-        "question_text, question_type, options, answer, explanation, category, max_score, "
-        "grading_rubric, model_answer, year_asked, option_image_prompts, option_media_urls) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        "question_text, question_audio_url, question_options_audio_url, option_audio_cues, "
+        "question_type, options, answer, explanation, category, max_score, grading_rubric, model_answer, "
+        "year_asked, option_image_prompts, option_audio_urls, option_media_urls) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
         [
             (q["id"], exam_id, q.get("passage_id"), q.get("part_number"), q["order_index"],
-             q["question_text"], q["question_type"],
+             q["question_text"], q.get("question_audio_url"), q.get("question_options_audio_url"),
+             Jsonb(q["option_audio_cues"]) if q.get("option_audio_cues") else None, q["question_type"],
              Jsonb(q["options"]) if q.get("options") else None, q.get("answer"),
              q.get("explanation", ""), q.get("category"), q.get("max_score", 1),
              Jsonb(q["grading_rubric"]) if q.get("grading_rubric") else None,
              q.get("model_answer"), q.get("year_asked"),
              Jsonb(q["option_image_prompts"]) if q.get("option_image_prompts") else None,
+             Jsonb(q["option_audio_urls"]) if q.get("option_audio_urls") else None,
              Jsonb(q["option_media_urls"]) if q.get("option_media_urls") else None)
             for q in artifact.get("questions", [])
         ],

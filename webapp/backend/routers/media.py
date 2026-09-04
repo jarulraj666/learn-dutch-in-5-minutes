@@ -25,7 +25,13 @@ def _safe_resolve(rel_path: str) -> Path:
 @router.get("/media/audio")
 def serve_audio(path: str):
     p = _safe_resolve(path)
-    return FileResponse(p, media_type="audio/wav")
+    media_type = {
+        ".mp3": "audio/mpeg",
+        ".wav": "audio/wav",
+        ".m4a": "audio/mp4",
+        ".ogg": "audio/ogg",
+    }.get(p.suffix.lower(), "application/octet-stream")
+    return FileResponse(p, media_type=media_type)
 
 
 @router.get("/media/video")

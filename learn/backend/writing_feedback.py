@@ -32,11 +32,32 @@ def _extract_json(text: str) -> dict[str, Any]:
 
 async def _grade_writing_task(task: dict[str, Any], keys: list[str], key_offset: int) -> dict[str, Any]:
     """Grade one task, preferring a distinct key when several are available."""
-    prompt = """You are a fair Dutch NT2 Programma I (A2) writing examiner.
-Evaluate the learner answer against the task, source text, and rubric. Award only whole points and never exceed each criterion's maximum. `adequacy_understandability` is a strict gatekeeper: award it 0 when the answer is off-topic, not understandable, or misses a required task point; when it is 0, all other criterion scores must be 0 and the overall `score` must be 0. Within adequacy, check the required format: e-mails need a greeting, message, and closing; notes must communicate every requested action; wijkkrant texts need at least three complete sentences and all three requested ideas; forms need every factual field, appropriate selections, and all open fields completed. Assess grammar for basic Dutch sentence structure and word order; spelling for everyday words, capital letters, sentence punctuation, and factual details in forms; vocabulary for appropriate everyday Dutch; and cohesion for logical sentence flow using basic connectors. Do not penalize harmless article confusion at A2 when meaning is clear. Your `score` must equal the sum of `criterion_scores`. Be encouraging but precise. Give feedback primarily in clear, concise English. You may quote a Dutch phrase from the learner's answer and provide a corrected Dutch phrase when that makes the improvement concrete, but explain the correction in English. Also provide one short, original possible answer in Dutch that satisfies the task; it must be a fresh example, not a copy of the stored model answer.
+    is_speaking_transcript = task.get("assessment_mode") == "speaking_transcript"
+    examiner = "speaking" if is_speaking_transcript else "writing"
+    assessment_criteria = (
+        "Assess task completion, intelligibility, relevant everyday vocabulary, and basic spoken Dutch sentence structure."
+        if is_speaking_transcript
+        else "Assess grammar for basic Dutch sentence structure and word order; spelling for everyday words, capital letters, sentence punctuation, and factual details in forms; vocabulary for appropriate everyday Dutch; and cohesion for logical sentence flow using basic connectors."
+    )
+    response_criteria = (
+        '[{"criterion":"adequacy_understandability","score":0},{"criterion":"grammar","score":0},{"criterion":"vocabulary","score":0},{"criterion":"cohesion","score":0}]'
+        if is_speaking_transcript
+        else '[{"criterion":"adequacy_understandability","score":0},{"criterion":"grammar","score":0},{"criterion":"spelling","score":0},{"criterion":"vocabulary","score":0},{"criterion":"cohesion","score":0}]'
+    )
+    transcript_instruction = (
+        "This is an automatic WhisperX transcript of spoken Dutch, not a written answer. "
+        "Assess what the learner intended and communicated aloud. Ignore misspellings, missing punctuation, "
+        "capitalisation, and likely speech-recognition errors; do not mention or score spelling. "
+        "Focus on task completion, intelligibility, relevant vocabulary, and spoken sentence structure. "
+        if is_speaking_transcript else ""
+    )
+    prompt = f"""You are a fair Dutch NT2 Programma I (A2) {examiner} examiner.
+Evaluate the learner answer against the task, source text, and rubric. Award only whole points and never exceed each criterion's maximum. `adequacy_understandability` is a strict gatekeeper: award it 0 when the answer is off-topic, not understandable, or misses a required task point; when it is 0, all other criterion scores must be 0 and the overall `score` must be 0. Within adequacy, check the required format: e-mails need a greeting, message, and closing; notes must communicate every requested action; wijkkrant texts need at least three complete sentences and all three requested ideas; forms need every factual field, appropriate selections, and all open fields completed. {assessment_criteria} Do not penalize harmless article confusion at A2 when meaning is clear. Your `score` must equal the sum of `criterion_scores`. Be encouraging but precise. Give feedback primarily in clear, concise English. You may quote a Dutch phrase from the learner's answer and provide a corrected Dutch phrase when that makes the improvement concrete, but explain the correction in English. In `possible_answer`, provide an improved Dutch rewrite of the learner's own answer: preserve their facts, choices, names, dates, and intended meaning; correct grammar, spelling, word order, punctuation, and cohesion; and add only the minimum content needed to satisfy a missing task requirement. Do not replace it with an unrelated example or copy the stored model answer.
+
+{transcript_instruction}
 
 Return strict JSON only, in this exact shape:
-{"id":"task id","score":0,"feedback":"2-4 short sentences, mostly English. Mention what was done well and the most useful improvements; optionally include one short Dutch correction in quotation marks.","possible_answer":"A short original Dutch answer that completes the task.","criterion_scores":[{"criterion":"adequacy_understandability","score":0},{"criterion":"grammar","score":0},{"criterion":"spelling","score":0},{"criterion":"vocabulary","score":0},{"criterion":"cohesion","score":0}]}
+{{"id":"task id","score":0,"feedback":"2-4 short sentences, mostly English. Mention what was done well and the most useful improvements; optionally include one short Dutch correction in quotation marks.","possible_answer":"An improved Dutch rewrite of the learner's answer that preserves their details and completes the task.","criterion_scores":{response_criteria}}}
 
 TASK:
 """ + json.dumps(task, ensure_ascii=False)

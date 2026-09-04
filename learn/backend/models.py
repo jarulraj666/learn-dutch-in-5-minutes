@@ -274,6 +274,8 @@ class MockExamPassageAdmin(BaseModel):
     part_number: int | None
     passage_type: str
     title: str
+    display_prompt_nl: str = ""
+    scene_description: str = ""
     content_nl: str
     content_en: str | None
     media_urls: list[dict[str, Any]]
@@ -287,6 +289,9 @@ class MockExamQuestionAdmin(BaseModel):
     part_number: int | None
     order_index: int
     question_text: str
+    question_audio_url: str | None = None
+    question_options_audio_url: str | None = None
+    option_audio_cues: list[dict[str, Any]] | None = None
     question_type: str
     options: list[str] | None
     answer: str | None
@@ -297,6 +302,7 @@ class MockExamQuestionAdmin(BaseModel):
     model_answer: str | None
     year_asked: int | None
     option_image_prompts: list[str] | None = None
+    option_audio_urls: list[str | None] | None = None
     option_media_urls: list[str | None] | None = None
 
 
@@ -313,6 +319,7 @@ class MockExamPassagePublic(BaseModel):
     part_number: int | None
     passage_type: str
     title: str
+    display_prompt_nl: str = ""
     content_nl: str
     content_en: str | None
     media_urls: list[dict[str, Any]]
@@ -325,8 +332,13 @@ class MockExamQuestionPublic(BaseModel):
     part_number: int | None
     order_index: int
     question_text: str
+    question_audio_url: str | None = None
+    question_options_audio_url: str | None = None
+    option_audio_cues: list[dict[str, Any]] | None = None
     question_type: str
     options: list[str] | None
+    category: str | None = None
+    option_audio_urls: list[str | None] | None = None
     option_media_urls: list[str | None] | None = None
 
 
@@ -348,6 +360,13 @@ class WritingFeedback(BaseModel):
     criterion_scores: list[dict[str, Any]] = []
 
 
+class SpeakingFeedback(BaseModel):
+    label: str
+    spoken_text: str
+    feedback: str
+    possible_answer: str
+
+
 class MockExamQuestionResult(BaseModel):
     id: str
     question_type: str
@@ -357,6 +376,7 @@ class MockExamQuestionResult(BaseModel):
     answer: str | None = None
     explanation: str | None = None
     writing_feedback: WritingFeedback | None = None
+    speaking_feedback: SpeakingFeedback | None = None
 
 
 class MockExamAttemptResult(BaseModel):
@@ -366,6 +386,7 @@ class MockExamAttemptResult(BaseModel):
     total: int
     percent: int
     label: str
+    status: str = "completed"
     created_at: datetime
     results: list[MockExamQuestionResult]
 
@@ -376,4 +397,5 @@ class MockExamAttemptSummary(BaseModel):
     total: int
     percent: int
     label: str
+    status: str = "completed"
     created_at: datetime

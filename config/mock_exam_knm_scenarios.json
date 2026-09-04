@@ -1,0 +1,4687 @@
+{
+  "version": 1,
+  "description": "Approved A2 KNM (Kennis van de Nederlandse Maatschappij) exam plans. Each exam has 40 questions grouped into the 8 official KNM themes of 5 questions, 45 minutes, pass mark 28/40. Following the DUO oefenexamen: 3 answer options per question and one photo per question, so every question is its own passage. Questions are self-contained; a passage only carries situation text (content_nl) when the question needs it. Content is authored and approved, so pipeline/generate/generate_mock_exam.py uses it verbatim instead of calling the LLM. Photos and question audio are added from the Media tab of the mock-exam admin app.",
+  "source": "Hand-authored from the DUO KNM oefenexamen structure.",
+  "exams": {
+    "1": {
+      "section": "knm",
+      "exam_number": 1,
+      "level": "A2",
+      "title": "KNM - Oefenexamen 1",
+      "instructions": "Beantwoord de vragen over de Nederlandse maatschappij.",
+      "time_limit_minutes": 45,
+      "total_questions": 40,
+      "parts_count": 1,
+      "pass_threshold": 28,
+      "max_score": 40,
+      "passages": [
+        {
+          "id": "p1",
+          "order_index": 1,
+          "passage_type": "text",
+          "title": "Een uitnodiging voor een verjaardag",
+          "content_nl": "",
+          "scene_description": "Guests arriving at a Dutch living room birthday party, shaking hands with the smiling woman whose birthday it is"
+        },
+        {
+          "id": "p2",
+          "order_index": 2,
+          "passage_type": "text",
+          "title": "Een uitnodiging voor een verjaardag",
+          "content_nl": "",
+          "scene_description": "A visitor on a Dutch doorstep holding a small wrapped present and a bunch of flowers"
+        },
+        {
+          "id": "p3",
+          "order_index": 3,
+          "passage_type": "text",
+          "title": "Een uitnodiging voor een verjaardag",
+          "content_nl": "",
+          "scene_description": "A host pouring coffee for a visitor at a living room table with a biscuit tin open"
+        },
+        {
+          "id": "p4",
+          "order_index": 4,
+          "passage_type": "text",
+          "title": "Feestdagen in Nederland",
+          "content_nl": "",
+          "scene_description": "A Dutch street on King's Day with orange bunting, people in orange clothes and a flea market stall"
+        },
+        {
+          "id": "p5",
+          "order_index": 5,
+          "passage_type": "text",
+          "title": "Feestdagen in Nederland",
+          "content_nl": "",
+          "scene_description": "People standing silently around a war memorial in a Dutch town square at dusk on 4 May"
+        },
+        {
+          "id": "p6",
+          "order_index": 6,
+          "passage_type": "text",
+          "title": "Uw eerste baan",
+          "content_nl": "",
+          "scene_description": "A new employee and a manager signing an employment contract across an office desk"
+        },
+        {
+          "id": "p7",
+          "order_index": 7,
+          "passage_type": "text",
+          "title": "Uw eerste baan",
+          "content_nl": "",
+          "scene_description": "A person at a kitchen table studying a Dutch payslip with a calculator beside it"
+        },
+        {
+          "id": "p8",
+          "order_index": 8,
+          "passage_type": "text",
+          "title": "Werken en belasting",
+          "content_nl": "",
+          "scene_description": "A person looking at a Dutch tax letter and a bank statement on a desk"
+        },
+        {
+          "id": "p9",
+          "order_index": 9,
+          "passage_type": "text",
+          "title": "Zonder werk",
+          "content_nl": "",
+          "scene_description": "A jobseeker talking with an adviser at a Dutch benefits office counter"
+        },
+        {
+          "id": "p10",
+          "order_index": 10,
+          "passage_type": "text",
+          "title": "Het minimumloon",
+          "content_nl": "",
+          "scene_description": "A newspaper article about the Dutch minimum wage lying open on a breakfast table"
+        },
+        {
+          "id": "p11",
+          "order_index": 11,
+          "passage_type": "text",
+          "title": "Uw kind wordt vier jaar",
+          "content_nl": "",
+          "scene_description": "A four-year-old child with a backpack waving goodbye at a Dutch primary school gate"
+        },
+        {
+          "id": "p12",
+          "order_index": 12,
+          "passage_type": "text",
+          "title": "Uw kind wordt vier jaar",
+          "content_nl": "",
+          "scene_description": "A five-year-old walking into a Dutch primary school classroom with other pupils"
+        },
+        {
+          "id": "p13",
+          "order_index": 13,
+          "passage_type": "text",
+          "title": "Uw kind wordt vier jaar",
+          "content_nl": "",
+          "scene_description": "A Dutch primary school corridor with eight classroom doors numbered by year group"
+        },
+        {
+          "id": "p14",
+          "order_index": 14,
+          "passage_type": "text",
+          "title": "Naar de middelbare school",
+          "content_nl": "",
+          "scene_description": "A teacher discussing a secondary school advice form with parents in a Dutch classroom"
+        },
+        {
+          "id": "p15",
+          "order_index": 15,
+          "passage_type": "text",
+          "title": "Naar de middelbare school",
+          "content_nl": "",
+          "scene_description": "Parents sitting on small chairs at a parents' evening in a Dutch primary school classroom"
+        },
+        {
+          "id": "p16",
+          "order_index": 16,
+          "passage_type": "text",
+          "title": "U bent ziek",
+          "content_nl": "",
+          "scene_description": "A patient describing symptoms to a Dutch general practitioner in a consulting room"
+        },
+        {
+          "id": "p17",
+          "order_index": 17,
+          "passage_type": "text",
+          "title": "U bent ziek",
+          "content_nl": "",
+          "scene_description": "A general practitioner writing a hospital referral letter for a patient"
+        },
+        {
+          "id": "p18",
+          "order_index": 18,
+          "passage_type": "text",
+          "title": "U bent ziek",
+          "content_nl": "",
+          "scene_description": "A pharmacist handing a bag of prescription medicine to a customer at a Dutch pharmacy"
+        },
+        {
+          "id": "p19",
+          "order_index": 19,
+          "passage_type": "text",
+          "title": "U bent ziek",
+          "content_nl": "",
+          "scene_description": "A person phoning the out-of-hours GP service from a living room on a Sunday evening"
+        },
+        {
+          "id": "p20",
+          "order_index": 20,
+          "passage_type": "text",
+          "title": "De zorgverzekering",
+          "content_nl": "",
+          "scene_description": "A parent with a ten-year-old child at a Dutch health insurance office counter"
+        },
+        {
+          "id": "p21",
+          "order_index": 21,
+          "passage_type": "text",
+          "title": "Een huis huren",
+          "content_nl": "",
+          "scene_description": "A housing corporation office with staff helping residents at a service desk"
+        },
+        {
+          "id": "p22",
+          "order_index": 22,
+          "passage_type": "text",
+          "title": "Een huis huren",
+          "content_nl": "",
+          "scene_description": "A person registering for social housing on a laptop at a kitchen table"
+        },
+        {
+          "id": "p23",
+          "order_index": 23,
+          "passage_type": "text",
+          "title": "Problemen in huis",
+          "content_nl": "",
+          "scene_description": "A tenant looking at a broken central heating boiler in a Dutch hallway"
+        },
+        {
+          "id": "p24",
+          "order_index": 24,
+          "passage_type": "text",
+          "title": "Problemen in huis",
+          "content_nl": "",
+          "scene_description": "A tenant standing on a chair replacing a light bulb in a rented flat"
+        },
+        {
+          "id": "p25",
+          "order_index": 25,
+          "passage_type": "text",
+          "title": "Problemen in huis",
+          "content_nl": "",
+          "scene_description": "A tired resident in bed at night while loud music comes through the wall from the neighbours"
+        },
+        {
+          "id": "p26",
+          "order_index": 26,
+          "passage_type": "text",
+          "title": "De zorgverzekering",
+          "content_nl": "",
+          "scene_description": "A family reading a Dutch health insurance information letter together at home"
+        },
+        {
+          "id": "p27",
+          "order_index": 27,
+          "passage_type": "text",
+          "title": "De zorgverzekering",
+          "content_nl": "",
+          "scene_description": "A person applying for healthcare benefit on a laptop with letters on the table"
+        },
+        {
+          "id": "p28",
+          "order_index": 28,
+          "passage_type": "text",
+          "title": "Een huis huren",
+          "content_nl": "",
+          "scene_description": "A tenant checking rent benefit information on a laptop in a small flat"
+        },
+        {
+          "id": "p29",
+          "order_index": 29,
+          "passage_type": "text",
+          "title": "Een huis huren",
+          "content_nl": "",
+          "scene_description": "A resident registering a new address at a Dutch municipality service desk"
+        },
+        {
+          "id": "p30",
+          "order_index": 30,
+          "passage_type": "text",
+          "title": "Problemen in huis",
+          "content_nl": "",
+          "scene_description": "A tenant and landlord in a disagreement about the rent, papers spread on the table"
+        },
+        {
+          "id": "p31",
+          "order_index": 31,
+          "passage_type": "text",
+          "title": "Nederland leren kennen",
+          "content_nl": "",
+          "scene_description": "The Dutch parliament buildings at the Binnenhof in The Hague"
+        },
+        {
+          "id": "p32",
+          "order_index": 32,
+          "passage_type": "text",
+          "title": "Nederland is een democratie",
+          "content_nl": "",
+          "scene_description": "Dutch voters queueing outside a polling station on election day"
+        },
+        {
+          "id": "p33",
+          "order_index": 33,
+          "passage_type": "text",
+          "title": "Wetten maken",
+          "content_nl": "",
+          "scene_description": "The plenary hall of the Dutch House of Representatives during a debate"
+        },
+        {
+          "id": "p34",
+          "order_index": 34,
+          "passage_type": "text",
+          "title": "Naar de rechter",
+          "content_nl": "",
+          "scene_description": "A judge in a Dutch courtroom listening to two parties"
+        },
+        {
+          "id": "p35",
+          "order_index": 35,
+          "passage_type": "text",
+          "title": "Vrijheid van meningsuiting",
+          "content_nl": "",
+          "scene_description": "People holding a peaceful demonstration with banners on a Dutch square"
+        },
+        {
+          "id": "p36",
+          "order_index": 36,
+          "passage_type": "text",
+          "title": "Nederland leren kennen",
+          "content_nl": "",
+          "scene_description": "A large map of the Netherlands showing the twelve provinces on a classroom wall"
+        },
+        {
+          "id": "p37",
+          "order_index": 37,
+          "passage_type": "text",
+          "title": "Nederland leren kennen",
+          "content_nl": "",
+          "scene_description": "The canals and old houses of central Amsterdam on a bright day"
+        },
+        {
+          "id": "p38",
+          "order_index": 38,
+          "passage_type": "text",
+          "title": "Nederland leren kennen",
+          "content_nl": "",
+          "scene_description": "The Erasmus Bridge and skyline of Rotterdam seen from the water"
+        },
+        {
+          "id": "p39",
+          "order_index": 39,
+          "passage_type": "text",
+          "title": "Water en geschiedenis",
+          "content_nl": "",
+          "scene_description": "A museum display about the 1953 North Sea flood in Zeeland with historic photographs"
+        },
+        {
+          "id": "p40",
+          "order_index": 40,
+          "passage_type": "text",
+          "title": "Water en geschiedenis",
+          "content_nl": "",
+          "scene_description": "A Holocaust memorial with names of victims in a Dutch city, visitors reading the plaques"
+        }
+      ],
+      "questions": [
+        {
+          "passage_id": "p1",
+          "order_index": 1,
+          "question_text": "U bent op de verjaardag van uw buurvrouw.\nU komt binnen in de woonkamer.\nWat doet u meestal eerst?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U feliciteert de jarige en ook haar familie.",
+            "U gaat meteen aan tafel zitten en wacht.",
+            "U geeft geld en gaat weer weg."
+          ],
+          "answer": "U feliciteert de jarige en ook haar familie.",
+          "explanation": "At a Dutch birthday party you congratulate the person whose birthday it is and also their family members.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p2",
+          "order_index": 2,
+          "question_text": "Sanne gaat naar de verjaardag van een collega.\nWat neemt zij meestal mee?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een klein cadeau of bloemen.",
+            "Een warme maaltijd voor iedereen.",
+            "Niets, dat is niet gewoon."
+          ],
+          "answer": "Een klein cadeau of bloemen.",
+          "explanation": "A small present or flowers is the normal gift at a Dutch birthday.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p3",
+          "order_index": 3,
+          "question_text": "Youssef komt op visite bij een Nederlands gezin.\nWat krijgt hij meestal als eerste?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Koffie of thee met iets erbij.",
+            "Een groot warm diner.",
+            "Een fles wijn om mee te nemen."
+          ],
+          "answer": "Koffie of thee met iets erbij.",
+          "explanation": "Dutch hosts normally start a visit with coffee or tea and something small to eat.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p4",
+          "order_index": 4,
+          "question_text": "Lisa ziet overal oranje vlaggen in de straat.\nWanneer is Koningsdag?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Op 27 april.",
+            "Op 5 mei.",
+            "Op 1 januari."
+          ],
+          "answer": "Op 27 april.",
+          "explanation": "King's Day is celebrated on 27 April, the birthday of King Willem-Alexander.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p5",
+          "order_index": 5,
+          "question_text": "Op 4 mei is er Dodenherdenking.\nWat gebeurt er dan om 20.00 uur?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Er zijn twee minuten stilte.",
+            "Er is overal vuurwerk.",
+            "De winkels gaan open."
+          ],
+          "answer": "Er zijn twee minuten stilte.",
+          "explanation": "On Remembrance Day, 4 May, the Netherlands observes two minutes of silence at 8 p.m.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p6",
+          "order_index": 6,
+          "question_text": "Ahmed begint volgende week bij een nieuw bedrijf.\nWat krijgt hij van zijn werkgever op papier voordat hij begint?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een arbeidscontract.",
+            "Een paspoort.",
+            "Een huurcontract."
+          ],
+          "answer": "Een arbeidscontract.",
+          "explanation": "An employment contract sets out the agreements between employer and employee.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p7",
+          "order_index": 7,
+          "question_text": "Maria heeft haar eerste maand gewerkt.\nZij krijgt een loonstrook.\nWat is een loonstrook?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een overzicht van uw loon en van wat er van uw loon af gaat.",
+            "Een brief van de gemeente over uw adres.",
+            "Een rekening van de zorgverzekering."
+          ],
+          "answer": "Een overzicht van uw loon en van wat er van uw loon af gaat.",
+          "explanation": "A payslip shows the gross wage and the deductions such as tax.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p8",
+          "order_index": 8,
+          "question_text": "Tom kijkt naar zijn loonstrook.\nElke maand gaat er geld naar de overheid.\nWat betaalt hij dan?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Belasting.",
+            "Huur.",
+            "Contributie."
+          ],
+          "answer": "Belasting.",
+          "explanation": "Employees pay income tax and social contributions on their wage.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p9",
+          "order_index": 9,
+          "question_text": "Kasia heeft geen werk en geen inkomen meer.\nWaar kan zij een uitkering aanvragen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Bij het UWV of bij de gemeente.",
+            "Bij de huisarts.",
+            "Bij de school."
+          ],
+          "answer": "Bij het UWV of bij de gemeente.",
+          "explanation": "Benefits are arranged by the UWV or by the municipality.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p10",
+          "order_index": 10,
+          "question_text": "In de krant staat een artikel over het minimumloon.\nWat is het minimumloon?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Het laagste loon dat een werkgever mag betalen.",
+            "Het loon van de directeur.",
+            "Het bedrag dat u aan belasting betaalt."
+          ],
+          "answer": "Het laagste loon dat een werkgever mag betalen.",
+          "explanation": "The minimum wage is the lowest wage an employer is legally allowed to pay.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p11",
+          "order_index": 11,
+          "question_text": "De zoon van Fatima wordt vier jaar.\nVanaf welke leeftijd mag een kind naar de basisschool?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Vanaf 4 jaar.",
+            "Vanaf 2 jaar.",
+            "Vanaf 6 jaar."
+          ],
+          "answer": "Vanaf 4 jaar.",
+          "explanation": "Children in the Netherlands may start primary school when they turn four.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p12",
+          "order_index": 12,
+          "question_text": "Jonas is vijf jaar geworden.\nVanaf welke leeftijd is een kind in Nederland leerplichtig?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Vanaf 5 jaar.",
+            "Vanaf 3 jaar.",
+            "Vanaf 8 jaar."
+          ],
+          "answer": "Vanaf 5 jaar.",
+          "explanation": "Compulsory education (leerplicht) starts at the age of five.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p13",
+          "order_index": 13,
+          "question_text": "Emma zit op de basisschool.\nHoeveel groepen heeft de basisschool?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Acht groepen.",
+            "Vier groepen.",
+            "Zes groepen."
+          ],
+          "answer": "Acht groepen.",
+          "explanation": "Dutch primary school has eight year groups, from groep 1 to groep 8.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p14",
+          "order_index": 14,
+          "question_text": "De dochter van Karim zit in groep 8.\nWie geeft het schooladvies voor de middelbare school?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De basisschool van uw dochter.",
+            "De gemeente.",
+            "De huisarts."
+          ],
+          "answer": "De basisschool van uw dochter.",
+          "explanation": "The primary school gives the advice about which type of secondary education fits the child.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p15",
+          "order_index": 15,
+          "question_text": "De school van Ines organiseert een ouderavond.\nWat is een ouderavond?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een avond op school met informatie voor ouders.",
+            "Een avond waarop kinderen op school slapen.",
+            "Een feest voor de leraren."
+          ],
+          "answer": "Een avond op school met informatie voor ouders.",
+          "explanation": "A parents' evening is an evening at school where parents get information about the school or their child.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p16",
+          "order_index": 16,
+          "question_text": "Pieter heeft al een week koorts en hoest veel.\nNaar wie gaat hij als eerste?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Naar de huisarts.",
+            "Naar het ziekenhuis.",
+            "Naar de tandarts."
+          ],
+          "answer": "Naar de huisarts.",
+          "explanation": "The huisarts (GP) is the first point of contact in Dutch healthcare.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p17",
+          "order_index": 17,
+          "question_text": "Dilan wil naar een specialist in het ziekenhuis.\nWat heeft zij daarvoor nodig?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een verwijzing van de huisarts.",
+            "Een brief van uw werkgever.",
+            "Een bewijs van de gemeente."
+          ],
+          "answer": "Een verwijzing van de huisarts.",
+          "explanation": "You normally need a referral (verwijzing) from your GP to see a hospital specialist.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p18",
+          "order_index": 18,
+          "question_text": "De huisarts geeft Omar een recept.\nWaar haalt hij zijn medicijnen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Bij de apotheek.",
+            "Bij de supermarkt.",
+            "Bij de gemeente."
+          ],
+          "answer": "Bij de apotheek.",
+          "explanation": "Prescription medicines are collected at a pharmacy (apotheek).",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p19",
+          "order_index": 19,
+          "question_text": "Het is zondagavond en de huisarts is dicht.\nAnna heeft hulp nodig, maar het is geen noodgeval.\nWaar belt zij naartoe?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Naar de huisartsenpost.",
+            "Naar 112.",
+            "Naar de apotheek."
+          ],
+          "answer": "Naar de huisartsenpost.",
+          "explanation": "Outside office hours you call the huisartsenpost for non-emergency medical help.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p20",
+          "order_index": 20,
+          "question_text": "De zoon van Rosa is tien jaar.\nBetaalt Rosa premie voor de zorgverzekering van haar zoon?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Nee, kinderen tot 18 jaar zijn gratis meeverzekerd.",
+            "Ja, kinderen betalen dezelfde premie.",
+            "Ja, maar alleen als het kind naar school gaat."
+          ],
+          "answer": "Nee, kinderen tot 18 jaar zijn gratis meeverzekerd.",
+          "explanation": "Children under 18 are insured free of charge with their parents.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p21",
+          "order_index": 21,
+          "question_text": "Bram zoekt een sociale huurwoning.\nWat is een woningcorporatie?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een organisatie die sociale huurwoningen verhuurt.",
+            "Een bank die hypotheken geeft.",
+            "Een winkel voor meubels."
+          ],
+          "answer": "Een organisatie die sociale huurwoningen verhuurt.",
+          "explanation": "A housing corporation is a non-profit organisation that rents out social housing.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p22",
+          "order_index": 22,
+          "question_text": "U zoekt een sociale huurwoning.\nWat moet u vaak doen om zo'n woning te krijgen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U schrijft zich in en wacht tot u aan de beurt bent.",
+            "U betaalt de gemeente een boete.",
+            "U koopt eerst een huis."
+          ],
+          "answer": "U schrijft zich in en wacht tot u aan de beurt bent.",
+          "explanation": "For social housing you register with the housing corporation and usually wait on a waiting list.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p23",
+          "order_index": 23,
+          "question_text": "De cv-ketel in de huurwoning van Selma is kapot.\nWie belt zij?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De verhuurder of de woningcorporatie.",
+            "De gemeente.",
+            "De politie."
+          ],
+          "answer": "De verhuurder of de woningcorporatie.",
+          "explanation": "Big repairs like a broken boiler are the landlord's responsibility.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p24",
+          "order_index": 24,
+          "question_text": "In de huurwoning van Daan is een lamp kapot.\nWie doet meestal zulke kleine reparaties?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De huurder zelf.",
+            "De gemeente.",
+            "De verhuurder."
+          ],
+          "answer": "De huurder zelf.",
+          "explanation": "Small repairs and maintenance inside the home are the tenant's responsibility.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p25",
+          "order_index": 25,
+          "question_text": "Uw buren maken 's nachts veel lawaai.\nWat doet u het eerst?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U praat er rustig met de buren over.",
+            "U belt meteen 112.",
+            "U maakt zelf ook veel lawaai."
+          ],
+          "answer": "U praat er rustig met de buren over.",
+          "explanation": "In the Netherlands you first talk to your neighbours yourself before involving others.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p26",
+          "order_index": 26,
+          "question_text": "Ravi komt in Nederland wonen en werken.\nWie moet in Nederland een zorgverzekering hebben?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Iedereen die in Nederland woont of werkt.",
+            "Alleen mensen die ziek zijn.",
+            "Alleen mensen met werk."
+          ],
+          "answer": "Iedereen die in Nederland woont of werkt.",
+          "explanation": "Health insurance is compulsory for everyone who lives or works in the Netherlands.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p27",
+          "order_index": 27,
+          "question_text": "Amina heeft een laag inkomen.\nZij kan de premie van haar zorgverzekering moeilijk betalen.\nWat kan zij aanvragen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Zorgtoeslag.",
+            "Huurtoeslag.",
+            "Kinderbijslag."
+          ],
+          "answer": "Zorgtoeslag.",
+          "explanation": "People with a low income can apply for zorgtoeslag, a contribution towards the health insurance premium.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p28",
+          "order_index": 28,
+          "question_text": "Jorge huurt een woning en heeft een laag inkomen.\nWelke toeslag kan hij misschien krijgen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Huurtoeslag.",
+            "Zorgtoeslag.",
+            "Studiefinanciering."
+          ],
+          "answer": "Huurtoeslag.",
+          "explanation": "Tenants with a low income can apply for rent benefit (huurtoeslag).",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p29",
+          "order_index": 29,
+          "question_text": "U verhuist naar een andere gemeente.\nWat moet u doen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U schrijft zich in bij de gemeente van uw nieuwe adres.",
+            "U hoeft niets te doen.",
+            "U meldt het alleen bij uw werk."
+          ],
+          "answer": "U schrijft zich in bij de gemeente van uw nieuwe adres.",
+          "explanation": "After moving you must register your new address with the municipality.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p30",
+          "order_index": 30,
+          "question_text": "Hasan is het niet eens met zijn verhuurder over de huurprijs.\nWaar kan hij naartoe?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Naar de Huurcommissie.",
+            "Naar de brandweer.",
+            "Naar het UWV."
+          ],
+          "answer": "Naar de Huurcommissie.",
+          "explanation": "The Huurcommissie settles disputes between tenants and landlords about rent.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p31",
+          "order_index": 31,
+          "question_text": "Lieke ziet op televisie een debat van het parlement.\nIn welke stad werken de regering en het parlement?",
+          "question_type": "multiple_choice",
+          "options": [
+            "In Den Haag.",
+            "In Amsterdam.",
+            "In Rotterdam."
+          ],
+          "answer": "In Den Haag.",
+          "explanation": "The government and parliament are based in The Hague.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p32",
+          "order_index": 32,
+          "question_text": "Het kind van Nour leert op school over de democratie.\nWat betekent het dat Nederland een democratie is?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De inwoners kiezen zelf hun volksvertegenwoordigers.",
+            "Eén partij beslist alles.",
+            "Er zijn geen wetten."
+          ],
+          "answer": "De inwoners kiezen zelf hun volksvertegenwoordigers.",
+          "explanation": "In a democracy citizens elect the people who represent them.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p33",
+          "order_index": 33,
+          "question_text": "Er komt een nieuwe wet in Nederland.\nWie maken samen de wetten?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De regering en het parlement.",
+            "Alleen de koning.",
+            "Alleen de rechter."
+          ],
+          "answer": "De regering en het parlement.",
+          "explanation": "Laws are made by the government together with parliament.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p34",
+          "order_index": 34,
+          "question_text": "Twee mensen zijn het niet eens en gaan naar de rechtbank.\nWat doet een rechter?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Hij beslist in een rechtszaak wie gelijk heeft.",
+            "Hij maakt de wetten.",
+            "Hij kiest de burgemeester."
+          ],
+          "answer": "Hij beslist in een rechtszaak wie gelijk heeft.",
+          "explanation": "A judge decides cases on the basis of the law.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p35",
+          "order_index": 35,
+          "question_text": "In de krant staat een discussie over vrijheid van meningsuiting.\nWat betekent vrijheid van meningsuiting?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U mag uw mening zeggen, maar u mag niet discrimineren of bedreigen.",
+            "U mag alles zeggen, ook kwetsende dingen over anderen.",
+            "U mag alleen uw mening zeggen met toestemming van de gemeente."
+          ],
+          "answer": "U mag uw mening zeggen, maar u mag niet discrimineren of bedreigen.",
+          "explanation": "Freedom of expression is a basic right, limited by laws against discrimination and threats.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p36",
+          "order_index": 36,
+          "question_text": "Milan kijkt naar een kaart van Nederland.\nHoeveel provincies heeft Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Twaalf.",
+            "Zeven.",
+            "Tien."
+          ],
+          "answer": "Twaalf.",
+          "explanation": "The Netherlands has twelve provinces.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p37",
+          "order_index": 37,
+          "question_text": "Wat is de hoofdstad van Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Amsterdam.",
+            "Den Haag.",
+            "Rotterdam."
+          ],
+          "answer": "Amsterdam.",
+          "explanation": "Amsterdam is the capital city of the Netherlands.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p38",
+          "order_index": 38,
+          "question_text": "Sofia gaat op bezoek in Rotterdam.\nIn welke provincie ligt Rotterdam?",
+          "question_type": "multiple_choice",
+          "options": [
+            "In Zuid-Holland.",
+            "In Noord-Holland.",
+            "In Utrecht."
+          ],
+          "answer": "In Zuid-Holland.",
+          "explanation": "Rotterdam is located in the province of Zuid-Holland.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p39",
+          "order_index": 39,
+          "question_text": "Ivan leest in een museum over het water in Nederland.\nWat gebeurde er in 1953 in het zuidwesten van Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Er was een grote watersnoodramp.",
+            "Er was een grote brand.",
+            "Er was een aardbeving."
+          ],
+          "answer": "Er was een grote watersnoodramp.",
+          "explanation": "In 1953 a major flood disaster hit Zeeland and the south-west of the country.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p40",
+          "order_index": 40,
+          "question_text": "Kayan leest op school over de Tweede Wereldoorlog.\nWanneer was de Holocaust?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Tijdens de Tweede Wereldoorlog.",
+            "Tijdens de Eerste Wereldoorlog.",
+            "Tijdens de Gouden Eeuw."
+          ],
+          "answer": "Tijdens de Tweede Wereldoorlog.",
+          "explanation": "The Holocaust took place during the Second World War, when the Netherlands was occupied.",
+          "category": "history_geography",
+          "year_asked": null
+        }
+      ]
+    },
+    "2": {
+      "section": "knm",
+      "exam_number": 2,
+      "level": "A2",
+      "title": "KNM - Oefenexamen 2",
+      "instructions": "Beantwoord de vragen over de Nederlandse maatschappij.",
+      "time_limit_minutes": 45,
+      "total_questions": 40,
+      "parts_count": 1,
+      "pass_threshold": 28,
+      "max_score": 40,
+      "passages": [
+        {
+          "id": "p1",
+          "order_index": 1,
+          "passage_type": "text",
+          "title": "Een afspraak maken",
+          "content_nl": "",
+          "scene_description": "A woman checking her phone calendar while arranging a visit with a friend"
+        },
+        {
+          "id": "p2",
+          "order_index": 2,
+          "passage_type": "text",
+          "title": "Een afspraak maken",
+          "content_nl": "",
+          "scene_description": "A guest ringing a Dutch doorbell exactly on time, wall clock visible inside"
+        },
+        {
+          "id": "p3",
+          "order_index": 3,
+          "passage_type": "text",
+          "title": "Een afspraak maken",
+          "content_nl": "",
+          "scene_description": "Two people shaking hands and introducing themselves at a Dutch office reception"
+        },
+        {
+          "id": "p4",
+          "order_index": 4,
+          "passage_type": "text",
+          "title": "Op het werk",
+          "content_nl": "",
+          "scene_description": "A shop assistant politely helping an elderly customer at a Dutch counter"
+        },
+        {
+          "id": "p5",
+          "order_index": 5,
+          "passage_type": "text",
+          "title": "Op het werk",
+          "content_nl": "",
+          "scene_description": "Two colleagues talking directly across a desk in a Dutch office, one shaking his head"
+        },
+        {
+          "id": "p6",
+          "order_index": 6,
+          "passage_type": "text",
+          "title": "Solliciteren",
+          "content_nl": "",
+          "scene_description": "A person emailing a job application letter and cv from a laptop at home"
+        },
+        {
+          "id": "p7",
+          "order_index": 7,
+          "passage_type": "text",
+          "title": "Uw contract",
+          "content_nl": "",
+          "scene_description": "An employee reading a temporary employment contract at a desk"
+        },
+        {
+          "id": "p8",
+          "order_index": 8,
+          "passage_type": "text",
+          "title": "Werktijden",
+          "content_nl": "",
+          "scene_description": "An employee signing a permanent contract with a manager in a Dutch office"
+        },
+        {
+          "id": "p9",
+          "order_index": 9,
+          "passage_type": "text",
+          "title": "Veilig werken",
+          "content_nl": "",
+          "scene_description": "A construction worker in a helmet and safety vest at a Dutch building site"
+        },
+        {
+          "id": "p10",
+          "order_index": 10,
+          "passage_type": "text",
+          "title": "Uw vakantie",
+          "content_nl": "",
+          "scene_description": "An employee asking a manager for holiday leave beside a wall planner"
+        },
+        {
+          "id": "p11",
+          "order_index": 11,
+          "passage_type": "text",
+          "title": "Nederlands leren",
+          "content_nl": "",
+          "scene_description": "Adults following a Dutch language lesson in a classroom with a teacher at the whiteboard"
+        },
+        {
+          "id": "p12",
+          "order_index": 12,
+          "passage_type": "text",
+          "title": "De school van uw kind",
+          "content_nl": "",
+          "scene_description": "A parent reading a Dutch primary school report at the kitchen table"
+        },
+        {
+          "id": "p13",
+          "order_index": 13,
+          "passage_type": "text",
+          "title": "De school van uw kind",
+          "content_nl": "",
+          "scene_description": "A teacher and a parent in a short meeting at a small classroom table"
+        },
+        {
+          "id": "p14",
+          "order_index": 14,
+          "passage_type": "text",
+          "title": "De school van uw kind",
+          "content_nl": "",
+          "scene_description": "A letter about the voluntary parental contribution on a Dutch kitchen table"
+        },
+        {
+          "id": "p15",
+          "order_index": 15,
+          "passage_type": "text",
+          "title": "De school van uw kind",
+          "content_nl": "",
+          "scene_description": "A Dutch family packing the car for the summer holidays outside their house"
+        },
+        {
+          "id": "p16",
+          "order_index": 16,
+          "passage_type": "text",
+          "title": "De tandarts en het consultatiebureau",
+          "content_nl": "",
+          "scene_description": "A ten-year-old child in a dentist chair while the dentist checks his teeth"
+        },
+        {
+          "id": "p17",
+          "order_index": 17,
+          "passage_type": "text",
+          "title": "De tandarts en het consultatiebureau",
+          "content_nl": "",
+          "scene_description": "A parent with a baby at a Dutch child health clinic during a check-up"
+        },
+        {
+          "id": "p18",
+          "order_index": 18,
+          "passage_type": "text",
+          "title": "De tandarts en het consultatiebureau",
+          "content_nl": "",
+          "scene_description": "A midwife listening to a pregnant woman's belly in a Dutch consulting room"
+        },
+        {
+          "id": "p19",
+          "order_index": 19,
+          "passage_type": "text",
+          "title": "Eigen risico en medicijnen",
+          "content_nl": "",
+          "scene_description": "A person reading a health insurance statement about the deductible at a table"
+        },
+        {
+          "id": "p20",
+          "order_index": 20,
+          "passage_type": "text",
+          "title": "Eigen risico en medicijnen",
+          "content_nl": "",
+          "scene_description": "A patient at the reception desk of a Dutch GP practice"
+        },
+        {
+          "id": "p21",
+          "order_index": 21,
+          "passage_type": "text",
+          "title": "Een huis kopen",
+          "content_nl": "",
+          "scene_description": "A couple discussing a mortgage with a bank adviser at a desk"
+        },
+        {
+          "id": "p22",
+          "order_index": 22,
+          "passage_type": "text",
+          "title": "Een huis kopen",
+          "content_nl": "",
+          "scene_description": "An estate agent showing a couple around an empty Dutch house"
+        },
+        {
+          "id": "p23",
+          "order_index": 23,
+          "passage_type": "text",
+          "title": "Een huis kopen",
+          "content_nl": "",
+          "scene_description": "A notary signing property documents with a couple in an office"
+        },
+        {
+          "id": "p24",
+          "order_index": 24,
+          "passage_type": "text",
+          "title": "Wonen in de wijk",
+          "content_nl": "",
+          "scene_description": "A resident putting empty bottles into a glass container on a Dutch street"
+        },
+        {
+          "id": "p25",
+          "order_index": 25,
+          "passage_type": "text",
+          "title": "Wonen in de wijk",
+          "content_nl": "",
+          "scene_description": "A homeowner looking at building plans for an extension with a contractor"
+        },
+        {
+          "id": "p26",
+          "order_index": 26,
+          "passage_type": "text",
+          "title": "Nederlands leren",
+          "content_nl": "",
+          "scene_description": "Adults in a civic integration class listening to a teacher explain Dutch society"
+        },
+        {
+          "id": "p27",
+          "order_index": 27,
+          "passage_type": "text",
+          "title": "Nederlands leren",
+          "content_nl": "",
+          "scene_description": "A person opening a letter from DUO about an exam at the kitchen table"
+        },
+        {
+          "id": "p28",
+          "order_index": 28,
+          "passage_type": "text",
+          "title": "Nederlands leren",
+          "content_nl": "",
+          "scene_description": "People reading and borrowing books in a Dutch public library"
+        },
+        {
+          "id": "p29",
+          "order_index": 29,
+          "passage_type": "text",
+          "title": "Eigen risico en medicijnen",
+          "content_nl": "",
+          "scene_description": "A public health nurse giving a vaccination at a municipal health service clinic"
+        },
+        {
+          "id": "p30",
+          "order_index": 30,
+          "passage_type": "text",
+          "title": "Een huis kopen",
+          "content_nl": "",
+          "scene_description": "A homeowner reading a municipal tax assessment letter at a desk"
+        },
+        {
+          "id": "p31",
+          "order_index": 31,
+          "passage_type": "text",
+          "title": "Het bestuur van Nederland",
+          "content_nl": "",
+          "scene_description": "A Dutch royal palace with the national flag flying from the roof"
+        },
+        {
+          "id": "p32",
+          "order_index": 32,
+          "passage_type": "text",
+          "title": "Het bestuur van Nederland",
+          "content_nl": "",
+          "scene_description": "A young adult putting a ballot paper into the box at a Dutch polling station"
+        },
+        {
+          "id": "p33",
+          "order_index": 33,
+          "passage_type": "text",
+          "title": "Het bestuur van Nederland",
+          "content_nl": "",
+          "scene_description": "The Dutch House of Representatives seen from the public gallery, seats filled"
+        },
+        {
+          "id": "p34",
+          "order_index": 34,
+          "passage_type": "text",
+          "title": "Het bestuur van Nederland",
+          "content_nl": "",
+          "scene_description": "A mayor wearing the chain of office at a Dutch town hall ceremony"
+        },
+        {
+          "id": "p35",
+          "order_index": 35,
+          "passage_type": "text",
+          "title": "De provincie",
+          "content_nl": "",
+          "scene_description": "A provincial government building in the Netherlands with flags outside"
+        },
+        {
+          "id": "p36",
+          "order_index": 36,
+          "passage_type": "text",
+          "title": "Aardrijkskunde van Nederland",
+          "content_nl": "",
+          "scene_description": "Waves and a wide sandy beach on the Dutch North Sea coast"
+        },
+        {
+          "id": "p37",
+          "order_index": 37,
+          "passage_type": "text",
+          "title": "Aardrijkskunde van Nederland",
+          "content_nl": "",
+          "scene_description": "A road sign at the Dutch border pointing towards Germany and Belgium"
+        },
+        {
+          "id": "p38",
+          "order_index": 38,
+          "passage_type": "text",
+          "title": "Aardrijkskunde van Nederland",
+          "content_nl": "",
+          "scene_description": "An aerial view of the densely built western Netherlands with cities and motorways"
+        },
+        {
+          "id": "p39",
+          "order_index": 39,
+          "passage_type": "text",
+          "title": "Aardrijkskunde van Nederland",
+          "content_nl": "",
+          "scene_description": "Euro banknotes and coins being handed over at a Dutch shop counter"
+        },
+        {
+          "id": "p40",
+          "order_index": 40,
+          "passage_type": "text",
+          "title": "Het noorden van Nederland",
+          "content_nl": "",
+          "scene_description": "A map of the Netherlands with the northern provinces highlighted"
+        }
+      ],
+      "questions": [
+        {
+          "passage_id": "p1",
+          "order_index": 1,
+          "question_text": "Sara wil een keer bij u langskomen.\nWat is normaal in Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Zij maakt eerst een afspraak met u.",
+            "Zij komt zomaar langs zonder iets te zeggen.",
+            "Zij wacht tot u haar ophaalt."
+          ],
+          "answer": "Zij maakt eerst een afspraak met u.",
+          "explanation": "In the Netherlands people usually make an appointment before visiting someone.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p2",
+          "order_index": 2,
+          "question_text": "Mehmet is om 15.00 uur uitgenodigd bij een vriend.\nHoe laat komt hij?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Rond 15.00 uur, dus op tijd.",
+            "Een uur te vroeg.",
+            "Twee uur later."
+          ],
+          "answer": "Rond 15.00 uur, dus op tijd.",
+          "explanation": "Being on time is important in Dutch culture.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p3",
+          "order_index": 3,
+          "question_text": "U ontmoet iemand voor het eerst.\nWat doet u meestal?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U geeft een hand en zegt uw naam.",
+            "U zegt niets en gaat zitten.",
+            "U geeft drie zoenen."
+          ],
+          "answer": "U geeft een hand en zegt uw naam.",
+          "explanation": "Shaking hands and saying your name is the usual first introduction in the Netherlands.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p4",
+          "order_index": 4,
+          "question_text": "Ilse werkt in een winkel.\nEr komt een onbekende oudere klant binnen.\nHoe spreekt zij hem aan?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Met 'u'.",
+            "Met 'jij'.",
+            "Met de voornaam van zijn vrouw."
+          ],
+          "answer": "Met 'u'.",
+          "explanation": "The polite form 'u' is used for people you do not know and for older people.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p5",
+          "order_index": 5,
+          "question_text": "Uw collega zegt duidelijk 'nee' op uw vraag.\nWat betekent dat meestal?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Hij bedoelt gewoon nee; Nederlanders zijn vaak direct.",
+            "Hij is boos op u.",
+            "Hij bedoelt eigenlijk ja."
+          ],
+          "answer": "Hij bedoelt gewoon nee; Nederlanders zijn vaak direct.",
+          "explanation": "Dutch people communicate directly; a clear 'no' is normal and not rude.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p6",
+          "order_index": 6,
+          "question_text": "Nadia ziet een vacature voor werk in een winkel.\nWat stuurt zij meestal als zij solliciteert?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een sollicitatiebrief en uw cv.",
+            "Alleen uw paspoort.",
+            "Een rekening."
+          ],
+          "answer": "Een sollicitatiebrief en uw cv.",
+          "explanation": "A Dutch application usually consists of a letter and a cv.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p7",
+          "order_index": 7,
+          "question_text": "Victor krijgt een tijdelijk contract.\nWat is een tijdelijk contract?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een contract dat na een afgesproken tijd stopt.",
+            "Een contract dat nooit stopt.",
+            "Een contract van de woningcorporatie."
+          ],
+          "answer": "Een contract dat na een afgesproken tijd stopt.",
+          "explanation": "A temporary contract ends on an agreed date.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p8",
+          "order_index": 8,
+          "question_text": "Josef krijgt een vast contract bij een bedrijf.\nMoet hij zich inschrijven bij de Kamer van Koophandel?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Nee, dat hoeft alleen voor mensen met een eigen bedrijf.",
+            "Ja, iedereen met werk moet dat doen.",
+            "Alleen als hij vijf dagen per week werkt."
+          ],
+          "answer": "Nee, dat hoeft alleen voor mensen met een eigen bedrijf.",
+          "explanation": "Only people who start their own business register with the Chamber of Commerce (KvK).",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p9",
+          "order_index": 9,
+          "question_text": "Op de bouwplaats van Marek hangen borden over veiligheid.\nWie moet zorgen voor veilig werk?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De werkgever.",
+            "De huisarts.",
+            "De buren."
+          ],
+          "answer": "De werkgever.",
+          "explanation": "The employer is responsible for safe working conditions.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p10",
+          "order_index": 10,
+          "question_text": "Wat doet u als u vakantie wilt opnemen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U vraagt het van tevoren aan uw werkgever.",
+            "U blijft gewoon thuis zonder iets te zeggen.",
+            "U vraagt het aan de gemeente."
+          ],
+          "answer": "U vraagt het van tevoren aan uw werkgever.",
+          "explanation": "Holiday leave has to be requested from and agreed with the employer.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p11",
+          "order_index": 11,
+          "question_text": "Fatou wil beter Nederlands leren spreken.\nWaar kunnen volwassenen Nederlandse les volgen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Bij een taalschool of een roc.",
+            "Bij de basisschool.",
+            "Bij het consultatiebureau."
+          ],
+          "answer": "Bij een taalschool of een roc.",
+          "explanation": "Adults follow Dutch lessons at language schools or regional education centres (roc).",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p12",
+          "order_index": 12,
+          "question_text": "De dochter van Wim krijgt haar rapport mee.\nWat staat er in een rapport van school?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Hoe uw kind het op school doet.",
+            "Hoeveel de school kost.",
+            "Wanneer de school vakantie heeft."
+          ],
+          "answer": "Hoe uw kind het op school doet.",
+          "explanation": "A school report shows how the child is performing at school.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p13",
+          "order_index": 13,
+          "question_text": "De juf nodigt de ouders van Sami uit voor een tienminutengesprek.\nWat is een tienminutengesprek?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een kort gesprek van de leraar met de ouders over het kind.",
+            "Een les van tien minuten.",
+            "Een pauze op school."
+          ],
+          "answer": "Een kort gesprek van de leraar met de ouders over het kind.",
+          "explanation": "A ten-minute meeting is a short talk between teacher and parents about the child.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p14",
+          "order_index": 14,
+          "question_text": "De school vraagt de ouders van Lars om een ouderbijdrage.\nWat is de ouderbijdrage op de basisschool?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een vrijwillige bijdrage voor extra activiteiten.",
+            "Het salaris van de leraar.",
+            "Een boete als uw kind te laat komt."
+          ],
+          "answer": "Een vrijwillige bijdrage voor extra activiteiten.",
+          "explanation": "The parental contribution is voluntary and is used for extra activities such as school trips.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p15",
+          "order_index": 15,
+          "question_text": "Wanneer hebben kinderen in Nederland de langste vakantie?",
+          "question_type": "multiple_choice",
+          "options": [
+            "In de zomer.",
+            "In de winter.",
+            "In het voorjaar."
+          ],
+          "answer": "In de zomer.",
+          "explanation": "The summer holiday is the longest school holiday, about six weeks.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p16",
+          "order_index": 16,
+          "question_text": "De zoon van Halima is tien jaar en moet naar de tandarts.\nWat geldt voor kinderen tot 18 jaar?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De tandarts zit in de basisverzekering.",
+            "Ouders betalen alles zelf.",
+            "Kinderen mogen niet naar de tandarts."
+          ],
+          "answer": "De tandarts zit in de basisverzekering.",
+          "explanation": "Dental care for children under 18 is covered by the basic health insurance.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p17",
+          "order_index": 17,
+          "question_text": "Nora heeft een baby van vier maanden.\nWaar gaat zij naartoe voor controles en vaccinaties?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Naar het consultatiebureau.",
+            "Naar de apotheek.",
+            "Naar de tandarts."
+          ],
+          "answer": "Naar het consultatiebureau.",
+          "explanation": "The consultatiebureau checks the health and development of young children and gives vaccinations.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p18",
+          "order_index": 18,
+          "question_text": "Julia is zwanger van haar eerste kind.\nWie helpt haar tijdens de zwangerschap en de bevalling?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De verloskundige.",
+            "De apotheker.",
+            "De tandarts."
+          ],
+          "answer": "De verloskundige.",
+          "explanation": "The midwife (verloskundige) supports women during pregnancy and birth.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p19",
+          "order_index": 19,
+          "question_text": "Peter krijgt een brief over zijn eigen risico.\nWat is het eigen risico?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een bedrag aan zorgkosten dat u eerst zelf betaalt.",
+            "De premie die u elke maand betaalt.",
+            "Een boete van de gemeente."
+          ],
+          "answer": "Een bedrag aan zorgkosten dat u eerst zelf betaalt.",
+          "explanation": "The eigen risico is the amount of care costs you pay yourself before the insurer pays.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p20",
+          "order_index": 20,
+          "question_text": "Marta gaat naar de huisarts.\nBetaalt zij daarvoor eigen risico?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Nee, de huisarts valt niet onder het eigen risico.",
+            "Ja, altijd.",
+            "Ja, maar alleen op zondag."
+          ],
+          "answer": "Nee, de huisarts valt niet onder het eigen risico.",
+          "explanation": "Visits to the GP are excluded from the compulsory deductible.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p21",
+          "order_index": 21,
+          "question_text": "Job en Kelly willen een huis kopen.\nWat hebben zij daarvoor meestal nodig?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een hypotheek bij de bank.",
+            "Huurtoeslag.",
+            "Een verwijzing van de huisarts."
+          ],
+          "answer": "Een hypotheek bij de bank.",
+          "explanation": "Most people need a mortgage from a bank to buy a house.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p22",
+          "order_index": 22,
+          "question_text": "Job en Kelly zoeken een huis.\nWie kan hen helpen bij het kopen van een huis?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een makelaar.",
+            "Een verloskundige.",
+            "Een leerplichtambtenaar."
+          ],
+          "answer": "Een makelaar.",
+          "explanation": "An estate agent (makelaar) helps with buying or selling a house.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p23",
+          "order_index": 23,
+          "question_text": "Job en Kelly kopen een huis.\nWaar wordt de koop officieel geregeld?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Bij de notaris.",
+            "Bij de politie.",
+            "Bij de huisarts."
+          ],
+          "answer": "Bij de notaris.",
+          "explanation": "The transfer of a house is officially arranged by a notary.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p24",
+          "order_index": 24,
+          "question_text": "Wouter heeft lege flessen en potten van glas.\nWaar doet hij die in?",
+          "question_type": "multiple_choice",
+          "options": [
+            "In de glasbak.",
+            "In de gewone vuilnisbak.",
+            "In de brievenbus."
+          ],
+          "answer": "In de glasbak.",
+          "explanation": "Glass is separated and taken to a glass container (glasbak).",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p25",
+          "order_index": 25,
+          "question_text": "Hakan wil een grote verbouwing aan zijn huis doen.\nWat heeft hij daarvoor vaak nodig?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een vergunning van de gemeente.",
+            "Een recept van de huisarts.",
+            "Toestemming van de school."
+          ],
+          "answer": "Een vergunning van de gemeente.",
+          "explanation": "Large building work usually requires a permit from the municipality.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p26",
+          "order_index": 26,
+          "question_text": "Amir moet inburgeren in Nederland.\nWat hoort bij inburgeren?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Nederlands leren en de Nederlandse maatschappij leren kennen.",
+            "Alleen een huis kopen.",
+            "Alleen werk zoeken."
+          ],
+          "answer": "Nederlands leren en de Nederlandse maatschappij leren kennen.",
+          "explanation": "Civic integration means learning the Dutch language and about Dutch society.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p27",
+          "order_index": 27,
+          "question_text": "Amir zoekt informatie over zijn inburgeringsexamen.\nWelke organisatie regelt de examens en de studiefinanciering?",
+          "question_type": "multiple_choice",
+          "options": [
+            "DUO.",
+            "De GGD.",
+            "De Huurcommissie."
+          ],
+          "answer": "DUO.",
+          "explanation": "DUO (Dienst Uitvoering Onderwijs) organises the integration exams and student finance.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p28",
+          "order_index": 28,
+          "question_text": "Grace wil gratis oefenen met Nederlands lezen.\nWaar kan zij naartoe?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Naar de bibliotheek.",
+            "Naar de apotheek.",
+            "Naar de notaris."
+          ],
+          "answer": "Naar de bibliotheek.",
+          "explanation": "Libraries lend books and often organise language activities for learners.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p29",
+          "order_index": 29,
+          "question_text": "In de wijk van Bo geeft de GGD vaccinaties.\nWat doet de GGD?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De GGD werkt aan de gezondheid van de bevolking, bijvoorbeeld met vaccinaties.",
+            "De GGD verhuurt woningen.",
+            "De GGD geeft rijbewijzen."
+          ],
+          "answer": "De GGD werkt aan de gezondheid van de bevolking, bijvoorbeeld met vaccinaties.",
+          "explanation": "The GGD is the municipal public health service.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p30",
+          "order_index": 30,
+          "question_text": "Erik heeft een eigen huis.\nWat betaalt hij elk jaar aan de gemeente?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Gemeentelijke belastingen, zoals de onroerendezaakbelasting.",
+            "De hypotheek.",
+            "De zorgpremie."
+          ],
+          "answer": "Gemeentelijke belastingen, zoals de onroerendezaakbelasting.",
+          "explanation": "Home owners pay municipal taxes such as property tax (ozb) every year.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p31",
+          "order_index": 31,
+          "question_text": "Wie is het staatshoofd van Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De koning.",
+            "De minister-president.",
+            "De burgemeester van Amsterdam."
+          ],
+          "answer": "De koning.",
+          "explanation": "The Netherlands is a constitutional monarchy with the king as head of state.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p32",
+          "order_index": 32,
+          "question_text": "Tessa wordt binnenkort achttien jaar.\nVanaf welke leeftijd mag zij stemmen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Vanaf 18 jaar.",
+            "Vanaf 16 jaar.",
+            "Vanaf 21 jaar."
+          ],
+          "answer": "Vanaf 18 jaar.",
+          "explanation": "You may vote in Dutch elections from the age of 18.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p33",
+          "order_index": 33,
+          "question_text": "Hoeveel leden heeft de Tweede Kamer?",
+          "question_type": "multiple_choice",
+          "options": [
+            "150.",
+            "75.",
+            "100."
+          ],
+          "answer": "150.",
+          "explanation": "The Dutch House of Representatives has 150 members.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p34",
+          "order_index": 34,
+          "question_text": "Wie staat er aan het hoofd van een gemeente?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De burgemeester.",
+            "De koning.",
+            "De minister-president."
+          ],
+          "answer": "De burgemeester.",
+          "explanation": "The mayor (burgemeester) heads the municipal administration.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p35",
+          "order_index": 35,
+          "question_text": "Diana leest een folder over het bestuur van haar provincie.\nWaarover beslist een provincie onder andere?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Over wegen en natuur in de provincie.",
+            "Over de schoolrapporten van kinderen.",
+            "Over de premie van uw zorgverzekering."
+          ],
+          "answer": "Over wegen en natuur in de provincie.",
+          "explanation": "Provinces decide on regional matters such as roads and nature.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p36",
+          "order_index": 36,
+          "question_text": "Welke zee ligt aan de westkant van Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De Noordzee.",
+            "De Middellandse Zee.",
+            "De Oostzee."
+          ],
+          "answer": "De Noordzee.",
+          "explanation": "The North Sea lies on the west side of the Netherlands.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p37",
+          "order_index": 37,
+          "question_text": "Adam wil met de auto naar het buitenland.\nWelke buurlanden heeft Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Duitsland en België.",
+            "Frankrijk en Spanje.",
+            "Denemarken en Polen."
+          ],
+          "answer": "Duitsland en België.",
+          "explanation": "The Netherlands borders Germany to the east and Belgium to the south.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p38",
+          "order_index": 38,
+          "question_text": "Wat is de Randstad?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Het gebied met de steden Amsterdam, Rotterdam, Den Haag en Utrecht.",
+            "Een dorp in Limburg.",
+            "Een groot bos in Drenthe."
+          ],
+          "answer": "Het gebied met de steden Amsterdam, Rotterdam, Den Haag en Utrecht.",
+          "explanation": "The Randstad is the densely populated area with the four largest cities in the west.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p39",
+          "order_index": 39,
+          "question_text": "Met welk geld betaalt u in Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Met de euro.",
+            "Met de gulden.",
+            "Met de dollar."
+          ],
+          "answer": "Met de euro.",
+          "explanation": "The Netherlands uses the euro as its currency.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p40",
+          "order_index": 40,
+          "question_text": "Welke provincie ligt in het noorden van Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Groningen.",
+            "Limburg.",
+            "Zeeland."
+          ],
+          "answer": "Groningen.",
+          "explanation": "Groningen is one of the northern provinces.",
+          "category": "history_geography",
+          "year_asked": null
+        }
+      ]
+    },
+    "3": {
+      "section": "knm",
+      "exam_number": 3,
+      "level": "A2",
+      "title": "KNM - Oefenexamen 3",
+      "instructions": "Beantwoord de vragen over de Nederlandse maatschappij.",
+      "time_limit_minutes": 45,
+      "total_questions": 40,
+      "parts_count": 1,
+      "pass_threshold": 28,
+      "max_score": 40,
+      "passages": [
+        {
+          "id": "p1",
+          "order_index": 1,
+          "passage_type": "text",
+          "title": "Boodschappen doen",
+          "content_nl": "",
+          "scene_description": "A Dutch shopping street in the evening with lit shop windows and shoppers"
+        },
+        {
+          "id": "p2",
+          "order_index": 2,
+          "passage_type": "text",
+          "title": "Boodschappen doen",
+          "content_nl": "",
+          "scene_description": "Customers waiting in line at a Dutch supermarket checkout"
+        },
+        {
+          "id": "p3",
+          "order_index": 3,
+          "passage_type": "text",
+          "title": "Boodschappen doen",
+          "content_nl": "",
+          "scene_description": "A man phoning a doctor's practice while looking at a missed appointment in his calendar"
+        },
+        {
+          "id": "p4",
+          "order_index": 4,
+          "passage_type": "text",
+          "title": "Eten en drinken in Nederland",
+          "content_nl": "",
+          "scene_description": "A Dutch lunch table with bread, cheese and a glass of milk"
+        },
+        {
+          "id": "p5",
+          "order_index": 5,
+          "passage_type": "text",
+          "title": "Eten en drinken in Nederland",
+          "content_nl": "",
+          "scene_description": "A market stall selling oliebollen around New Year in a Dutch street"
+        },
+        {
+          "id": "p6",
+          "order_index": 6,
+          "passage_type": "text",
+          "title": "Werk zoeken",
+          "content_nl": "",
+          "scene_description": "A jobseeker reading vacancies on a laptop at a kitchen table"
+        },
+        {
+          "id": "p7",
+          "order_index": 7,
+          "passage_type": "text",
+          "title": "Uitzendwerk",
+          "content_nl": "",
+          "scene_description": "People waiting at the counter of a Dutch temporary employment agency"
+        },
+        {
+          "id": "p8",
+          "order_index": 8,
+          "passage_type": "text",
+          "title": "Vakantiegeld",
+          "content_nl": "",
+          "scene_description": "A person smiling at a bank app showing an extra payment in May"
+        },
+        {
+          "id": "p9",
+          "order_index": 9,
+          "passage_type": "text",
+          "title": "Werken als zzp'er",
+          "content_nl": "",
+          "scene_description": "A self-employed painter working alone in a Dutch house"
+        },
+        {
+          "id": "p10",
+          "order_index": 10,
+          "passage_type": "text",
+          "title": "Belasting terugvragen",
+          "content_nl": "",
+          "scene_description": "An employer and a new employee going through contract terms at a desk"
+        },
+        {
+          "id": "p11",
+          "order_index": 11,
+          "passage_type": "text",
+          "title": "Kinderopvang",
+          "content_nl": "",
+          "scene_description": "Toddlers playing with a carer at a Dutch daycare centre"
+        },
+        {
+          "id": "p12",
+          "order_index": 12,
+          "passage_type": "text",
+          "title": "Kinderopvang",
+          "content_nl": "",
+          "scene_description": "Young children singing with a teacher at a Dutch preschool group"
+        },
+        {
+          "id": "p13",
+          "order_index": 13,
+          "passage_type": "text",
+          "title": "Kinderopvang",
+          "content_nl": "",
+          "scene_description": "Children of different backgrounds together in a Dutch state school classroom"
+        },
+        {
+          "id": "p14",
+          "order_index": 14,
+          "passage_type": "text",
+          "title": "Studeren na de middelbare school",
+          "content_nl": "",
+          "scene_description": "A teenager and a study adviser looking at higher education brochures"
+        },
+        {
+          "id": "p15",
+          "order_index": 15,
+          "passage_type": "text",
+          "title": "Studeren na de middelbare school",
+          "content_nl": "",
+          "scene_description": "A secondary school student receiving a diploma at a Dutch school ceremony"
+        },
+        {
+          "id": "p16",
+          "order_index": 16,
+          "passage_type": "text",
+          "title": "In het ziekenhuis",
+          "content_nl": "",
+          "scene_description": "A patient handing an identity card at a Dutch hospital reception desk"
+        },
+        {
+          "id": "p17",
+          "order_index": 17,
+          "passage_type": "text",
+          "title": "In het ziekenhuis",
+          "content_nl": "",
+          "scene_description": "A hospital specialist examining a patient's knee in a consulting room"
+        },
+        {
+          "id": "p18",
+          "order_index": 18,
+          "passage_type": "text",
+          "title": "In het ziekenhuis",
+          "content_nl": "",
+          "scene_description": "A doctor printing a prescription in a Dutch consulting room"
+        },
+        {
+          "id": "p19",
+          "order_index": 19,
+          "passage_type": "text",
+          "title": "Gezond leven",
+          "content_nl": "",
+          "scene_description": "A general practitioner listening to a worried patient in a quiet consulting room"
+        },
+        {
+          "id": "p20",
+          "order_index": 20,
+          "passage_type": "text",
+          "title": "Gezond leven",
+          "content_nl": "",
+          "scene_description": "A nurse giving a vaccination in the arm of an adult at a clinic"
+        },
+        {
+          "id": "p21",
+          "order_index": 21,
+          "passage_type": "text",
+          "title": "Verhuizen",
+          "content_nl": "",
+          "scene_description": "A tenant and landlord reading a rental contract together at a table"
+        },
+        {
+          "id": "p22",
+          "order_index": 22,
+          "passage_type": "text",
+          "title": "Verhuizen",
+          "content_nl": "",
+          "scene_description": "A tenant transferring a deposit on a phone banking app"
+        },
+        {
+          "id": "p23",
+          "order_index": 23,
+          "passage_type": "text",
+          "title": "Veilig wonen",
+          "content_nl": "",
+          "scene_description": "A family leaving a Dutch house through the front door while smoke alarms sound"
+        },
+        {
+          "id": "p24",
+          "order_index": 24,
+          "passage_type": "text",
+          "title": "Veilig wonen",
+          "content_nl": "",
+          "scene_description": "A resident opening a kitchen window wide beside a gas cooker"
+        },
+        {
+          "id": "p25",
+          "order_index": 25,
+          "passage_type": "text",
+          "title": "Veilig wonen",
+          "content_nl": "",
+          "scene_description": "A smoke detector on the ceiling of a Dutch hallway"
+        },
+        {
+          "id": "p26",
+          "order_index": 26,
+          "passage_type": "text",
+          "title": "Kinderopvang",
+          "content_nl": "",
+          "scene_description": "Working parents dropping their child at a Dutch daycare centre"
+        },
+        {
+          "id": "p27",
+          "order_index": 27,
+          "passage_type": "text",
+          "title": "Studeren na de middelbare school",
+          "content_nl": "",
+          "scene_description": "A school attendance officer talking with a parent at a school office"
+        },
+        {
+          "id": "p28",
+          "order_index": 28,
+          "passage_type": "text",
+          "title": "Verhuizen",
+          "content_nl": "",
+          "scene_description": "A person logging in to a Dutch government website using the DigiD app on a phone"
+        },
+        {
+          "id": "p29",
+          "order_index": 29,
+          "passage_type": "text",
+          "title": "Verhuizen",
+          "content_nl": "",
+          "scene_description": "A resident reporting a change of address at a Dutch municipality desk"
+        },
+        {
+          "id": "p30",
+          "order_index": 30,
+          "passage_type": "text",
+          "title": "De Belastingdienst",
+          "content_nl": "",
+          "scene_description": "A letter from the Dutch tax office about benefits on a kitchen table"
+        },
+        {
+          "id": "p31",
+          "order_index": 31,
+          "passage_type": "text",
+          "title": "Verkiezingen",
+          "content_nl": "",
+          "scene_description": "Dutch election posters on a public board in a town street"
+        },
+        {
+          "id": "p32",
+          "order_index": 32,
+          "passage_type": "text",
+          "title": "Verkiezingen",
+          "content_nl": "",
+          "scene_description": "A voting pass and identity card lying on a doormat under the letterbox"
+        },
+        {
+          "id": "p33",
+          "order_index": 33,
+          "passage_type": "text",
+          "title": "Verkiezingen",
+          "content_nl": "",
+          "scene_description": "The official residence of the Dutch prime minister in The Hague"
+        },
+        {
+          "id": "p34",
+          "order_index": 34,
+          "passage_type": "text",
+          "title": "Verkiezingen",
+          "content_nl": "",
+          "scene_description": "A church, a mosque and a synagogue in the same Dutch city street"
+        },
+        {
+          "id": "p35",
+          "order_index": 35,
+          "passage_type": "text",
+          "title": "De politie",
+          "content_nl": "",
+          "scene_description": "Dutch police officers talking with residents in a city street"
+        },
+        {
+          "id": "p36",
+          "order_index": 36,
+          "passage_type": "text",
+          "title": "Nederland en de wereld",
+          "content_nl": "",
+          "scene_description": "European Union flags in front of a modern government building"
+        },
+        {
+          "id": "p37",
+          "order_index": 37,
+          "passage_type": "text",
+          "title": "Nederland en de wereld",
+          "content_nl": "",
+          "scene_description": "A seventeenth-century Dutch merchant ship in a maritime museum"
+        },
+        {
+          "id": "p38",
+          "order_index": 38,
+          "passage_type": "text",
+          "title": "Nederland en de wereld",
+          "content_nl": "",
+          "scene_description": "The Anne Frank house facade beside an Amsterdam canal"
+        },
+        {
+          "id": "p39",
+          "order_index": 39,
+          "passage_type": "text",
+          "title": "Nederland en de wereld",
+          "content_nl": "",
+          "scene_description": "Aircraft at the gates of Schiphol Airport near Amsterdam"
+        },
+        {
+          "id": "p40",
+          "order_index": 40,
+          "passage_type": "text",
+          "title": "Het IJsselmeer",
+          "content_nl": "",
+          "scene_description": "Sailing boats on the wide water of the IJsselmeer"
+        }
+      ],
+      "questions": [
+        {
+          "passage_id": "p1",
+          "order_index": 1,
+          "question_text": "Bianca ziet dat de winkels donderdag langer open zijn.\nWat is een koopavond?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een avond waarop de winkels langer open zijn.",
+            "Een avond waarop alles gratis is.",
+            "Een avond waarop de winkels dicht zijn."
+          ],
+          "answer": "Een avond waarop de winkels langer open zijn.",
+          "explanation": "On a koopavond shops stay open later than usual, often on Thursday or Friday.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p2",
+          "order_index": 2,
+          "question_text": "Er staan mensen bij de kassa.\nWat doet u?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U gaat achteraan in de rij staan en wacht op uw beurt.",
+            "U loopt naar voren en betaalt eerst.",
+            "U vraagt de andere klanten weg te gaan."
+          ],
+          "answer": "U gaat achteraan in de rij staan en wacht op uw beurt.",
+          "explanation": "Waiting your turn in the queue is normal and expected in the Netherlands.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p3",
+          "order_index": 3,
+          "question_text": "Alex heeft een afspraak bij de huisarts, maar hij is die vergeten.\nHij is nu een uur te laat.\nWat kan Alex het beste doen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De huisarts bellen en het uitleggen.",
+            "In de wachtkamer gaan wachten.",
+            "Wachten tot de huisarts hem belt."
+          ],
+          "answer": "De huisarts bellen en het uitleggen.",
+          "explanation": "If you miss an appointment you phone as soon as possible to explain and make a new one.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p4",
+          "order_index": 4,
+          "question_text": "Wat eten veel Nederlanders tussen de middag?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Brood met bijvoorbeeld kaas.",
+            "Een warme maaltijd met vlees en groente.",
+            "Alleen fruit."
+          ],
+          "answer": "Brood met bijvoorbeeld kaas.",
+          "explanation": "Lunch in the Netherlands is usually bread with a topping such as cheese.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p5",
+          "order_index": 5,
+          "question_text": "Wanneer eten Nederlanders oliebollen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Rond oud en nieuw.",
+            "Op Koningsdag.",
+            "Met Pasen."
+          ],
+          "answer": "Rond oud en nieuw.",
+          "explanation": "Oliebollen are eaten around New Year's Eve.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p6",
+          "order_index": 6,
+          "question_text": "Rachid zoekt werk op internet.\nWat is een vacature?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een advertentie voor werk dat vrij is.",
+            "Een vrije dag.",
+            "Een rekening van uw werkgever."
+          ],
+          "answer": "Een advertentie voor werk dat vrij is.",
+          "explanation": "A vacancy is an advertisement for an open job.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p7",
+          "order_index": 7,
+          "question_text": "Een bekende vertelt Rachid over een uitzendbureau.\nWat doet een uitzendbureau?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Het zorgt dat mensen tijdelijk bij een bedrijf kunnen werken.",
+            "Het verhuurt woningen.",
+            "Het geeft medische hulp."
+          ],
+          "answer": "Het zorgt dat mensen tijdelijk bij een bedrijf kunnen werken.",
+          "explanation": "A temp agency places workers with companies for temporary work.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p8",
+          "order_index": 8,
+          "question_text": "In mei staat er extra geld op de rekening van Sanne.\nWat is vakantiegeld?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Extra geld dat u meestal in mei van uw werkgever krijgt.",
+            "Geld dat u aan de gemeente betaalt.",
+            "Geld dat u van de school krijgt."
+          ],
+          "answer": "Extra geld dat u meestal in mei van uw werkgever krijgt.",
+          "explanation": "Holiday pay is an extra payment, usually paid out in May.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p9",
+          "order_index": 9,
+          "question_text": "De vriend van Nina werkt als zzp'er.\nWat is een zzp'er?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Iemand die voor zichzelf werkt, zonder werkgever.",
+            "Iemand met een vaste baan bij de gemeente.",
+            "Iemand die nog op school zit."
+          ],
+          "answer": "Iemand die voor zichzelf werkt, zonder werkgever.",
+          "explanation": "A zzp'er is a self-employed person without an employer.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p10",
+          "order_index": 10,
+          "question_text": "Een werkgever maakt afspraken met een nieuwe werknemer.\nWelke afspraken maken zij vaak?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Afspraken over werktijden en reiskosten.",
+            "Afspraken over hobby's en vakantieplannen.",
+            "Afspraken over familie en vrienden."
+          ],
+          "answer": "Afspraken over werktijden en reiskosten.",
+          "explanation": "An employment contract covers matters such as working hours, salary and travel costs.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p11",
+          "order_index": 11,
+          "question_text": "Priya gaat weer werken.\nWaar kan haar dochter van twee jaar overdag naartoe?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Naar de kinderopvang.",
+            "Naar de basisschool.",
+            "Naar het roc."
+          ],
+          "answer": "Naar de kinderopvang.",
+          "explanation": "Children who are too young for primary school can go to childcare (kinderopvang).",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p12",
+          "order_index": 12,
+          "question_text": "De zoon van Aylin gaat naar de peuterspeelzaal.\nWaarvoor is een peuterspeelzaal bedoeld?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Spelen en de taal oefenen voordat een kind naar de basisschool gaat.",
+            "Huiswerk maken voor de middelbare school.",
+            "Een diploma halen."
+          ],
+          "answer": "Spelen en de taal oefenen voordat een kind naar de basisschool gaat.",
+          "explanation": "Preschool helps young children play and develop language before primary school.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p13",
+          "order_index": 13,
+          "question_text": "De kinderen van Samir gaan naar een openbare school.\nWat is een openbare school?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een school die niet bij één geloof hoort en open is voor alle kinderen.",
+            "Een school alleen voor kinderen uit de buurt.",
+            "Een school waar u veel moet betalen."
+          ],
+          "answer": "Een school die niet bij één geloof hoort en open is voor alle kinderen.",
+          "explanation": "A public (openbare) school is not based on one religion and is open to all children.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p14",
+          "order_index": 14,
+          "question_text": "De zoon van Ellen heeft een havodiploma.\nWelke opleiding past daarna?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Het hbo.",
+            "De basisschool.",
+            "Het vmbo."
+          ],
+          "answer": "Het hbo.",
+          "explanation": "After havo students usually continue to higher professional education (hbo).",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p15",
+          "order_index": 15,
+          "question_text": "Welk diploma van de middelbare school geeft direct toegang tot de universiteit?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Het vwo-diploma.",
+            "Het vmbo-diploma.",
+            "Het mbo-niveau 1-diploma."
+          ],
+          "answer": "Het vwo-diploma.",
+          "explanation": "The vwo diploma gives direct access to university.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p16",
+          "order_index": 16,
+          "question_text": "Wat neemt u mee naar uw afspraak in het ziekenhuis?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Uw identiteitsbewijs en de gegevens van uw zorgverzekering.",
+            "Uw huurcontract.",
+            "Het rapport van uw kind."
+          ],
+          "answer": "Uw identiteitsbewijs en de gegevens van uw zorgverzekering.",
+          "explanation": "Hospitals ask for identification and your health insurance details.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p17",
+          "order_index": 17,
+          "question_text": "Farid heeft een afspraak bij een specialist.\nWat doet een specialist?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Hij helpt bij één soort ziekte of één deel van het lichaam.",
+            "Hij verkoopt medicijnen.",
+            "Hij regelt uw verzekering."
+          ],
+          "answer": "Hij helpt bij één soort ziekte of één deel van het lichaam.",
+          "explanation": "A medical specialist treats one specific area of medicine.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p18",
+          "order_index": 18,
+          "question_text": "De dokter geeft Meryem een recept.\nWat is een recept?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een opdracht van de dokter waarmee u medicijnen kunt halen.",
+            "Een rekening van het ziekenhuis.",
+            "Een brief van de verzekering."
+          ],
+          "answer": "Een opdracht van de dokter waarmee u medicijnen kunt halen.",
+          "explanation": "A prescription is the doctor's order that lets the pharmacy give you medicine.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p19",
+          "order_index": 19,
+          "question_text": "Simon voelt zich al weken somber en wil erover praten.\nNaar wie gaat hij eerst?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Naar de huisarts.",
+            "Naar de gemeente.",
+            "Naar de apotheek."
+          ],
+          "answer": "Naar de huisarts.",
+          "explanation": "The GP is also the first contact for mental health problems and can refer you.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p20",
+          "order_index": 20,
+          "question_text": "De baby van Lotte krijgt een prik.\nWat is een vaccinatie?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een prik die beschermt tegen een ziekte.",
+            "Een onderzoek van uw ogen.",
+            "Een medicijn tegen hoofdpijn."
+          ],
+          "answer": "Een prik die beschermt tegen een ziekte.",
+          "explanation": "A vaccination protects you against a disease.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p21",
+          "order_index": 21,
+          "question_text": "Ahmet tekent een huurcontract.\nWat staat er in een huurcontract?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Afspraken over de huurprijs en de regels van de woning.",
+            "Het salaris van uw werk.",
+            "De naam van uw huisarts."
+          ],
+          "answer": "Afspraken over de huurprijs en de regels van de woning.",
+          "explanation": "A rental contract sets out the rent and the rules for using the home.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p22",
+          "order_index": 22,
+          "question_text": "Ahmet moet een waarborgsom betalen.\nWat is een waarborgsom?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Geld dat u aan de verhuurder betaalt en meestal terugkrijgt aan het einde van de huur.",
+            "De maandelijkse huur.",
+            "Een boete van de gemeente."
+          ],
+          "answer": "Geld dat u aan de verhuurder betaalt en meestal terugkrijgt aan het einde van de huur.",
+          "explanation": "A deposit is paid to the landlord and returned if the home is left in good condition.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p23",
+          "order_index": 23,
+          "question_text": "Er is brand in uw woning.\nWat doet u?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U gaat naar buiten en belt 112.",
+            "U doet de deur op slot en wacht.",
+            "U belt eerst de verhuurder."
+          ],
+          "answer": "U gaat naar buiten en belt 112.",
+          "explanation": "In case of fire you leave the building immediately and call the emergency number 112.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p24",
+          "order_index": 24,
+          "question_text": "U ruikt gas in uw huis.\nWat doet u?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U zet de ramen open, maakt geen vuur en belt de storingsdienst.",
+            "U steekt een kaars aan om beter te zien.",
+            "U wacht tot de geur weggaat."
+          ],
+          "answer": "U zet de ramen open, maakt geen vuur en belt de storingsdienst.",
+          "explanation": "If you smell gas you ventilate, avoid any flame or spark and call the emergency gas service.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p25",
+          "order_index": 25,
+          "question_text": "In de gang van Ayse hangt een rookmelder.\nWat is een rookmelder?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een apparaat dat alarm geeft bij rook of brand.",
+            "Een apparaat dat de temperatuur regelt.",
+            "Een lamp voor in de gang."
+          ],
+          "answer": "Een apparaat dat alarm geeft bij rook of brand.",
+          "explanation": "A smoke detector warns you with a loud alarm when there is smoke or fire.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p26",
+          "order_index": 26,
+          "question_text": "Priya en haar partner werken allebei en brengen hun kind naar de opvang.\nWelke toeslag kunnen zij aanvragen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Kinderopvangtoeslag.",
+            "Huurtoeslag.",
+            "Zorgtoeslag."
+          ],
+          "answer": "Kinderopvangtoeslag.",
+          "explanation": "Working parents can apply for childcare benefit (kinderopvangtoeslag).",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p27",
+          "order_index": 27,
+          "question_text": "Een kind van acht jaar gaat vaak niet naar school.\nWie controleert of kinderen echt naar school gaan?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De leerplichtambtenaar.",
+            "De huisarts.",
+            "De burgemeester."
+          ],
+          "answer": "De leerplichtambtenaar.",
+          "explanation": "The leerplichtambtenaar of the municipality checks that children attend school.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p28",
+          "order_index": 28,
+          "question_text": "Mike wil inloggen op de website van het UWV.\nWat heeft hij daarvoor nodig?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Zijn DigiD.",
+            "Zijn postcode en huisnummer.",
+            "Zijn bankpas."
+          ],
+          "answer": "Zijn DigiD.",
+          "explanation": "DigiD is the personal login used for Dutch government websites.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p29",
+          "order_index": 29,
+          "question_text": "Binnen hoeveel dagen na de verhuizing moet u uw nieuwe adres doorgeven aan de gemeente?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Binnen vijf dagen.",
+            "Binnen zes maanden.",
+            "Binnen twee jaar."
+          ],
+          "answer": "Binnen vijf dagen.",
+          "explanation": "A change of address must be reported to the municipality within five days of moving.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p30",
+          "order_index": 30,
+          "question_text": "Nancy krijgt een brief over haar toeslagen.\nWelke organisatie regelt de belastingen en de toeslagen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De Belastingdienst.",
+            "De woningcorporatie.",
+            "De GGD."
+          ],
+          "answer": "De Belastingdienst.",
+          "explanation": "The Belastingdienst collects taxes and pays out benefits such as huurtoeslag.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p31",
+          "order_index": 31,
+          "question_text": "Hoe vaak zijn er normaal verkiezingen voor de Tweede Kamer?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Ongeveer elke vier jaar.",
+            "Elk jaar.",
+            "Elke tien jaar."
+          ],
+          "answer": "Ongeveer elke vier jaar.",
+          "explanation": "Elections for the House of Representatives are normally held every four years.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p32",
+          "order_index": 32,
+          "question_text": "Sam mag stemmen.\nWat krijgt hij daarvoor thuis?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een stempas.",
+            "Een stembiljet met uw naam erop.",
+            "Een rekening."
+          ],
+          "answer": "Een stempas.",
+          "explanation": "Voters receive a voting pass (stempas) by post before the election.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p33",
+          "order_index": 33,
+          "question_text": "Wie is de minister-president?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De leider van de regering.",
+            "De koning van Nederland.",
+            "De baas van een provincie."
+          ],
+          "answer": "De leider van de regering.",
+          "explanation": "The prime minister leads the Dutch government.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p34",
+          "order_index": 34,
+          "question_text": "In de straat van Ilyas staan een kerk en een moskee.\nWat betekent vrijheid van godsdienst?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Iedereen mag zelf kiezen welk geloof hij heeft of geen geloof.",
+            "Iedereen moet naar de kerk.",
+            "Alleen christenen mogen bidden."
+          ],
+          "answer": "Iedereen mag zelf kiezen welk geloof hij heeft of geen geloof.",
+          "explanation": "Freedom of religion means everyone may choose their own religion or none.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p35",
+          "order_index": 35,
+          "question_text": "Wat doet de politie in Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Zij zorgt voor veiligheid en let op of mensen zich aan de wet houden.",
+            "Zij maakt de wetten.",
+            "Zij bepaalt de huurprijzen."
+          ],
+          "answer": "Zij zorgt voor veiligheid en let op of mensen zich aan de wet houden.",
+          "explanation": "The police maintain safety and enforce the law.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p36",
+          "order_index": 36,
+          "question_text": "Van welke Europese samenwerking is Nederland lid?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Van de Europese Unie.",
+            "Van de Verenigde Staten.",
+            "Van de Waddenzee."
+          ],
+          "answer": "Van de Europese Unie.",
+          "explanation": "The Netherlands is a member state of the European Union.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p37",
+          "order_index": 37,
+          "question_text": "In welke eeuw was de Gouden Eeuw van Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "In de zeventiende eeuw.",
+            "In de twintigste eeuw.",
+            "In de negentiende eeuw."
+          ],
+          "answer": "In de zeventiende eeuw.",
+          "explanation": "The Dutch Golden Age was in the seventeenth century.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p38",
+          "order_index": 38,
+          "question_text": "Wie was Anne Frank?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een Joods meisje dat in de Tweede Wereldoorlog een dagboek schreef.",
+            "Een koningin van Nederland.",
+            "Een beroemde schilder."
+          ],
+          "answer": "Een Joods meisje dat in de Tweede Wereldoorlog een dagboek schreef.",
+          "explanation": "Anne Frank was a Jewish girl who wrote a diary while hiding in Amsterdam during the war.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p39",
+          "order_index": 39,
+          "question_text": "Hoe heet de grote luchthaven bij Amsterdam?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Schiphol.",
+            "Rotterdam Centraal.",
+            "De Afsluitdijk."
+          ],
+          "answer": "Schiphol.",
+          "explanation": "Schiphol near Amsterdam is the largest airport in the Netherlands.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p40",
+          "order_index": 40,
+          "question_text": "Chen fietst langs een groot water in het midden van Nederland.\nWat is het IJsselmeer?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een groot meer in Nederland.",
+            "Een zee bij België.",
+            "Een rivier in Limburg."
+          ],
+          "answer": "Een groot meer in Nederland.",
+          "explanation": "The IJsselmeer is a large lake, created when the Zuiderzee was closed off.",
+          "category": "history_geography",
+          "year_asked": null
+        }
+      ]
+    },
+    "4": {
+      "section": "knm",
+      "exam_number": 4,
+      "level": "A2",
+      "title": "KNM - Oefenexamen 4",
+      "instructions": "Beantwoord de vragen over de Nederlandse maatschappij.",
+      "time_limit_minutes": 45,
+      "total_questions": 40,
+      "parts_count": 1,
+      "pass_threshold": 28,
+      "max_score": 40,
+      "passages": [
+        {
+          "id": "p1",
+          "order_index": 1,
+          "passage_type": "text",
+          "title": "In het openbaar vervoer",
+          "content_nl": "",
+          "scene_description": "A young passenger standing up to offer a seat to an elderly woman in a busy Dutch bus"
+        },
+        {
+          "id": "p2",
+          "order_index": 2,
+          "passage_type": "text",
+          "title": "Contact met de buren",
+          "content_nl": "",
+          "scene_description": "A new resident introducing herself to neighbours at a Dutch front door"
+        },
+        {
+          "id": "p3",
+          "order_index": 3,
+          "passage_type": "text",
+          "title": "Contact met de buren",
+          "content_nl": "",
+          "scene_description": "Neighbours putting a note about a party in the letterbox next door"
+        },
+        {
+          "id": "p4",
+          "order_index": 4,
+          "passage_type": "text",
+          "title": "Contact met de buren",
+          "content_nl": "",
+          "scene_description": "A man and a woman working side by side as equals in a Dutch workplace"
+        },
+        {
+          "id": "p5",
+          "order_index": 5,
+          "passage_type": "text",
+          "title": "Contact met de buren",
+          "content_nl": "",
+          "scene_description": "A volunteer serving coffee to visitors in a Dutch community centre"
+        },
+        {
+          "id": "p6",
+          "order_index": 6,
+          "passage_type": "text",
+          "title": "Werk en opleiding",
+          "content_nl": "",
+          "scene_description": "A student receiving a vocational diploma at a Dutch college"
+        },
+        {
+          "id": "p7",
+          "order_index": 7,
+          "passage_type": "text",
+          "title": "Werk en opleiding",
+          "content_nl": "",
+          "scene_description": "A jobseeker at a computer in a Dutch employment office with an adviser nearby"
+        },
+        {
+          "id": "p8",
+          "order_index": 8,
+          "passage_type": "text",
+          "title": "Werk en opleiding",
+          "content_nl": "",
+          "scene_description": "A student in work clothes learning on the job at a Dutch company"
+        },
+        {
+          "id": "p9",
+          "order_index": 9,
+          "passage_type": "text",
+          "title": "Werk en opleiding",
+          "content_nl": "",
+          "scene_description": "A printed cv and application letter lying on a desk beside a laptop"
+        },
+        {
+          "id": "p10",
+          "order_index": 10,
+          "passage_type": "text",
+          "title": "Ziek op het werk",
+          "content_nl": "",
+          "scene_description": "An employee phoning in sick from home while the alarm clock shows morning"
+        },
+        {
+          "id": "p11",
+          "order_index": 11,
+          "passage_type": "text",
+          "title": "Meedoen op school",
+          "content_nl": "",
+          "scene_description": "Parents and teachers in a school council meeting around a table"
+        },
+        {
+          "id": "p12",
+          "order_index": 12,
+          "passage_type": "text",
+          "title": "Meedoen op school",
+          "content_nl": "",
+          "scene_description": "A parent helping a group of pupils during a school outing"
+        },
+        {
+          "id": "p13",
+          "order_index": 13,
+          "passage_type": "text",
+          "title": "Meedoen op school",
+          "content_nl": "",
+          "scene_description": "A parent talking with a teacher about a child in an empty Dutch classroom"
+        },
+        {
+          "id": "p14",
+          "order_index": 14,
+          "passage_type": "text",
+          "title": "Meedoen op school",
+          "content_nl": "",
+          "scene_description": "Children having a swimming lesson in a Dutch indoor swimming pool"
+        },
+        {
+          "id": "p15",
+          "order_index": 15,
+          "passage_type": "text",
+          "title": "De schoolgids",
+          "content_nl": "",
+          "scene_description": "A parent reading a school guide booklet at home"
+        },
+        {
+          "id": "p16",
+          "order_index": 16,
+          "passage_type": "text",
+          "title": "Ziek op het werk",
+          "content_nl": "",
+          "scene_description": "An employee phoning the employer from bed on a Monday morning"
+        },
+        {
+          "id": "p17",
+          "order_index": 17,
+          "passage_type": "text",
+          "title": "Ziek op het werk",
+          "content_nl": "",
+          "scene_description": "A company doctor talking with an employee in a consulting room"
+        },
+        {
+          "id": "p18",
+          "order_index": 18,
+          "passage_type": "text",
+          "title": "Ziek op het werk",
+          "content_nl": "",
+          "scene_description": "A person cleaning a small cut on the hand at a bathroom mirror"
+        },
+        {
+          "id": "p19",
+          "order_index": 19,
+          "passage_type": "text",
+          "title": "Zorg thuis",
+          "content_nl": "",
+          "scene_description": "A home care nurse helping an elderly woman in her living room"
+        },
+        {
+          "id": "p20",
+          "order_index": 20,
+          "passage_type": "text",
+          "title": "Zorg thuis",
+          "content_nl": "",
+          "scene_description": "An adult daughter helping her elderly father with the shopping at home"
+        },
+        {
+          "id": "p21",
+          "order_index": 21,
+          "passage_type": "text",
+          "title": "Geld en wonen",
+          "content_nl": "",
+          "scene_description": "A rental advertisement showing the basic rent for a Dutch apartment"
+        },
+        {
+          "id": "p22",
+          "order_index": 22,
+          "passage_type": "text",
+          "title": "Geld en wonen",
+          "content_nl": "",
+          "scene_description": "A worried tenant phoning the landlord with unpaid bills on the table"
+        },
+        {
+          "id": "p23",
+          "order_index": 23,
+          "passage_type": "text",
+          "title": "Uw huurwoning",
+          "content_nl": "",
+          "scene_description": "Furniture and belongings in a Dutch living room with an insurance policy on the table"
+        },
+        {
+          "id": "p24",
+          "order_index": 24,
+          "passage_type": "text",
+          "title": "Uw huurwoning",
+          "content_nl": "",
+          "scene_description": "A tenant pointing at damp and mould on the wall of a Dutch flat"
+        },
+        {
+          "id": "p25",
+          "order_index": 25,
+          "passage_type": "text",
+          "title": "Uw huurwoning",
+          "content_nl": "",
+          "scene_description": "A cleaner mopping the shared stairwell of a Dutch apartment building"
+        },
+        {
+          "id": "p26",
+          "order_index": 26,
+          "passage_type": "text",
+          "title": "Zorg thuis",
+          "content_nl": "",
+          "scene_description": "An elderly woman talking with a municipal support worker in her living room"
+        },
+        {
+          "id": "p27",
+          "order_index": 27,
+          "passage_type": "text",
+          "title": "Geld en wonen",
+          "content_nl": "",
+          "scene_description": "A person with unpaid bills talking to a debt counsellor at the municipality"
+        },
+        {
+          "id": "p28",
+          "order_index": 28,
+          "passage_type": "text",
+          "title": "Geld en wonen",
+          "content_nl": "",
+          "scene_description": "A resident getting free legal advice at a Dutch legal advice desk"
+        },
+        {
+          "id": "p29",
+          "order_index": 29,
+          "passage_type": "text",
+          "title": "Uw huurwoning",
+          "content_nl": "",
+          "scene_description": "A person with a suitcase talking to a municipal housing adviser at a desk"
+        },
+        {
+          "id": "p30",
+          "order_index": 30,
+          "passage_type": "text",
+          "title": "Een paspoort aanvragen",
+          "content_nl": "",
+          "scene_description": "A resident collecting a new passport at a Dutch municipality counter"
+        },
+        {
+          "id": "p31",
+          "order_index": 31,
+          "passage_type": "text",
+          "title": "Gemeenteraadsverkiezingen",
+          "content_nl": "",
+          "scene_description": "Election posters for the municipal council on a Dutch street board"
+        },
+        {
+          "id": "p32",
+          "order_index": 32,
+          "passage_type": "text",
+          "title": "De Grondwet",
+          "content_nl": "",
+          "scene_description": "A small book of the Dutch constitution on a library table"
+        },
+        {
+          "id": "p33",
+          "order_index": 33,
+          "passage_type": "text",
+          "title": "Het is niet eerlijk",
+          "content_nl": "",
+          "scene_description": "A person writing a formal letter of objection at a desk"
+        },
+        {
+          "id": "p34",
+          "order_index": 34,
+          "passage_type": "text",
+          "title": "De gemeenteraad",
+          "content_nl": "",
+          "scene_description": "Residents casting their votes at a Dutch municipal polling station"
+        },
+        {
+          "id": "p35",
+          "order_index": 35,
+          "passage_type": "text",
+          "title": "Gelijk voor de wet",
+          "content_nl": "",
+          "scene_description": "A judge and lawyers in a Dutch courtroom during a hearing"
+        },
+        {
+          "id": "p36",
+          "order_index": 36,
+          "passage_type": "text",
+          "title": "Provincies en steden",
+          "content_nl": "",
+          "scene_description": "Flags of many countries in front of an international organisation building"
+        },
+        {
+          "id": "p37",
+          "order_index": 37,
+          "passage_type": "text",
+          "title": "Provincies en steden",
+          "content_nl": "",
+          "scene_description": "The old bridge over the Maas river in Maastricht, Limburg"
+        },
+        {
+          "id": "p38",
+          "order_index": 38,
+          "passage_type": "text",
+          "title": "Provincies en steden",
+          "content_nl": "",
+          "scene_description": "Straight roads, ditches and new farmland in the polder province of Flevoland"
+        },
+        {
+          "id": "p39",
+          "order_index": 39,
+          "passage_type": "text",
+          "title": "Provincies en steden",
+          "content_nl": "",
+          "scene_description": "Container cranes and ships in the port of Rotterdam"
+        },
+        {
+          "id": "p40",
+          "order_index": 40,
+          "passage_type": "text",
+          "title": "Symbolen en tradities",
+          "content_nl": "",
+          "scene_description": "A Liberation Day festival with music and flags in a Dutch park on 5 May"
+        }
+      ],
+      "questions": [
+        {
+          "passage_id": "p1",
+          "order_index": 1,
+          "question_text": "Er stapt een oudere vrouw in de volle bus.\nWat is netjes?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U staat op en biedt haar uw plaats aan.",
+            "U doet alsof u haar niet ziet.",
+            "U vraagt haar om te betalen voor uw plaats."
+          ],
+          "answer": "U staat op en biedt haar uw plaats aan.",
+          "explanation": "Offering your seat to an elderly person is considered polite.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p2",
+          "order_index": 2,
+          "question_text": "U komt nieuw in de straat wonen.\nWat is een goed idee?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U stelt zich even voor aan de buren.",
+            "U praat nooit met de buren.",
+            "U geeft alle buren een cadeau."
+          ],
+          "answer": "U stelt zich even voor aan de buren.",
+          "explanation": "Introducing yourself to the neighbours is a normal and friendly first step.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p3",
+          "order_index": 3,
+          "question_text": "Uw buren geven zaterdag een feest.\nWat doen zij vaak van tevoren?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Zij laten weten dat het misschien wat lawaai geeft.",
+            "Zij vragen u de politie te bellen.",
+            "Zij verhuizen voor één nacht."
+          ],
+          "answer": "Zij laten weten dat het misschien wat lawaai geeft.",
+          "explanation": "Warning the neighbours about a party is a common courtesy in the Netherlands.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p4",
+          "order_index": 4,
+          "question_text": "Wat geldt in Nederland voor mannen en vrouwen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Zij hebben dezelfde rechten.",
+            "Alleen mannen mogen werken.",
+            "Alleen vrouwen mogen stemmen."
+          ],
+          "answer": "Zij hebben dezelfde rechten.",
+          "explanation": "Men and women have equal rights under Dutch law.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p5",
+          "order_index": 5,
+          "question_text": "Klaas helpt elke week in het buurthuis en krijgt daar geen geld voor.\nWat is vrijwilligerswerk?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Werk dat u doet zonder dat u ervoor betaald wordt.",
+            "Werk waarvoor u veel geld krijgt.",
+            "Werk dat u van de gemeente moet doen."
+          ],
+          "answer": "Werk dat u doet zonder dat u ervoor betaald wordt.",
+          "explanation": "Volunteer work is unpaid work, for example in a sports club or care home.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p6",
+          "order_index": 6,
+          "question_text": "Yusuf hoort dat hij een startkwalificatie nodig heeft.\nWat is een startkwalificatie?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een diploma van minimaal mbo-niveau 2, havo of vwo.",
+            "Een diploma van de basisschool.",
+            "Een bewijs dat u Nederlands spreekt."
+          ],
+          "answer": "Een diploma van minimaal mbo-niveau 2, havo of vwo.",
+          "explanation": "A startkwalificatie is at least an mbo level 2, havo or vwo diploma.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p7",
+          "order_index": 7,
+          "question_text": "Yusuf zoekt werk.\nWaar kan hij hulp krijgen bij het zoeken naar werk?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Bij het UWV of bij de gemeente.",
+            "Bij de huisarts.",
+            "Bij de Huurcommissie."
+          ],
+          "answer": "Bij het UWV of bij de gemeente.",
+          "explanation": "The UWV and the municipality help people who are looking for work.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p8",
+          "order_index": 8,
+          "question_text": "Lena leert in de praktijk bij een bedrijf, als onderdeel van haar opleiding.\nWat is een stage?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Werk waarbij u in de praktijk leert, als onderdeel van uw opleiding.",
+            "Een vakantie van school.",
+            "Een examen aan het einde van het jaar."
+          ],
+          "answer": "Werk waarbij u in de praktijk leert, als onderdeel van uw opleiding.",
+          "explanation": "A stage is a work placement that is part of a study programme.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p9",
+          "order_index": 9,
+          "question_text": "Wat staat er in een cv?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Uw opleiding en uw werkervaring.",
+            "Uw huurprijs.",
+            "De namen van uw buren."
+          ],
+          "answer": "Uw opleiding en uw werkervaring.",
+          "explanation": "A cv gives an overview of your education and work experience.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p10",
+          "order_index": 10,
+          "question_text": "Bas werkt in loondienst en is ziek.\nKrijgt hij dan loon?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Ja, uw werkgever betaalt een groot deel van uw loon door.",
+            "Nee, u krijgt niets.",
+            "Ja, maar alleen de eerste dag."
+          ],
+          "answer": "Ja, uw werkgever betaalt een groot deel van uw loon door.",
+          "explanation": "Employers must continue to pay a large part of the wage during illness.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p11",
+          "order_index": 11,
+          "question_text": "Op de school van Sofie praten ouders en leraren mee.\nWat is de medezeggenschapsraad van een school?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een raad waarin ouders en personeel meepraten over de school.",
+            "De groep leerlingen van groep 8.",
+            "De vergadering van alle gemeentes."
+          ],
+          "answer": "Een raad waarin ouders en personeel meepraten over de school.",
+          "explanation": "The participation council lets parents and staff have a say in school matters.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p12",
+          "order_index": 12,
+          "question_text": "Wat doet een ouder die op school helpt bij een uitje?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Hij gaat als vrijwilliger mee om de leraar te helpen.",
+            "Hij geeft zelf de lessen.",
+            "Hij bepaalt het schooladvies."
+          ],
+          "answer": "Hij gaat als vrijwilliger mee om de leraar te helpen.",
+          "explanation": "Parents often help as volunteers during school trips and activities.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p13",
+          "order_index": 13,
+          "question_text": "Uw kind wordt gepest op school.\nWat doet u?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U praat erover met de leraar van uw kind.",
+            "U doet niets, dat gaat vanzelf over.",
+            "U gaat naar de ouders van het andere kind schreeuwen."
+          ],
+          "answer": "U praat erover met de leraar van uw kind.",
+          "explanation": "The teacher is the first person to discuss bullying with.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p14",
+          "order_index": 14,
+          "question_text": "Bijna alle kinderen in Nederland leren zwemmen.\nWaarom is dat?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Omdat er in Nederland veel water is.",
+            "Omdat het verplicht is voor het paspoort.",
+            "Omdat de zee altijd warm is."
+          ],
+          "answer": "Omdat er in Nederland veel water is.",
+          "explanation": "Because of all the canals and water, swimming lessons are important for safety.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p15",
+          "order_index": 15,
+          "question_text": "De school van Noor geeft de ouders een schoolgids.\nWat staat er in een schoolgids?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Informatie over de regels en de manier van werken van de school.",
+            "Het huiswerk voor elke dag.",
+            "De namen van alle ouders."
+          ],
+          "answer": "Informatie over de regels en de manier van werken van de school.",
+          "explanation": "The school guide explains the school's rules and way of working.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p16",
+          "order_index": 16,
+          "question_text": "U bent ziek en kunt niet werken.\nWat doet u?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U meldt zich zo snel mogelijk ziek bij uw werkgever.",
+            "U wacht tot uw werkgever u belt.",
+            "U gaat toch naar het werk."
+          ],
+          "answer": "U meldt zich zo snel mogelijk ziek bij uw werkgever.",
+          "explanation": "Employees must report sick to their employer, usually before the working day starts.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p17",
+          "order_index": 17,
+          "question_text": "Rik is al zes weken ziek.\nWelke arts helpt de werkgever en de werknemer bij langere ziekte?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De bedrijfsarts.",
+            "De tandarts.",
+            "De verloskundige."
+          ],
+          "answer": "De bedrijfsarts.",
+          "explanation": "The company doctor (bedrijfsarts) advises about work and illness.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p18",
+          "order_index": 18,
+          "question_text": "Sanae heeft een klein wondje aan haar hand.\nWanneer gaat zij naar de huisarts?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Als het wondje niet geneest of erger wordt.",
+            "Meteen, altijd.",
+            "Nooit, ook niet bij een ontsteking."
+          ],
+          "answer": "Als het wondje niet geneest of erger wordt.",
+          "explanation": "For small injuries you go to the GP if the wound does not heal or gets worse.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p19",
+          "order_index": 19,
+          "question_text": "De buurvrouw van Femke krijgt hulp van de thuiszorg.\nWat doet de thuiszorg?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Die helpt mensen thuis met zorg, bijvoorbeeld met wassen en medicijnen.",
+            "Die maakt het huis schoon voor iedereen.",
+            "Die verhuurt woningen aan ouderen."
+          ],
+          "answer": "Die helpt mensen thuis met zorg, bijvoorbeeld met wassen en medicijnen.",
+          "explanation": "Home care provides nursing and personal care at home.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p20",
+          "order_index": 20,
+          "question_text": "Femke zorgt zonder betaling voor haar zieke moeder.\nWat is een mantelzorger?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Iemand die zonder betaling zorgt voor een familielid of vriend.",
+            "Een dokter in het ziekenhuis.",
+            "Een medewerker van de gemeente."
+          ],
+          "answer": "Iemand die zonder betaling zorgt voor een familielid of vriend.",
+          "explanation": "A mantelzorger cares unpaid for a family member, neighbour or friend.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p21",
+          "order_index": 21,
+          "question_text": "In de advertentie van een woning staat de kale huur.\nWat is de kale huur?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De huur zonder kosten voor bijvoorbeeld gas, water en licht.",
+            "De huur inclusief alle kosten.",
+            "De huur van een leeg stuk grond."
+          ],
+          "answer": "De huur zonder kosten voor bijvoorbeeld gas, water en licht.",
+          "explanation": "Kale huur is the basic rent, without service costs and utilities.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p22",
+          "order_index": 22,
+          "question_text": "U kunt de huur deze maand niet betalen.\nWat doet u het beste?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U neemt zo snel mogelijk contact op met de verhuurder.",
+            "U wacht af en zegt niets.",
+            "U betaalt pas na een jaar."
+          ],
+          "answer": "U neemt zo snel mogelijk contact op met de verhuurder.",
+          "explanation": "Contacting the landlord early usually helps to arrange a payment solution.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p23",
+          "order_index": 23,
+          "question_text": "Jamal wil zijn spullen in huis verzekeren.\nWat is een inboedelverzekering?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een verzekering voor uw spullen in huis.",
+            "Een verzekering voor uw auto.",
+            "Een verzekering voor uw gezondheid."
+          ],
+          "answer": "Een verzekering voor uw spullen in huis.",
+          "explanation": "Contents insurance covers the belongings inside your home.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p24",
+          "order_index": 24,
+          "question_text": "Er zit schimmel op de muur door vocht in uw huurwoning.\nWat doet u?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U meldt het bij de verhuurder.",
+            "U verft er zelf overheen en zegt niets.",
+            "U belt 112."
+          ],
+          "answer": "U meldt het bij de verhuurder.",
+          "explanation": "Damp and mould caused by the building are the landlord's responsibility to fix.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p25",
+          "order_index": 25,
+          "question_text": "Op de rekening van Ines staan servicekosten.\nWat zijn servicekosten bij een huurwoning?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Kosten voor bijvoorbeeld het schoonmaken van de gemeenschappelijke ruimte.",
+            "De prijs van uw meubels.",
+            "De belasting op uw inkomen."
+          ],
+          "answer": "Kosten voor bijvoorbeeld het schoonmaken van de gemeenschappelijke ruimte.",
+          "explanation": "Service costs cover shared services such as cleaning of communal areas.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p26",
+          "order_index": 26,
+          "question_text": "Uw buurvrouw heeft hulp in huis nodig.\nWaar kan zij die hulp aanvragen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Bij de gemeente.",
+            "Bij de politie.",
+            "Bij de school."
+          ],
+          "answer": "Bij de gemeente.",
+          "explanation": "Support at home under the Wmo is arranged by the municipality.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p27",
+          "order_index": 27,
+          "question_text": "Marco heeft schulden en kan het niet meer zelf oplossen.\nWaar vraagt hij hulp?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Bij de schuldhulpverlening van de gemeente.",
+            "Bij de bedrijfsarts.",
+            "Bij het consultatiebureau."
+          ],
+          "answer": "Bij de schuldhulpverlening van de gemeente.",
+          "explanation": "Municipalities offer debt assistance (schuldhulpverlening).",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p28",
+          "order_index": 28,
+          "question_text": "Sanne heeft een vraag over haar rechten als huurder.\nWaarbij helpt het Juridisch Loket?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Bij vragen over rechten en plichten.",
+            "Bij het zoeken naar een woning.",
+            "Bij het leren van Nederlands."
+          ],
+          "answer": "Bij vragen over rechten en plichten.",
+          "explanation": "Het Juridisch Loket gives free information and advice about legal rights and duties.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p29",
+          "order_index": 29,
+          "question_text": "Stefan dreigt zijn woning kwijt te raken en weet niet waar hij naartoe moet.\nWaar vraagt hij hulp?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Bij de gemeente.",
+            "Bij de school.",
+            "Bij de apotheek."
+          ],
+          "answer": "Bij de gemeente.",
+          "explanation": "The municipality is responsible for help with housing problems and homelessness.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p30",
+          "order_index": 30,
+          "question_text": "Kofi wil een Nederlands paspoort aanvragen.\nWaar kan hij dat doen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Bij de gemeente.",
+            "Bij de politie.",
+            "Bij de bank."
+          ],
+          "answer": "Bij de gemeente.",
+          "explanation": "Passports and identity cards are applied for at the municipality.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p31",
+          "order_index": 31,
+          "question_text": "Hoe vaak zijn er gemeenteraadsverkiezingen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Ongeveer elke vier jaar.",
+            "Elk jaar.",
+            "Elke tien jaar."
+          ],
+          "answer": "Ongeveer elke vier jaar.",
+          "explanation": "Municipal elections are held about every four years.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p32",
+          "order_index": 32,
+          "question_text": "In de bibliotheek ziet Ruben een boekje over de Grondwet.\nWat is de Grondwet?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De belangrijkste wet van Nederland, met de rechten van iedereen.",
+            "Een regel van uw woningcorporatie.",
+            "Een boek met de geschiedenis van Nederland."
+          ],
+          "answer": "De belangrijkste wet van Nederland, met de rechten van iedereen.",
+          "explanation": "The constitution is the most important law and sets out everyone's basic rights.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p33",
+          "order_index": 33,
+          "question_text": "Wat mag u doen als u het niet eens bent met een besluit van een instantie?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Bezwaar maken en zo nodig naar de rechter gaan.",
+            "Niets, een besluit staat altijd vast.",
+            "De ambtenaar thuis opzoeken."
+          ],
+          "answer": "Bezwaar maken en zo nodig naar de rechter gaan.",
+          "explanation": "You may object to a decision and ultimately go to court.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p34",
+          "order_index": 34,
+          "question_text": "Wie kiezen de leden van de gemeenteraad?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De inwoners van de gemeente.",
+            "De koning.",
+            "De minister-president."
+          ],
+          "answer": "De inwoners van de gemeente.",
+          "explanation": "Council members are elected by the inhabitants of the municipality.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p35",
+          "order_index": 35,
+          "question_text": "Wat betekent 'iedereen is gelijk voor de wet'?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De wet geldt voor alle mensen, ook voor de regering.",
+            "Alleen rijke mensen moeten zich aan de wet houden.",
+            "De wet geldt alleen voor mensen met een Nederlands paspoort."
+          ],
+          "answer": "De wet geldt voor alle mensen, ook voor de regering.",
+          "explanation": "In a constitutional state the law applies equally to everyone.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p36",
+          "order_index": 36,
+          "question_text": "Nederland is lid van de Verenigde Naties.\nWat is het doel van de VN?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Vrede en veiligheid in de wereld.",
+            "Betere scholen in Europa.",
+            "Bescherming van de Nederlandse natuur."
+          ],
+          "answer": "Vrede en veiligheid in de wereld.",
+          "explanation": "The United Nations works for peace and security between countries.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p37",
+          "order_index": 37,
+          "question_text": "In welke provincie ligt Maastricht?",
+          "question_type": "multiple_choice",
+          "options": [
+            "In Limburg.",
+            "In Zeeland.",
+            "In Drenthe."
+          ],
+          "answer": "In Limburg.",
+          "explanation": "Maastricht is the capital of the province of Limburg.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p38",
+          "order_index": 38,
+          "question_text": "Welke provincie is gemaakt van land dat uit het water is gehaald?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Flevoland.",
+            "Utrecht.",
+            "Gelderland."
+          ],
+          "answer": "Flevoland.",
+          "explanation": "Flevoland is the newest province, built on land reclaimed from the water.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p39",
+          "order_index": 39,
+          "question_text": "Welke stad heeft de grootste haven van Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Rotterdam.",
+            "Utrecht.",
+            "Eindhoven."
+          ],
+          "answer": "Rotterdam.",
+          "explanation": "Rotterdam has the largest port in the Netherlands.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p40",
+          "order_index": 40,
+          "question_text": "Wat vieren Nederlanders op 5 mei?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Bevrijdingsdag.",
+            "Koningsdag.",
+            "Sinterklaas."
+          ],
+          "answer": "Bevrijdingsdag.",
+          "explanation": "On 5 May the Netherlands celebrates Liberation Day.",
+          "category": "history_geography",
+          "year_asked": null
+        }
+      ]
+    },
+    "5": {
+      "section": "knm",
+      "exam_number": 5,
+      "level": "A2",
+      "title": "KNM - Oefenexamen 5",
+      "instructions": "Beantwoord de vragen over de Nederlandse maatschappij.",
+      "time_limit_minutes": 45,
+      "total_questions": 40,
+      "parts_count": 1,
+      "pass_threshold": 28,
+      "max_score": 40,
+      "passages": [
+        {
+          "id": "p1",
+          "order_index": 1,
+          "passage_type": "text",
+          "title": "Vrije tijd en sport",
+          "content_nl": "",
+          "scene_description": "Children playing football at a Dutch amateur sports club with parents watching"
+        },
+        {
+          "id": "p2",
+          "order_index": 2,
+          "passage_type": "text",
+          "title": "Vrije tijd en sport",
+          "content_nl": "",
+          "scene_description": "A child arriving at a birthday party with a small wrapped present"
+        },
+        {
+          "id": "p3",
+          "order_index": 3,
+          "passage_type": "text",
+          "title": "Vrije tijd en sport",
+          "content_nl": "",
+          "scene_description": "A Dutch flag with a school bag hanging from an upstairs window of a house"
+        },
+        {
+          "id": "p4",
+          "order_index": 4,
+          "passage_type": "text",
+          "title": "Regels en omgaan met elkaar",
+          "content_nl": "",
+          "scene_description": "Two men exchanging rings at a Dutch civil wedding ceremony in a town hall"
+        },
+        {
+          "id": "p5",
+          "order_index": 5,
+          "passage_type": "text",
+          "title": "Regels en omgaan met elkaar",
+          "content_nl": "",
+          "scene_description": "Colleagues of different backgrounds working together in a Dutch office"
+        },
+        {
+          "id": "p6",
+          "order_index": 6,
+          "passage_type": "text",
+          "title": "Het sollicitatiegesprek",
+          "content_nl": "",
+          "scene_description": "A job interview between a candidate and an employer in a Dutch office"
+        },
+        {
+          "id": "p7",
+          "order_index": 7,
+          "passage_type": "text",
+          "title": "Werk en zorg voor de kinderen",
+          "content_nl": "",
+          "scene_description": "A parent working at a laptop for a few hours while a child plays nearby"
+        },
+        {
+          "id": "p8",
+          "order_index": 8,
+          "passage_type": "text",
+          "title": "Ontslag",
+          "content_nl": "",
+          "scene_description": "A person registering for unemployment benefit at a Dutch UWV office"
+        },
+        {
+          "id": "p9",
+          "order_index": 9,
+          "passage_type": "text",
+          "title": "Pensioen",
+          "content_nl": "",
+          "scene_description": "An older couple looking at a state pension letter at their kitchen table"
+        },
+        {
+          "id": "p10",
+          "order_index": 10,
+          "passage_type": "text",
+          "title": "Geld verdienen naast school",
+          "content_nl": "",
+          "scene_description": "A sixteen-year-old working at the checkout of a Dutch supermarket"
+        },
+        {
+          "id": "p11",
+          "order_index": 11,
+          "passage_type": "text",
+          "title": "Extra hulp op school",
+          "content_nl": "",
+          "scene_description": "A teacher and a parent talking about a child's reading progress at a school table"
+        },
+        {
+          "id": "p12",
+          "order_index": 12,
+          "passage_type": "text",
+          "title": "Extra hulp op school",
+          "content_nl": "",
+          "scene_description": "Pupils in a Dutch groep 8 classroom filling in an assessment test"
+        },
+        {
+          "id": "p13",
+          "order_index": 13,
+          "passage_type": "text",
+          "title": "Extra hulp op school",
+          "content_nl": "",
+          "scene_description": "The entrance of a Dutch school with a religious name and children arriving"
+        },
+        {
+          "id": "p14",
+          "order_index": 14,
+          "passage_type": "text",
+          "title": "Extra hulp op school",
+          "content_nl": "",
+          "scene_description": "An empty seat in a Dutch classroom while the teacher checks the register"
+        },
+        {
+          "id": "p15",
+          "order_index": 15,
+          "passage_type": "text",
+          "title": "Leren als volwassene",
+          "content_nl": "",
+          "scene_description": "An adult learner practising Dutch conversation with a volunteer in a library"
+        },
+        {
+          "id": "p16",
+          "order_index": 16,
+          "passage_type": "text",
+          "title": "Spoed in het weekend",
+          "content_nl": "",
+          "scene_description": "A parent and a child with an injured arm at a Dutch out-of-hours clinic"
+        },
+        {
+          "id": "p17",
+          "order_index": 17,
+          "passage_type": "text",
+          "title": "Spoed in het weekend",
+          "content_nl": "",
+          "scene_description": "The emergency department entrance of a Dutch hospital at night"
+        },
+        {
+          "id": "p18",
+          "order_index": 18,
+          "passage_type": "text",
+          "title": "Spoed in het weekend",
+          "content_nl": "",
+          "scene_description": "A man registering as a new patient at the reception of a Dutch GP practice"
+        },
+        {
+          "id": "p19",
+          "order_index": 19,
+          "passage_type": "text",
+          "title": "Een zorgverzekering kiezen",
+          "content_nl": "",
+          "scene_description": "A person comparing health insurance policies on a laptop in December"
+        },
+        {
+          "id": "p20",
+          "order_index": 20,
+          "passage_type": "text",
+          "title": "Een zorgverzekering kiezen",
+          "content_nl": "",
+          "scene_description": "A health insurance policy document lying on a kitchen table"
+        },
+        {
+          "id": "p21",
+          "order_index": 21,
+          "passage_type": "text",
+          "title": "Samenleven in de buurt",
+          "content_nl": "",
+          "scene_description": "Neighbours drinking coffee together in a Dutch community centre"
+        },
+        {
+          "id": "p22",
+          "order_index": 22,
+          "passage_type": "text",
+          "title": "Samenleven in de buurt",
+          "content_nl": "",
+          "scene_description": "Bicycles parked in front of a neighbour's door in a Dutch street"
+        },
+        {
+          "id": "p23",
+          "order_index": 23,
+          "passage_type": "text",
+          "title": "Samenleven in de buurt",
+          "content_nl": "",
+          "scene_description": "A resident bothered by loud music from the flat next door"
+        },
+        {
+          "id": "p24",
+          "order_index": 24,
+          "passage_type": "text",
+          "title": "Duurzaam wonen",
+          "content_nl": "",
+          "scene_description": "A resident sorting paper, plastic and glass into separate bins at home"
+        },
+        {
+          "id": "p25",
+          "order_index": 25,
+          "passage_type": "text",
+          "title": "Duurzaam wonen",
+          "content_nl": "",
+          "scene_description": "A person turning down a radiator thermostat in a Dutch living room"
+        },
+        {
+          "id": "p26",
+          "order_index": 26,
+          "passage_type": "text",
+          "title": "Regels en omgaan met elkaar",
+          "content_nl": "",
+          "scene_description": "A resident making an appointment with the municipality on a laptop"
+        },
+        {
+          "id": "p27",
+          "order_index": 27,
+          "passage_type": "text",
+          "title": "Leren als volwassene",
+          "content_nl": "",
+          "scene_description": "A person showing a foreign diploma to an adviser at an information desk"
+        },
+        {
+          "id": "p28",
+          "order_index": 28,
+          "passage_type": "text",
+          "title": "Leren als volwassene",
+          "content_nl": "",
+          "scene_description": "Adult candidates taking a Dutch language state exam in a quiet exam room"
+        },
+        {
+          "id": "p29",
+          "order_index": 29,
+          "passage_type": "text",
+          "title": "Leren als volwassene",
+          "content_nl": "",
+          "scene_description": "A couple registering their new shared address at a municipality service desk"
+        },
+        {
+          "id": "p30",
+          "order_index": 30,
+          "passage_type": "text",
+          "title": "Hulp in de wijk",
+          "content_nl": "",
+          "scene_description": "Residents talking with a neighbourhood team worker in a community centre"
+        },
+        {
+          "id": "p31",
+          "order_index": 31,
+          "passage_type": "text",
+          "title": "Geschiedenis van Nederland",
+          "content_nl": "",
+          "scene_description": "The Dutch royal palace with a crowd gathered outside on a national holiday"
+        },
+        {
+          "id": "p32",
+          "order_index": 32,
+          "passage_type": "text",
+          "title": "Politieke partijen",
+          "content_nl": "",
+          "scene_description": "Party stands with volunteers and leaflets at a Dutch election market"
+        },
+        {
+          "id": "p33",
+          "order_index": 33,
+          "passage_type": "text",
+          "title": "Stemmen in het stemhokje",
+          "content_nl": "",
+          "scene_description": "A voter alone in a polling booth with a red pencil"
+        },
+        {
+          "id": "p34",
+          "order_index": 34,
+          "passage_type": "text",
+          "title": "Wat doet de gemeenteraad?",
+          "content_nl": "",
+          "scene_description": "A municipal council meeting in a Dutch town hall"
+        },
+        {
+          "id": "p35",
+          "order_index": 35,
+          "passage_type": "text",
+          "title": "Een regel overtreden",
+          "content_nl": "",
+          "scene_description": "A police officer writing a fine for a resident in a Dutch street"
+        },
+        {
+          "id": "p36",
+          "order_index": 36,
+          "passage_type": "text",
+          "title": "Water, land en weer",
+          "content_nl": "",
+          "scene_description": "A flat Dutch polder landscape with ditches, dikes and grazing cows"
+        },
+        {
+          "id": "p37",
+          "order_index": 37,
+          "passage_type": "text",
+          "title": "Water, land en weer",
+          "content_nl": "",
+          "scene_description": "A wide Dutch river with barges passing under a bridge"
+        },
+        {
+          "id": "p38",
+          "order_index": 38,
+          "passage_type": "text",
+          "title": "Water, land en weer",
+          "content_nl": "",
+          "scene_description": "The long Afsluitdijk causeway with water on both sides"
+        },
+        {
+          "id": "p39",
+          "order_index": 39,
+          "passage_type": "text",
+          "title": "Geschiedenis van Nederland",
+          "content_nl": "",
+          "scene_description": "A wartime street scene in the occupied Netherlands, historical black and white photograph"
+        },
+        {
+          "id": "p40",
+          "order_index": 40,
+          "passage_type": "text",
+          "title": "Geschiedenis van Nederland",
+          "content_nl": "",
+          "scene_description": "A seventeenth-century Dutch East India Company warehouse and sailing ships"
+        }
+      ],
+      "questions": [
+        {
+          "passage_id": "p1",
+          "order_index": 1,
+          "question_text": "De zoon van Dounia wil gaan voetballen.\nWaar sporten veel Nederlandse kinderen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Bij een sportvereniging in de buurt.",
+            "Alleen op school.",
+            "Alleen thuis in de tuin."
+          ],
+          "answer": "Bij een sportvereniging in de buurt.",
+          "explanation": "Most children in the Netherlands play sport at a local club (sportvereniging).",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p2",
+          "order_index": 2,
+          "question_text": "Het kind van Tim gaat naar een kinderfeestje.\nWat neemt het meestal mee?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een klein cadeautje voor de jarige.",
+            "Zijn eigen eten.",
+            "Geld voor de ouders."
+          ],
+          "answer": "Een klein cadeautje voor de jarige.",
+          "explanation": "Children usually bring a small present to a birthday party.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p3",
+          "order_index": 3,
+          "question_text": "Bij een huis hangt een vlag met een schooltas uit het raam.\nWat betekent dit?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Iemand is geslaagd voor school.",
+            "Iemand gaat verhuizen.",
+            "Iemand is jarig."
+          ],
+          "answer": "Iemand is geslaagd voor school.",
+          "explanation": "A flag with a school bag means someone in the house has passed their final school exams.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p4",
+          "order_index": 4,
+          "question_text": "Arno en Timo zijn twee mannen.\nZij willen met elkaar trouwen.\nWat staat hierover in de Nederlandse wet?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Dat mag.",
+            "Dat mag niet.",
+            "Dat beslist de gemeente."
+          ],
+          "answer": "Dat mag.",
+          "explanation": "Same-sex marriage has been legal in the Netherlands since 2001.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p5",
+          "order_index": 5,
+          "question_text": "In Nederland is discriminatie verboden.\nWat betekent dat?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Iedereen moet gelijk behandeld worden, ook bij een andere afkomst of geloof.",
+            "Alleen Nederlanders hebben rechten.",
+            "Iedereen moet hetzelfde geloof hebben."
+          ],
+          "answer": "Iedereen moet gelijk behandeld worden, ook bij een andere afkomst of geloof.",
+          "explanation": "Discrimination is forbidden: everyone must be treated equally.",
+          "category": "customs",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p6",
+          "order_index": 6,
+          "question_text": "Layla is uitgenodigd door een werkgever.\nWat is een sollicitatiegesprek?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een gesprek met een werkgever over een baan.",
+            "Een gesprek met de leraar over uw kind.",
+            "Een gesprek bij de huisarts."
+          ],
+          "answer": "Een gesprek met een werkgever over een baan.",
+          "explanation": "A job interview is a conversation with an employer about a job.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p7",
+          "order_index": 7,
+          "question_text": "Sander werkt drie dagen per week.\nWat is parttime werken?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Minder uren werken dan een volledige werkweek.",
+            "Meer dan zestig uur per week werken.",
+            "Werken zonder contract."
+          ],
+          "answer": "Minder uren werken dan een volledige werkweek.",
+          "explanation": "Part-time means working fewer hours than a full working week.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p8",
+          "order_index": 8,
+          "question_text": "Nadja raakt haar baan kwijt.\nWaar kan zij een WW-uitkering aanvragen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Bij het UWV.",
+            "Bij de woningcorporatie.",
+            "Bij de school."
+          ],
+          "answer": "Bij het UWV.",
+          "explanation": "Unemployment benefit (WW) is applied for at the UWV.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p9",
+          "order_index": 9,
+          "question_text": "De collega van Joop bereikt de pensioenleeftijd.\nWat is de AOW?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een uitkering van de overheid voor mensen die de pensioenleeftijd hebben bereikt.",
+            "Een verzekering voor uw woning.",
+            "Een toeslag voor kinderen op school."
+          ],
+          "answer": "Een uitkering van de overheid voor mensen die de pensioenleeftijd hebben bereikt.",
+          "explanation": "AOW is the state pension paid from the state pension age.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p10",
+          "order_index": 10,
+          "question_text": "De zoon van Hanan is zestien jaar en werkt op zaterdag in een supermarkt.\nWat is een bijbaan?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Werk voor een paar uur per week, naast school of een andere baan.",
+            "Een volledige baan van veertig uur.",
+            "Werk zonder loon."
+          ],
+          "answer": "Werk voor een paar uur per week, naast school of een andere baan.",
+          "explanation": "A bijbaan is a small side job alongside school or other work.",
+          "category": "work_income",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p11",
+          "order_index": 11,
+          "question_text": "De dochter van Vera heeft moeite met lezen.\nMet wie bespreekt Vera dat het eerst?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Met de leraar van uw dochter.",
+            "Met de burgemeester.",
+            "Met de huisarts."
+          ],
+          "answer": "Met de leraar van uw dochter.",
+          "explanation": "The teacher is the first person to talk to about learning problems.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p12",
+          "order_index": 12,
+          "question_text": "In groep 8 maken kinderen een toets.\nWaarvoor is die toets?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Om te kijken welk niveau van middelbare school past bij het kind.",
+            "Om te kijken of het kind mag blijven wonen.",
+            "Om te kijken of het kind gezond is."
+          ],
+          "answer": "Om te kijken welk niveau van middelbare school past bij het kind.",
+          "explanation": "The test in groep 8 helps determine the right level of secondary school.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p13",
+          "order_index": 13,
+          "question_text": "De ouders van Musa willen een school met een geloof kiezen.\nMag dat in Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Ja, ouders mogen zelf een school kiezen.",
+            "Nee, dat mag niet.",
+            "Ja, maar alleen in Amsterdam."
+          ],
+          "answer": "Ja, ouders mogen zelf een school kiezen.",
+          "explanation": "Freedom of education means parents may choose a public or a religious school.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p14",
+          "order_index": 14,
+          "question_text": "Een kind gaat vaak zonder goede reden niet naar school.\nWat doet de school?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De school meldt het bij de leerplichtambtenaar.",
+            "De school doet niets.",
+            "De school belt de brandweer."
+          ],
+          "answer": "De school meldt het bij de leerplichtambtenaar.",
+          "explanation": "Schools must report unauthorised absence to the compulsory-education officer.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p15",
+          "order_index": 15,
+          "question_text": "Oksana wil sneller Nederlands leren.\nWat helpt het beste?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Veel oefenen door met Nederlanders te praten.",
+            "Alleen thuis naar muziek luisteren.",
+            "Alleen in uw eigen taal praten."
+          ],
+          "answer": "Veel oefenen door met Nederlanders te praten.",
+          "explanation": "Practising by speaking with Dutch people is the fastest way to learn the language.",
+          "category": "education",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p16",
+          "order_index": 16,
+          "question_text": "Het is zaterdagavond en de zoon van Petra heeft veel pijn aan zijn arm.\nWaar gaat zij naartoe?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Naar de huisartsenpost.",
+            "Naar de apotheek.",
+            "Naar de tandarts."
+          ],
+          "answer": "Naar de huisartsenpost.",
+          "explanation": "Outside opening hours the huisartsenpost gives urgent medical help.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p17",
+          "order_index": 17,
+          "question_text": "Wat is de spoedeisende hulp?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De afdeling van het ziekenhuis voor mensen die snel hulp nodig hebben.",
+            "De wachtkamer van de huisarts.",
+            "Een winkel voor medicijnen."
+          ],
+          "answer": "De afdeling van het ziekenhuis voor mensen die snel hulp nodig hebben.",
+          "explanation": "The spoedeisende hulp is the hospital's accident and emergency department.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p18",
+          "order_index": 18,
+          "question_text": "Ramin is verhuisd naar een andere stad.\nHoe krijgt hij een huisarts in zijn nieuwe woonplaats?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Hij zoekt zelf een huisarts en schrijft zich in.",
+            "De gemeente regelt een huisarts voor hem.",
+            "De huisarts in de wijk stuurt hem vanzelf een bericht."
+          ],
+          "answer": "Hij zoekt zelf een huisarts en schrijft zich in.",
+          "explanation": "After moving you look for a GP yourself and register as a patient.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p19",
+          "order_index": 19,
+          "question_text": "Het is december en Bilal vergelijkt de zorgverzekeringen.\nWanneer kan hij van zorgverzekering veranderen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Aan het einde van het jaar, voor het nieuwe jaar begint.",
+            "Elke maand.",
+            "Alleen als u verhuist."
+          ],
+          "answer": "Aan het einde van het jaar, voor het nieuwe jaar begint.",
+          "explanation": "You can switch health insurer once a year, at the end of the calendar year.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p20",
+          "order_index": 20,
+          "question_text": "Iedereen in Nederland heeft een basisverzekering.\nWat is de basisverzekering?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De verzekering met de zorg die iedereen minimaal verzekerd heeft.",
+            "Een verzekering voor uw fiets.",
+            "Een verzekering die alleen ouderen hebben."
+          ],
+          "answer": "De verzekering met de zorg die iedereen minimaal verzekerd heeft.",
+          "explanation": "The basic health insurance covers the standard care that everyone must be insured for.",
+          "category": "healthcare",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p21",
+          "order_index": 21,
+          "question_text": "In de wijk van Ans is een plek met activiteiten voor bewoners.\nWat is een buurthuis?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een plek in de wijk waar bewoners elkaar ontmoeten en activiteiten doen.",
+            "Een winkel voor meubels.",
+            "Het huis van de burgemeester."
+          ],
+          "answer": "Een plek in de wijk waar bewoners elkaar ontmoeten en activiteiten doen.",
+          "explanation": "A community centre is a place in the neighbourhood for meeting and activities.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p22",
+          "order_index": 22,
+          "question_text": "Uw buren zetten hun fietsen steeds voor uw deur.\nWat doet u het eerst?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U vraagt het vriendelijk aan de buren.",
+            "U gooit de fietsen weg.",
+            "U belt meteen de politie."
+          ],
+          "answer": "U vraagt het vriendelijk aan de buren.",
+          "explanation": "Talking to your neighbours yourself is the normal first step.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p23",
+          "order_index": 23,
+          "question_text": "Wat is burenoverlast?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Last hebben van wat de buren doen, bijvoorbeeld veel lawaai.",
+            "Een feest van de buurt.",
+            "Een vergadering van de gemeente."
+          ],
+          "answer": "Last hebben van wat de buren doen, bijvoorbeeld veel lawaai.",
+          "explanation": "Burenoverlast means nuisance caused by neighbours, such as noise.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p24",
+          "order_index": 24,
+          "question_text": "Waarom scheiden mensen in Nederland hun afval?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Zodat het opnieuw gebruikt kan worden.",
+            "Omdat de vuilnisbakken te klein zijn.",
+            "Omdat de buren dat willen."
+          ],
+          "answer": "Zodat het opnieuw gebruikt kan worden.",
+          "explanation": "Waste is separated so that materials such as paper, glass and plastic can be recycled.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p25",
+          "order_index": 25,
+          "question_text": "Sjoerd wil energie besparen in huis.\nWat is een goede manier?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De verwarming lager zetten en ledlampen gebruiken.",
+            "Alle ramen openzetten met de verwarming aan.",
+            "De lampen dag en nacht aanlaten."
+          ],
+          "answer": "De verwarming lager zetten en ledlampen gebruiken.",
+          "explanation": "Lowering the heating and using LED lamps saves energy.",
+          "category": "housing",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p26",
+          "order_index": 26,
+          "question_text": "U wilt iets regelen bij de gemeente.\nWat doet u meestal eerst?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U maakt een afspraak.",
+            "U gaat 's nachts naar het gemeentehuis.",
+            "U stuurt een cadeau."
+          ],
+          "answer": "U maakt een afspraak.",
+          "explanation": "For most services at the municipality you need to make an appointment first.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p27",
+          "order_index": 27,
+          "question_text": "U heeft een diploma uit een ander land.\nWat kunt u laten doen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Uw diploma laten waarderen, zodat u weet wat het in Nederland waard is.",
+            "Uw diploma inleveren bij de gemeente.",
+            "Uw diploma opnieuw laten drukken."
+          ],
+          "answer": "Uw diploma laten waarderen, zodat u weet wat het in Nederland waard is.",
+          "explanation": "A foreign diploma can be evaluated to see which Dutch level it compares with.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p28",
+          "order_index": 28,
+          "question_text": "Waarvoor is het Staatsexamen NT2?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Om te laten zien dat u genoeg Nederlands kunt voor werk of studie.",
+            "Om een rijbewijs te halen.",
+            "Om een woning te krijgen."
+          ],
+          "answer": "Om te laten zien dat u genoeg Nederlands kunt voor werk of studie.",
+          "explanation": "The Staatsexamen NT2 shows that your Dutch is good enough for work or study.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p29",
+          "order_index": 29,
+          "question_text": "Dave en Yara gaan samenwonen.\nMoeten zij dit melden aan de gemeente?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Ja, zij geven hun nieuwe adres door.",
+            "Nee, dat gebeurt automatisch.",
+            "Alleen als zij gaan trouwen."
+          ],
+          "answer": "Ja, zij geven hun nieuwe adres door.",
+          "explanation": "A change of address always has to be reported to the municipality.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p30",
+          "order_index": 30,
+          "question_text": "Waar kunt u naartoe voor hulp en advies in uw wijk?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Naar het wijkteam van de gemeente.",
+            "Naar de bank.",
+            "Naar de apotheek."
+          ],
+          "answer": "Naar het wijkteam van de gemeente.",
+          "explanation": "Municipal neighbourhood teams give help and advice to residents.",
+          "category": "institutions",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p31",
+          "order_index": 31,
+          "question_text": "Wie is op dit moment de koning van Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Willem-Alexander.",
+            "Beatrix.",
+            "Juliana."
+          ],
+          "answer": "Willem-Alexander.",
+          "explanation": "Willem-Alexander became King of the Netherlands in 2013.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p32",
+          "order_index": 32,
+          "question_text": "Op televisie ziet Roos een debat tussen politici.\nWat is een politieke partij?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een groep mensen met dezelfde ideeën over het besturen van het land.",
+            "Een groep mensen die samen sporten.",
+            "Een bedrijf dat woningen bouwt."
+          ],
+          "answer": "Een groep mensen met dezelfde ideeën over het besturen van het land.",
+          "explanation": "A political party is a group with shared ideas about governing the country.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p33",
+          "order_index": 33,
+          "question_text": "Hoe stemt u bij verkiezingen in Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "In het geheim, alleen in een stemhokje.",
+            "Samen met uw buren, hardop.",
+            "Door het aan de burgemeester te vertellen."
+          ],
+          "answer": "In het geheim, alleen in een stemhokje.",
+          "explanation": "Voting in the Netherlands is secret and done alone in a booth.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p34",
+          "order_index": 34,
+          "question_text": "In de wijkkrant van Joris staan nieuwe plannen van de gemeenteraad.\nWaarover beslist de gemeenteraad?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Over zaken in de gemeente, zoals wegen en buurthuizen.",
+            "Over de wetten van heel Nederland.",
+            "Over de prijzen in de supermarkt."
+          ],
+          "answer": "Over zaken in de gemeente, zoals wegen en buurthuizen.",
+          "explanation": "The municipal council decides on local matters.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p35",
+          "order_index": 35,
+          "question_text": "Wat kan er gebeuren als u een wet overtreedt?",
+          "question_type": "multiple_choice",
+          "options": [
+            "U kunt een straf krijgen, bijvoorbeeld een boete.",
+            "Er gebeurt nooit iets.",
+            "U moet verhuizen naar een andere gemeente."
+          ],
+          "answer": "U kunt een straf krijgen, bijvoorbeeld een boete.",
+          "explanation": "Breaking the law can lead to a penalty such as a fine.",
+          "category": "government",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p36",
+          "order_index": 36,
+          "question_text": "Wat is een polder?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Land dat is drooggemaakt en beschermd wordt door dijken.",
+            "Een berg in Limburg.",
+            "Een groot bos in Drenthe."
+          ],
+          "answer": "Land dat is drooggemaakt en beschermd wordt door dijken.",
+          "explanation": "A polder is reclaimed land protected by dikes and kept dry with pumps.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p37",
+          "order_index": 37,
+          "question_text": "Welke grote rivieren stromen door Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De Rijn en de Maas.",
+            "De Donau en de Elbe.",
+            "De Seine en de Loire."
+          ],
+          "answer": "De Rijn en de Maas.",
+          "explanation": "The Rhine and the Meuse are the biggest rivers in the Netherlands.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p38",
+          "order_index": 38,
+          "question_text": "Wat is de Afsluitdijk?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een lange dijk tussen de Waddenzee en het IJsselmeer.",
+            "Een brug in Rotterdam.",
+            "Een tunnel onder Amsterdam."
+          ],
+          "answer": "Een lange dijk tussen de Waddenzee en het IJsselmeer.",
+          "explanation": "The Afsluitdijk closed off the Zuiderzee and separates the Wadden Sea from the IJsselmeer.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p39",
+          "order_index": 39,
+          "question_text": "Wat gebeurde er tussen 1940 en 1945 in Nederland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Nederland was bezet tijdens de Tweede Wereldoorlog.",
+            "Nederland kreeg een nieuwe provincie.",
+            "Nederland werd lid van de euro."
+          ],
+          "answer": "Nederland was bezet tijdens de Tweede Wereldoorlog.",
+          "explanation": "The Netherlands was occupied from 1940 until the liberation in 1945.",
+          "category": "history_geography",
+          "year_asked": null
+        },
+        {
+          "passage_id": "p40",
+          "order_index": 40,
+          "question_text": "Wat was de VOC?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een grote Nederlandse handelsonderneming uit de zeventiende eeuw.",
+            "Een politieke partij van nu.",
+            "Een organisatie voor sociale huurwoningen."
+          ],
+          "answer": "Een grote Nederlandse handelsonderneming uit de zeventiende eeuw.",
+          "explanation": "The VOC was the Dutch East India Company, a large trading company in the seventeenth century.",
+          "category": "history_geography",
+          "year_asked": null
+        }
+      ]
+    }
+  }
+}

@@ -575,22 +575,35 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
                     # --- Step 10b: Upload Shorts to Instagram ---
                     if settings.UPLOAD_INSTAGRAM:
                         with _stage("upload_shorts_instagram"):
+                            from pipeline.core.db import (
+                                claim_instagram_reel_upload,
+                                complete_instagram_reel_upload,
+                                release_instagram_reel_upload_claim,
+                            )
                             for i, short in enumerate(shorts_list):
+                                scene = short.get("scene", i)
+                                claimed = claim_instagram_reel_upload(_topic_id, scene)
+                                if not claimed:
+                                    LOGGER.info("Instagram Reel skipped scene=%d — already uploaded or in progress", scene)
+                                    continue
+                                claim_id, claimed_artifact, claimed_short = claimed
                                 try:
                                     ig_result = stage_upload_short_instagram(
-                                        artifact, short
+                                        claimed_artifact, claimed_short
                                     )
-                                    artifact["shorts"][i]["instagram"] = ig_result
-                                    _save_artifact(_topic_id, artifact)
+                                    if not complete_instagram_reel_upload(_topic_id, scene, claim_id, ig_result):
+                                        LOGGER.warning("Instagram Reel result ignored scene=%d — upload claim was superseded", scene)
+                                        continue
                                     LOGGER.info(
                                         "\u2713 Instagram Reel uploaded scene=%d reel_id=%s",
-                                        short["scene"],
+                                        scene,
                                         ig_result.get("reel_id"),
                                     )
                                 except Exception as exc:
+                                    release_instagram_reel_upload_claim(_topic_id, scene, claim_id)
                                     LOGGER.warning(
                                         "\u26a0 Instagram upload failed scene=%d (non-fatal): %s",
-                                        short.get("scene"), exc,
+                                        scene, exc,
                                     )
 
                     # --- Step 10c: Upload Shorts to TikTok ---
@@ -618,22 +631,35 @@ def run(language: str, level: str, category: str | None = None, upload: bool = T
                     if settings.UPLOAD_FACEBOOK:
                         with _stage("upload_shorts_facebook"):
                             from pipeline.stages import stage_upload_short_facebook
+                            from pipeline.core.db import (
+                                claim_facebook_reel_upload,
+                                complete_facebook_reel_upload,
+                                release_facebook_reel_upload_claim,
+                            )
                             for i, short in enumerate(shorts_list):
+                                scene = short.get("scene", i)
+                                claimed = claim_facebook_reel_upload(_topic_id, scene)
+                                if not claimed:
+                                    LOGGER.info("Facebook Reel skipped scene=%d — already uploaded or in progress", scene)
+                                    continue
+                                claim_id, claimed_artifact, claimed_short = claimed
                                 try:
                                     fb_result = stage_upload_short_facebook(
-                                        artifact, short
+                                        claimed_artifact, claimed_short
                                     )
-                                    artifact["shorts"][i]["facebook"] = fb_result
-                                    _save_artifact(_topic_id, artifact)
+                                    if not complete_facebook_reel_upload(_topic_id, scene, claim_id, fb_result):
+                                        LOGGER.warning("Facebook Reel result ignored scene=%d — upload claim was superseded", scene)
+                                        continue
                                     LOGGER.info(
                                         "\u2713 Facebook Reel uploaded scene=%d post_id=%s",
-                                        short["scene"],
+                                        scene,
                                         fb_result.get("post_id"),
                                     )
                                 except Exception as exc:
+                                    release_facebook_reel_upload_claim(_topic_id, scene, claim_id)
                                     LOGGER.warning(
                                         "\u26a0 Facebook upload failed scene=%d (non-fatal): %s",
-                                        short.get("scene"), exc,
+                                        scene, exc,
                                     )
         else:
             LOGGER.warning("\u26a0 Upload skipped — no rendered video found at: %s", stable_video_path)
@@ -1538,6 +1564,11 @@ def run_upload_shorts(topic_id: str) -> None:
 
 
 def run_upload_shorts_instagram(topic_id: str) -> None:
+    from pipeline.core.db import (
+        claim_instagram_reel_upload,
+        complete_instagram_reel_upload,
+        release_instagram_reel_upload_claim,
+    )
     artifact = load_artifact(topic_id)
     shorts_list: list[dict] = artifact.get("shorts", [])
     if not shorts_list:
@@ -1551,13 +1582,21 @@ def run_upload_shorts_instagram(topic_id: str) -> None:
         return
     print(f"\U0001f4f8 Uploading {len(pending)} Reel(s) to Instagram (skipping {len(shorts_list) - len(pending)} already done) for: {artifact['title_slug']}")
     for i, short in pending:
+        scene = short.get("scene", i)
+        claimed = claim_instagram_reel_upload(topic_id, scene)
+        if not claimed:
+            print(f"  \u2139\ufe0f  Scene {scene} skipped: already uploaded or in progress")
+            continue
+        claim_id, claimed_artifact, claimed_short = claimed
         try:
-            ig_result = stage_upload_short_instagram(artifact, short)
-            artifact["shorts"][i]["instagram"] = ig_result
-            _save_artifact(topic_id, artifact)
-            print(f"  \u2705 Scene {short['scene']} uploaded: reel_id={ig_result.get('reel_id')}")
+            ig_result = stage_upload_short_instagram(claimed_artifact, claimed_short)
+            if complete_instagram_reel_upload(topic_id, scene, claim_id, ig_result):
+                print(f"  \u2705 Scene {scene} uploaded: reel_id={ig_result.get('reel_id')}")
+            else:
+                print(f"  \u2139\ufe0f  Scene {scene} result ignored: upload claim was superseded")
         except Exception as exc:
-            print(f"  \u26a0\ufe0f  Scene {short['scene']} Instagram upload failed: {exc}")
+            release_instagram_reel_upload_claim(topic_id, scene, claim_id)
+            print(f"  \u26a0\ufe0f  Scene {scene} Instagram upload failed: {exc}")
     print("\u2705 Instagram Reels upload complete")
     _check_and_mark_done(artifact)
 
@@ -1589,6 +1628,11 @@ def run_upload_shorts_tiktok(topic_id: str) -> None:
 
 def run_upload_shorts_facebook(topic_id: str) -> None:
     from pipeline.stages import stage_upload_short_facebook
+    from pipeline.core.db import (
+        claim_facebook_reel_upload,
+        complete_facebook_reel_upload,
+        release_facebook_reel_upload_claim,
+    )
     artifact = load_artifact(topic_id)
     shorts_list: list[dict] = artifact.get("shorts", [])
     if not shorts_list:
@@ -1602,13 +1646,21 @@ def run_upload_shorts_facebook(topic_id: str) -> None:
         return
     print(f"\U0001f4d8 Uploading {len(pending)} Reel(s) to Facebook for: {artifact['title_slug']}")
     for i, short in pending:
+        scene = short.get("scene", i)
+        claimed = claim_facebook_reel_upload(topic_id, scene)
+        if not claimed:
+            print(f"  \u2139\ufe0f  Scene {scene} skipped: already uploaded or in progress")
+            continue
+        claim_id, claimed_artifact, claimed_short = claimed
         try:
-            fb_result = stage_upload_short_facebook(artifact, short)
-            artifact["shorts"][i]["facebook"] = fb_result
-            _save_artifact(topic_id, artifact)
-            print(f"  \u2705 Scene {short['scene']} uploaded: post_id={fb_result.get('post_id')}")
+            fb_result = stage_upload_short_facebook(claimed_artifact, claimed_short)
+            if complete_facebook_reel_upload(topic_id, scene, claim_id, fb_result):
+                print(f"  \u2705 Scene {scene} uploaded: post_id={fb_result.get('post_id')}")
+            else:
+                print(f"  \u2139\ufe0f  Scene {scene} result ignored: upload claim was superseded")
         except Exception as exc:
-            print(f"  \u26a0\ufe0f  Scene {short['scene']} Facebook upload failed: {exc}")
+            release_facebook_reel_upload_claim(topic_id, scene, claim_id)
+            print(f"  \u26a0\ufe0f  Scene {scene} Facebook upload failed: {exc}")
     print("\u2705 Facebook Reels upload complete")
     _check_and_mark_done(artifact)
 

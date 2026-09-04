@@ -17,8 +17,10 @@ const ALLOWED: RegExp[] = [
   /^feedback$/,
   /^mock-exams\/[\w.-]+\/take$/,
   /^mock-exams\/[\w.-]+\/submit$/,
+  /^mock-exams\/[\w.-]+\/recordings$/,
   /^mock-exams\/[\w.-]+\/attempts$/,
   /^mock-exams\/[\w.-]+\/attempts\/\d+$/,
+  /^mock-exams\/[\w.-]+\/attempts\/\d+\/recordings\/[\w.-]+$/,
   /^mock-exams\/media\/image$/,
   /^mock-exams\/media\/audio$/,
   /^mock-exams\/media\/video$/,
@@ -41,25 +43,30 @@ async function forward(req: NextRequest, segments: string[]) {
     return NextResponse.json({ detail: "Sign in required" }, { status: 401 });
   }
 
-  const headers = new Headers({
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-  });
+  const headers = new Headers({ Authorization: `Bearer ${token}` });
+  const contentType = req.headers.get("Content-Type");
+  if (contentType) headers.set("Content-Type", contentType);
+  const range = req.headers.get("Range");
+  if (range) headers.set("Range", range);
 
-  const body = req.method === "GET" ? undefined : await req.text();
+  const body = req.method === "GET" ? undefined : await req.arrayBuffer();
   const url = `${BASE}/api/${path}${req.nextUrl.search}`;
   const res = await fetch(url, { method: req.method, headers, body, cache: "no-store" });
 
-  const contentType = res.headers.get("Content-Type") ?? "application/json";
-  if (contentType.startsWith("image/") || contentType.startsWith("audio/") || contentType.startsWith("video/")) {
-    const buf = await res.arrayBuffer();
-    return new NextResponse(buf, { status: res.status, headers: { "Content-Type": contentType } });
+  const responseContentType = res.headers.get("Content-Type") ?? "application/json";
+  if (responseContentType.startsWith("image/") || responseContentType.startsWith("audio/") || responseContentType.startsWith("video/")) {
+    const mediaHeaders = new Headers({ "Content-Type": responseContentType });
+    for (const name of ["Accept-Ranges", "Content-Length", "Content-Range", "Cache-Control"]) {
+      const value = res.headers.get(name);
+      if (value) mediaHeaders.set(name, value);
+    }
+    return new NextResponse(res.body, { status: res.status, headers: mediaHeaders });
   }
 
   const text = await res.text();
   return new NextResponse(text || null, {
     status: res.status,
-    headers: { "Content-Type": contentType },
+    headers: { "Content-Type": responseContentType },
   });
 }
 
