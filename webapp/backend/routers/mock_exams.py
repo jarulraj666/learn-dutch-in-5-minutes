@@ -32,13 +32,13 @@ def get_mock_exam(exam_id: str):
 class RunRequest(BaseModel):
     section: str | None = None
     exam_number: int | None = None
-    stage: str  # content | media | question_audio | export
+    stage: str  # content | media | question_audio | export | production_sync
 
 
 @router.post("/mock-exams/run")
 async def run_mock_exam_job(req: RunRequest):
-    if req.stage not in ("content", "media", "question_audio", "export"):
-        raise HTTPException(status_code=400, detail="stage must be one of content|media|question_audio|export")
+    if req.stage not in ("content", "media", "question_audio", "export", "production_sync"):
+        raise HTTPException(status_code=400, detail="stage must be one of content|media|question_audio|export|production_sync")
 
     cmd = ["python", "-m", "pipeline.tools.generate_and_export_mock_exams", "--stage", req.stage]
     if req.section:

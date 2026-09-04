@@ -76,6 +76,23 @@ Attach the production domain to Vercel. If both the apex and `www` domain are us
 
 Do not run video generation, WhisperX, FFmpeg rendering, or social publishing inside a web request. Run `pipeline/run_pipeline.py` locally at first, then move it to a dedicated worker, VM, or scheduled job when needed.
 
+## 7. Sync mock exams and media
+
+Keep the admin pipeline service private. Its Pipeline tab can upload completed mock-exam media to an S3-compatible Cloudflare R2 bucket and then sync the updated exam to Railway Postgres. Configure these variables on that service:
+
+```text
+PRODUCTION_DATABASE_URL=postgresql://...
+R2_ENDPOINT_URL=https://<account-id>.r2.cloudflarestorage.com
+R2_ACCESS_KEY_ID=...
+R2_SECRET_ACCESS_KEY=...
+R2_BUCKET=learn-dutch-media
+R2_PUBLIC_BASE_URL=https://media.your-domain.com
+```
+
+`R2_PUBLIC_BASE_URL` must be a public custom domain or public bucket URL that serves the bucket. The bucket must permit the service credentials to upload objects. Generate videos, MP3/WAV audio, images, and subtitles locally or on a worker first. In the admin Mock Exam Pipeline tab, select **Sync to Production**, confirm the action, and wait for the job to finish. It uploads local media, rewrites the exam artifact to use public URLs, and upserts that exam to `PRODUCTION_DATABASE_URL`.
+
+Do not use Railway's container filesystem for generated video or audio. It is ephemeral and can be cleared during a deploy. Learners stream public media directly from R2; private speaking recordings are transcribed and deleted by the API.
+
 ## Deployment checklist
 
 - [ ] PostgreSQL schema applied
@@ -86,3 +103,5 @@ Do not run video generation, WhisperX, FFmpeg rendering, or social publishing in
 - [ ] `ADMIN_EMAILS` set
 - [ ] Secrets and token files excluded from git
 - [ ] Database backups enabled
+- [ ] R2 variables configured on the private admin pipeline service
+- [ ] R2 public media domain configured

@@ -705,6 +705,9 @@ function PipelineTab({ examId, onDone }: { examId: string; onDone: () => void })
 
   const runStage = useCallback(
     async (stage: string) => {
+      if (stage === "production_sync" && !window.confirm("Upload this exam's media and sync its content to the production database?")) {
+        return;
+      }
       setLogs([]);
       const job = await apiFetch<{ job_id: string }>("/api/mock-exams/run", {
         method: "POST",
@@ -753,6 +756,9 @@ function PipelineTab({ examId, onDone }: { examId: string; onDone: () => void })
         )}
         <button onClick={() => runStage("export")} className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-sm">
           Export to Postgres
+        </button>
+        <button onClick={() => runStage("production_sync")} className="bg-orange-600 hover:bg-orange-500 text-white px-3 py-1.5 rounded text-sm">
+          Sync to Production
         </button>
       </div>
       <pre className="bg-black/60 rounded p-3 text-xs h-80 overflow-y-auto whitespace-pre-wrap">

@@ -12,6 +12,8 @@ topic pipeline:
               (Gemini TTS); leaves passage media untouched.
     export  — push the staged artifact into the learner-app Postgres tables
               (mock_exams / mock_exam_passages / mock_exam_questions).
+    production_sync — upload local media to R2, replace artifact paths with
+              public URLs, then push the exam to PRODUCTION_DATABASE_URL.
 
 Usage:
     python -m pipeline.tools.generate_and_export_mock_exams --section reading --exam-number 1 --stage content
@@ -139,11 +141,52 @@ def run_export(section: str | None, exam_number: int | None, database_url: str, 
     return 0 if ok else 1
 
 
+def run_production_sync(section: str | None, exam_number: int | None, dry_run: bool) -> int:
+    from pipeline.core.object_storage import ObjectStorageError, upload_mock_exam_media
+    from pipeline.core.store_mock_exam import load_mock_exam_job, mark_mock_exam_job_exported, push_mock_exam_to_postgres, save_mock_exam_job
+
+    database_url = os.environ.get("PRODUCTION_DATABASE_URL", "")
+    if not database_url:
+        print("PRODUCTION_DATABASE_URL is required for --stage production_sync.")
+        return 1
+    if not dry_run:
+        import psycopg
+
+        try:
+            with psycopg.connect(database_url):
+                pass
+        except psycopg.Error as exc:
+            LOGGER.error("production sync cannot connect to PRODUCTION_DATABASE_URL: %s", exc)
+            return 1
+
+    ok = 0
+    for sec, num in _exam_targets(section, exam_number):
+        exam_id = f"a2-{sec}-{num}"
+        job = load_mock_exam_job(exam_id)
+        if not job or not job.get("artifact"):
+            LOGGER.warning("production_sync stage: no staged content for %s", exam_id)
+            continue
+        artifact = job["artifact"]
+        try:
+            uploaded = 0 if dry_run else upload_mock_exam_media(artifact)
+            print(f"{exam_id}: {uploaded} media file(s) uploaded; syncing to production")
+            if not dry_run:
+                push_mock_exam_to_postgres(artifact, database_url)
+                save_mock_exam_job(exam_id, sec, num, artifact["level"], artifact, status="exported")
+                mark_mock_exam_job_exported(exam_id)
+        except ObjectStorageError as exc:
+            LOGGER.error("production sync failed for %s: %s", exam_id, exc)
+            continue
+        ok += 1
+    print(f"production_sync stage: {ok} exam(s) synced")
+    return 0 if ok else 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate and export A2 mock exams")
     parser.add_argument("--section", choices=["reading", "listening", "writing", "speaking", "knm"])
     parser.add_argument("--exam-number", type=int, choices=range(1, 6))
-    parser.add_argument("--stage", choices=["content", "media", "question_audio", "export"], required=True)
+    parser.add_argument("--stage", choices=["content", "media", "question_audio", "export", "production_sync"], required=True)
     parser.add_argument("--dry-run", action="store_true", help="Report only; no writes")
     parser.add_argument("--overwrite", action="store_true", help="Re-voice questions that already have audio")
     parser.add_argument("--database-url", default=os.environ.get("DATABASE_URL", ""))
@@ -155,6 +198,8 @@ def main() -> int:
         return run_media(args.section, args.exam_number, args.dry_run)
     if args.stage == "question_audio":
         return run_question_audio(args.section, args.exam_number, args.dry_run, args.overwrite)
+    if args.stage == "production_sync":
+        return run_production_sync(args.section, args.exam_number, args.dry_run)
     return run_export(args.section, args.exam_number, args.database_url, args.dry_run)
 
 
