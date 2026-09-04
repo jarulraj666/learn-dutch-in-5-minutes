@@ -101,6 +101,7 @@ export function ExamFooter({
 }
 
 export function mediaProxyUrl(type: "image" | "audio" | "video", path: string): string {
+  if (path.startsWith("https://") || path.startsWith("http://")) return path;
   return `/api/backend/mock-exams/media/${type}?path=${encodeURIComponent(path)}`;
 }
 

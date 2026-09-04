@@ -63,7 +63,7 @@ def process_one() -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Process Railway speaking jobs with local WhisperX")
     parser.add_argument("--watch", action="store_true", help="Keep polling for new jobs")
-    parser.add_argument("--interval", type=int, default=10, help="Seconds between empty queue checks")
+    parser.add_argument("--interval", type=int, default=60, help="Seconds between empty queue checks")
     args = parser.parse_args()
     while True:
         found = process_one()

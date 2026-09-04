@@ -489,7 +489,23 @@ Confirm it is healthy (should report `"ok": true` and a lesson count):
 curl -s localhost:8001/api/health
 ```
 
-**3. Frontend** — separate terminal, reads `learn/frontend/.env.local`:
+**3. Speaking-feedback worker** — macOS runs the local WhisperX worker through `launchd`.
+It checks the Railway queue every minute:
+```bash
+launchctl print gui/$(id -u)/com.learndutch.speaking-worker
+# Confirm the output contains: state = running
+```
+Restart it after changing the worker code or root `.env`:
+```bash
+launchctl kickstart -k gui/$(id -u)/com.learndutch.speaking-worker
+```
+Watch its logs:
+```bash
+tail -f ~/Library/Logs/learn-dutch-speaking-worker.log
+tail -f ~/Library/Logs/learn-dutch-speaking-worker-error.log
+```
+
+**4. Frontend** — separate terminal, reads `learn/frontend/.env.local`:
 ```bash
 ./learn/scripts/start_frontend.sh
 # → http://localhost:3001
