@@ -41,13 +41,9 @@ export function MockExamsSection({ mockExams }: { mockExams: MockExamSummary[] }
     <section>
       <div className="flex items-center justify-center gap-2">
         <h2 className="text-center text-3xl font-bold">Mock Exams</h2>
-        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
-          Admin preview
-        </span>
       </div>
       <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-600">
-        Full-length practice exams matching the real Staatsexamen NT2 Programma I — visible
-        to admins only while this feature is being built out.
+        Full-length practice exams matching the real Staatsexamen NT2 Programma I.
       </p>
 
       <div className="mx-auto mt-6 flex max-w-5xl justify-center gap-2">

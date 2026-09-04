@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from psycopg.types.json import Jsonb
 
 import db
-from auth import AdminUser
+from auth import AdminUser, CurrentUser
 from models import (
     MockExamAttemptResult,
     MockExamAttemptSummary,
@@ -43,7 +43,7 @@ def _safe_media_path(rel_path: str) -> Path:
 
 
 @router.get("/mock-exams/media/image")
-async def serve_mock_exam_image(_: AdminUser, path: str):
+async def serve_mock_exam_image(_: CurrentUser, path: str):
     p = _safe_media_path(path)
     media_type = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}.get(
         p.suffix.lower(), "image/png"
@@ -52,7 +52,7 @@ async def serve_mock_exam_image(_: AdminUser, path: str):
 
 
 @router.get("/mock-exams/media/audio")
-async def serve_mock_exam_audio(_: AdminUser, path: str):
+async def serve_mock_exam_audio(_: CurrentUser, path: str):
     p = _safe_media_path(path)
     media_type = {".mp3": "audio/mpeg", ".ogg": "audio/ogg", ".wav": "audio/wav"}.get(
         p.suffix.lower(), "application/octet-stream"
@@ -61,7 +61,7 @@ async def serve_mock_exam_audio(_: AdminUser, path: str):
 
 
 @router.get("/mock-exams/media/video")
-async def serve_mock_exam_video(_: AdminUser, path: str):
+async def serve_mock_exam_video(_: CurrentUser, path: str):
     p = _safe_media_path(path)
     return FileResponse(p, media_type="video/mp4")
 
@@ -69,7 +69,7 @@ async def serve_mock_exam_video(_: AdminUser, path: str):
 @router.post("/mock-exams/{exam_id}/recordings")
 async def upload_speaking_recording(
     exam_id: str,
-    user: AdminUser,
+    user: CurrentUser,
     question_id: str = Form(...),
     recording: UploadFile = File(...),
 ):
@@ -94,7 +94,7 @@ async def upload_speaking_recording(
 
 
 @router.get("/mock-exams/{exam_id}/attempts/{attempt_no}/recordings/{question_id}")
-async def serve_speaking_recording(exam_id: str, attempt_no: int, question_id: str, user: AdminUser):
+async def serve_speaking_recording(exam_id: str, attempt_no: int, question_id: str, user: CurrentUser):
     recording = await db.fetch_one(
         "SELECT recording.storage_path FROM mock_exam_speaking_recordings recording "
         "JOIN mock_exam_attempts attempt ON attempt.id = recording.attempt_id "
@@ -115,7 +115,7 @@ async def serve_speaking_recording(exam_id: str, attempt_no: int, question_id: s
 
 
 @router.get("/mock-exams", response_model=list[MockExamSummary])
-async def list_mock_exams(_: AdminUser, section: str | None = None) -> list[MockExamSummary]:
+async def list_mock_exams(_: CurrentUser, section: str | None = None) -> list[MockExamSummary]:
     query = (
         "SELECT id, section, level, exam_number, title, time_limit_minutes, total_questions, "
         "parts_count, pass_threshold, max_score, status FROM mock_exams"
@@ -163,7 +163,7 @@ async def get_mock_exam(exam_id: str, _: AdminUser) -> MockExamDetailAdmin:
 
 
 @router.get("/mock-exams/{exam_id}/take", response_model=MockExamTakeDetail)
-async def take_mock_exam(exam_id: str, _: AdminUser) -> MockExamTakeDetail:
+async def take_mock_exam(exam_id: str, _: CurrentUser) -> MockExamTakeDetail:
     """Learner-facing exam view: never includes answers, explanations or rubrics."""
     exam = await db.fetch_one(
         "SELECT id, section, level, exam_number, title, instructions, time_limit_minutes, "
@@ -403,7 +403,7 @@ async def _process_speaking_attempt(attempt_id: int) -> None:
 
 
 @router.post("/mock-exams/{exam_id}/submit", response_model=MockExamAttemptResult)
-async def submit_mock_exam(exam_id: str, payload: MockExamSubmission, user: AdminUser, background_tasks: BackgroundTasks) -> MockExamAttemptResult:
+async def submit_mock_exam(exam_id: str, payload: MockExamSubmission, user: CurrentUser, background_tasks: BackgroundTasks) -> MockExamAttemptResult:
     """Grade server-side (so the answer key never reaches the browser before submission)
     and persist the attempt so the learner can review it later."""
     exam = await db.fetch_one(
@@ -511,7 +511,7 @@ def _speaking_results_from_feedback(questions: list[dict], answers: dict[str, An
 
 
 @router.get("/mock-exams/{exam_id}/attempts", response_model=list[MockExamAttemptSummary])
-async def list_mock_exam_attempts(exam_id: str, user: AdminUser) -> list[MockExamAttemptSummary]:
+async def list_mock_exam_attempts(exam_id: str, user: CurrentUser) -> list[MockExamAttemptSummary]:
     rows = await db.fetch_all(
         """
         SELECT attempt_no, score, total, percent, label, status, created_at
@@ -525,7 +525,7 @@ async def list_mock_exam_attempts(exam_id: str, user: AdminUser) -> list[MockExa
 
 
 @router.get("/mock-exams/{exam_id}/attempts/{attempt_no}", response_model=MockExamAttemptResult)
-async def get_mock_exam_attempt(exam_id: str, attempt_no: int, user: AdminUser) -> MockExamAttemptResult:
+async def get_mock_exam_attempt(exam_id: str, attempt_no: int, user: CurrentUser) -> MockExamAttemptResult:
     attempt = await db.fetch_one(
         """
         SELECT score, total, percent, label, status, answers, created_at
