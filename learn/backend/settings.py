@@ -44,3 +44,8 @@ GOOGLE_REDIRECT_URI = os.environ.get(
 )
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://learndutchin5minutes.nl").rstrip("/")
 AUTH_STATE_SECRET = os.environ.get("AUTH_STATE_SECRET") or os.environ.get("AUTH_SECRET", "")
+SPEAKING_WORKER_TOKEN = os.environ.get("SPEAKING_WORKER_TOKEN", "")
+R2_ENDPOINT_URL = os.environ.get("R2_ENDPOINT_URL", "")
+R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID", "")
+R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY", "")
+R2_BUCKET = os.environ.get("R2_BUCKET", "")

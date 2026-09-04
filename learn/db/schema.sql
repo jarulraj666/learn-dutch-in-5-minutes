@@ -311,6 +311,20 @@ CREATE TABLE IF NOT EXISTS mock_exam_speaking_recordings (
 
 CREATE INDEX IF NOT EXISTS idx_speaking_recordings_attempt ON mock_exam_speaking_recordings(attempt_id);
 
+CREATE TABLE IF NOT EXISTS speaking_transcription_jobs (
+    id           UUID PRIMARY KEY,
+    recording_id UUID NOT NULL UNIQUE REFERENCES mock_exam_speaking_recordings(id) ON DELETE CASCADE,
+    attempt_id   BIGINT NOT NULL REFERENCES mock_exam_attempts(id) ON DELETE CASCADE,
+    status       TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+    error_message TEXT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    started_at   TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_speaking_transcription_jobs_pending
+    ON speaking_transcription_jobs(status, created_at);
+
 -- SM-2 spaced repetition over lesson_vocabulary.
 CREATE TABLE IF NOT EXISTS flashcard_reviews (
     user_id        UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,

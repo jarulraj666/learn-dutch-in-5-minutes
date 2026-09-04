@@ -6,7 +6,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-ROOT = Path(__file__).resolve().parents[2]
+_MODULE_DIR = Path(__file__).resolve().parent
+ROOT = _MODULE_DIR.parents[1] if _MODULE_DIR.name == "backend" else _MODULE_DIR
 
 
 class SpeakingFeedbackError(RuntimeError):

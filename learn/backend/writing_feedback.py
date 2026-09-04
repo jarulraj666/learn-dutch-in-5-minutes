@@ -3,17 +3,9 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-import sys
-from pathlib import Path
 from typing import Any
 
 import httpx
-
-ROOT = Path(__file__).resolve().parents[2]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
-from pipeline.clients.key_rotator import KeyRotator
 
 
 class WritingFeedbackError(RuntimeError):
@@ -63,14 +55,13 @@ TASK:
 """ + json.dumps(task, ensure_ascii=False)
 
     ordered_keys = keys[key_offset:] + keys[:key_offset]
-    rotator = KeyRotator(ordered_keys, "gemini")
     request_body = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"responseMimeType": "application/json", "temperature": 0.2},
     }
     last_error: Exception | None = None
     async with httpx.AsyncClient(timeout=75, trust_env=False) as client:
-        for key in rotator.available_keys():
+        for key in ordered_keys:
             try:
                 response = await client.post(
                     "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent",
@@ -78,7 +69,6 @@ TASK:
                     json=request_body,
                 )
                 if response.status_code == 429:
-                    rotator.mark_rate_limited(key, WritingFeedbackError(response.text))
                     last_error = WritingFeedbackError("Gemini is temporarily rate limited")
                     continue
                 response.raise_for_status()

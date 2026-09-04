@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import secrets
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, File, Form, Header, HTTPException, Response, UploadFile, status
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from psycopg.types.json import Jsonb
 
 import db
+import settings
 from auth import AdminUser, CurrentUser
+from services import speaking_recordings
 from models import (
     MockExamAttemptResult,
     MockExamAttemptSummary,
@@ -29,6 +33,19 @@ ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
 router = APIRouter()
 WRITING_STUDY_TARGET = 25
+
+
+def _require_speaking_worker(authorization: str | None) -> None:
+    token = (authorization or "").removeprefix("Bearer ")
+    if not settings.SPEAKING_WORKER_TOKEN or not secrets.compare_digest(token, settings.SPEAKING_WORKER_TOKEN):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid speaking worker token")
+
+
+class SpeakingJobCompletion(BaseModel):
+    spoken_text: str
+    label: str
+    feedback: str
+    possible_answer: str
 
 
 def _safe_media_path(rel_path: str) -> Path:
@@ -84,11 +101,12 @@ async def upload_speaking_recording(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Unsupported recording format")
     recording_dir = ROOT / "private_recordings" / str(user["id"]) / exam_id
     recording_dir.mkdir(parents=True, exist_ok=True)
-    path = recording_dir / f"{question_id}-{uuid4()}{suffix}"
-    path.write_bytes(await recording.read())
+    filename = f"{user['id']}/{exam_id}/{question_id}-{uuid4()}{suffix}"
+    path = recording_dir / Path(filename).name
+    storage_path = speaking_recordings.save(await recording.read(), filename, path)
     await db.execute(
         "INSERT INTO mock_exam_speaking_recordings (id, user_id, exam_id, question_id, storage_path) VALUES (%s, %s, %s, %s, %s)",
-        (uuid4(), user["id"], exam_id, question_id, str(path)),
+        (uuid4(), user["id"], exam_id, question_id, storage_path),
     )
     return {"question_id": question_id}
 
@@ -104,13 +122,89 @@ async def serve_speaking_recording(exam_id: str, attempt_no: int, question_id: s
     )
     if not recording:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Speaking recording not found")
-    path = Path(recording["storage_path"])
-    if not path.is_file():
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Speaking recording file not found")
+    try:
+        audio = speaking_recordings.read(recording["storage_path"])
+    except (FileNotFoundError, OSError):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Speaking recording file not found") from None
     media_type = {".webm": "audio/webm", ".ogg": "audio/ogg", ".wav": "audio/wav", ".mp3": "audio/mpeg", ".m4a": "audio/mp4"}.get(
         path.suffix.lower(), "application/octet-stream"
     )
-    return FileResponse(path, media_type=media_type)
+    return Response(content=audio, media_type=media_type)
+
+
+@router.post("/internal/speaking-jobs/claim")
+async def claim_speaking_job(authorization: str | None = Header(default=None)) -> dict | None:
+    _require_speaking_worker(authorization)
+    async with db.connection() as conn:
+        job = await (await conn.execute(
+            """
+            SELECT j.id, j.attempt_id, r.storage_path, r.question_id, q.question_text,
+                   q.grading_rubric, q.model_answer
+            FROM speaking_transcription_jobs j
+            JOIN mock_exam_speaking_recordings r ON r.id = j.recording_id
+            JOIN mock_exam_questions q ON q.id = r.question_id
+            WHERE j.status = 'pending'
+            ORDER BY j.created_at
+            FOR UPDATE SKIP LOCKED LIMIT 1
+            """
+        )).fetchone()
+        if not job:
+            return None
+        await conn.execute(
+            "UPDATE speaking_transcription_jobs SET status = 'processing', started_at = now() WHERE id = %s",
+            (job["id"],),
+        )
+    return {key: job[key] for key in ("id", "attempt_id", "question_id", "question_text", "grading_rubric", "model_answer")}
+
+
+@router.get("/internal/speaking-jobs/{job_id}/audio")
+async def download_speaking_job_audio(job_id: str, authorization: str | None = Header(default=None)) -> Response:
+    _require_speaking_worker(authorization)
+    recording = await db.fetch_one(
+        "SELECT r.storage_path FROM speaking_transcription_jobs j JOIN mock_exam_speaking_recordings r ON r.id = j.recording_id WHERE j.id = %s AND j.status = 'processing'",
+        (job_id,),
+    )
+    if not recording:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Speaking job not found")
+    storage_path = recording["storage_path"]
+    suffix = Path(storage_path).suffix.lower()
+    media_type = {".webm": "audio/webm", ".ogg": "audio/ogg", ".wav": "audio/wav", ".mp3": "audio/mpeg", ".m4a": "audio/mp4"}.get(suffix, "application/octet-stream")
+    return Response(content=speaking_recordings.read(storage_path), media_type=media_type)
+
+
+@router.post("/internal/speaking-jobs/{job_id}/complete")
+async def complete_speaking_job(job_id: str, payload: SpeakingJobCompletion, authorization: str | None = Header(default=None)) -> dict:
+    _require_speaking_worker(authorization)
+    job = await db.fetch_one(
+        "SELECT j.attempt_id, r.id AS recording_id, r.storage_path, r.question_id FROM speaking_transcription_jobs j JOIN mock_exam_speaking_recordings r ON r.id = j.recording_id WHERE j.id = %s AND j.status = 'processing'",
+        (job_id,),
+    )
+    if not job:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Speaking job not found")
+    attempt = await db.fetch_one("SELECT answers FROM mock_exam_attempts WHERE id = %s", (job["attempt_id"],))
+    answers = dict(attempt["answers"])
+    feedback_by_id = dict(answers.get("__speaking_feedback", {}))
+    feedback_by_id[job["question_id"]] = payload.model_dump()
+    answers["__speaking_feedback"] = feedback_by_id
+    await db.execute("UPDATE mock_exam_attempts SET answers = %s WHERE id = %s", (Jsonb(answers), job["attempt_id"]))
+    await db.execute("UPDATE mock_exam_speaking_recordings SET feedback_label = %s WHERE id = %s", (payload.label, job["recording_id"]))
+    await db.execute("UPDATE speaking_transcription_jobs SET status = 'completed', completed_at = now() WHERE id = %s", (job_id,))
+    speaking_recordings.delete(job["storage_path"])
+    remaining = await db.fetch_one("SELECT count(*) AS total FROM speaking_transcription_jobs WHERE attempt_id = %s AND status IN ('pending', 'processing')", (job["attempt_id"],))
+    if remaining and remaining["total"] == 0:
+        completed = await db.fetch_all("SELECT r.feedback_label FROM speaking_transcription_jobs j JOIN mock_exam_speaking_recordings r ON r.id = j.recording_id WHERE j.attempt_id = %s", (job["attempt_id"],))
+        score = sum({"Excellent": 2, "Good": 1}.get(row["feedback_label"], 1) for row in completed)
+        total = len(completed) * 2
+        percent = round(score * 100 / total) if total else 0
+        await db.execute("UPDATE mock_exam_attempts SET score = %s, total = %s, percent = %s, label = %s, status = 'completed' WHERE id = %s", (score, total, percent, _score_label(percent, percent >= 60), job["attempt_id"]))
+    return {"status": "completed"}
+
+
+@router.post("/internal/speaking-jobs/{job_id}/fail")
+async def fail_speaking_job(job_id: str, authorization: str | None = Header(default=None)) -> dict:
+    _require_speaking_worker(authorization)
+    await db.execute("UPDATE speaking_transcription_jobs SET status = 'pending', error_message = 'Worker processing failed' WHERE id = %s AND status = 'processing'", (job_id,))
+    return {"status": "pending"}
 
 
 
@@ -472,7 +566,15 @@ async def submit_mock_exam(exam_id: str, payload: MockExamSubmission, user: Curr
             "WHERE user_id = %s AND exam_id = %s AND attempt_id IS NULL",
             (row["id"], user["id"], exam_id),
         )
-        background_tasks.add_task(_process_speaking_attempt, row["id"])
+        recordings = await db.fetch_all(
+            "SELECT id FROM mock_exam_speaking_recordings WHERE user_id = %s AND exam_id = %s AND attempt_id = %s",
+            (user["id"], exam_id, row["id"]),
+        )
+        for recording in recordings:
+            await db.execute(
+                "INSERT INTO speaking_transcription_jobs (id, recording_id, attempt_id) VALUES (%s, %s, %s)",
+                (uuid4(), recording["id"], row["id"]),
+            )
 
     return MockExamAttemptResult(
         exam_id=exam_id,
