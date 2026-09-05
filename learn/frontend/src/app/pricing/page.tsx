@@ -123,6 +123,7 @@ export default async function PricingPage({ searchParams }: { searchParams: { ch
           <p className="mt-4">
             <span className="text-lg text-slate-400 line-through">€45</span>{" "}
             <span className="text-3xl font-bold">€25</span>{" "}
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-600">-44%</span>{" "}
             <span className="text-base font-normal text-slate-500">one-time / 3 months</span>
           </p>
           <ul className="mt-6 space-y-3 text-sm text-slate-600">

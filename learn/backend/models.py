@@ -415,3 +415,9 @@ class Entitlement(BaseModel):
     product: str
     section: str | None
     expires_at: datetime
+
+
+class MockExamGenerateRequest(BaseModel):
+    section: str
+    exam_number: int
+    stage: str = "content"

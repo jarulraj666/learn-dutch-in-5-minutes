@@ -1,12 +1,21 @@
 from __future__ import annotations
 
+import asyncio
+import logging
+import sys
+from pathlib import Path
+
 from fastapi import APIRouter, HTTPException, Query, status
 
 import db
 from auth import AdminUser
-from models import AdminFeedback, AdminLearner
+from models import AdminFeedback, AdminLearner, MockExamGenerateRequest, MockExamSummary
 
 router = APIRouter()
+LOGGER = logging.getLogger(__name__)
+ROOT = Path(__file__).resolve().parent.parent.parent.parent
+_VALID_SECTIONS = {"reading", "listening", "writing", "speaking", "knm"}
+_VALID_STAGES = {"content", "media", "question_audio", "export", "production_sync"}
 
 
 @router.get("/admin/stats")
@@ -126,3 +135,81 @@ async def reject_feedback(feedback_id: int, _: AdminUser) -> dict:
         (feedback_id,),
     )
     return {"ok": True}
+
+
+@router.get("/admin/mock-exams", response_model=list[MockExamSummary])
+async def admin_mock_exams(_: AdminUser, section: str | None = None) -> list[MockExamSummary]:
+    """Unlike the public /mock-exams endpoint, this returns exams in every status (draft included)."""
+    query = (
+        "SELECT id, section, level, exam_number, title, time_limit_minutes, total_questions, "
+        "parts_count, pass_threshold, max_score, status, is_free_preview FROM mock_exams"
+    )
+    params: tuple = ()
+    if section:
+        query += " WHERE section = %s"
+        params = (section,)
+    query += " ORDER BY section, exam_number"
+    rows = await db.fetch_all(query, params)
+    return [MockExamSummary(**row) for row in rows]
+
+
+@router.patch("/admin/mock-exams/{exam_id}/publish")
+async def publish_mock_exam(exam_id: str, _: AdminUser) -> dict:
+    row = await db.fetch_one("SELECT id FROM mock_exams WHERE id = %s", (exam_id,))
+    if not row:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Mock exam not found")
+    await db.execute("UPDATE mock_exams SET status = 'published' WHERE id = %s", (exam_id,))
+    return {"ok": True}
+
+
+@router.patch("/admin/mock-exams/{exam_id}/unpublish")
+async def unpublish_mock_exam(exam_id: str, _: AdminUser) -> dict:
+    row = await db.fetch_one("SELECT id FROM mock_exams WHERE id = %s", (exam_id,))
+    if not row:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Mock exam not found")
+    await db.execute("UPDATE mock_exams SET status = 'draft' WHERE id = %s", (exam_id,))
+    return {"ok": True}
+
+
+async def _run_generation(section: str, exam_number: int, stage: str) -> None:
+    log_dir = ROOT / "output" / "mock_exams" / "generation_logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"{section}-{exam_number}-{stage}.log"
+    proc = await asyncio.create_subprocess_exec(
+        sys.executable, "-m", "pipeline.tools.generate_and_export_mock_exams",
+        "--section", section, "--exam-number", str(exam_number), "--stage", stage,
+        cwd=str(ROOT),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+    output = await proc.stdout.read() if proc.stdout else b""
+    log_path.write_bytes(output)
+    await proc.wait()
+    if proc.returncode != 0:
+        LOGGER.error("Mock exam generation failed (%s-%s-%s), see %s", section, exam_number, stage, log_path)
+    else:
+        LOGGER.info("Mock exam generation finished (%s-%s-%s), log at %s", section, exam_number, stage, log_path)
+
+
+@router.post("/admin/mock-exams/generate")
+async def generate_mock_exam(payload: MockExamGenerateRequest, _: AdminUser) -> dict:
+    """Kicks off `pipeline.tools.generate_and_export_mock_exams` in the background.
+
+    Stages run in order (content → media → question_audio → export) and each can take
+    from ~30s (content) to several minutes (media), so this returns immediately rather
+    than blocking the request; check the log file or re-fetch /admin/mock-exams to see
+    the result. Newly exported exams land as status='draft' until explicitly published.
+    """
+    if payload.section not in _VALID_SECTIONS:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid section")
+    if payload.stage not in _VALID_STAGES:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid stage")
+    if not 1 <= payload.exam_number <= 99:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid exam number")
+
+    asyncio.create_task(_run_generation(payload.section, payload.exam_number, payload.stage))
+    return {
+        "ok": True,
+        "message": f"Generation started for {payload.section} #{payload.exam_number} ({payload.stage} stage). "
+                   "This can take a few minutes — refresh the exam list shortly to check progress.",
+    }

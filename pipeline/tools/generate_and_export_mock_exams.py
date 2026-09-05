@@ -115,7 +115,7 @@ def run_question_audio(section: str | None, exam_number: int | None, dry_run: bo
     return 0 if ok else 1
 
 
-def run_export(section: str | None, exam_number: int | None, database_url: str, dry_run: bool) -> int:
+def run_export(section: str | None, exam_number: int | None, database_url: str, dry_run: bool, publish: bool = False) -> int:
     from pipeline.core.store_mock_exam import (
         load_mock_exam_job, mark_mock_exam_job_exported, push_mock_exam_to_postgres,
     )
@@ -132,9 +132,9 @@ def run_export(section: str | None, exam_number: int | None, database_url: str, 
             LOGGER.warning("export stage: no staged content for %s (run --stage content first)", exam_id)
             continue
 
-        print(f"{exam_id}: exporting to Postgres")
+        print(f"{exam_id}: exporting to Postgres ({'published' if publish else 'draft'})")
         if not dry_run:
-            push_mock_exam_to_postgres(job["artifact"], database_url)
+            push_mock_exam_to_postgres(job["artifact"], database_url, status="published" if publish else "draft")
             mark_mock_exam_job_exported(exam_id)
         ok += 1
     print(f"export stage: {ok} exam(s) exported")
@@ -189,6 +189,7 @@ def main() -> int:
     parser.add_argument("--stage", choices=["content", "media", "question_audio", "export", "production_sync"], required=True)
     parser.add_argument("--dry-run", action="store_true", help="Report only; no writes")
     parser.add_argument("--overwrite", action="store_true", help="Re-voice questions that already have audio")
+    parser.add_argument("--publish", action="store_true", help="For --stage export: mark the exam published immediately instead of draft")
     parser.add_argument("--database-url", default=os.environ.get("DATABASE_URL", ""))
     args = parser.parse_args()
 
@@ -200,7 +201,7 @@ def main() -> int:
         return run_question_audio(args.section, args.exam_number, args.dry_run, args.overwrite)
     if args.stage == "production_sync":
         return run_production_sync(args.section, args.exam_number, args.dry_run)
-    return run_export(args.section, args.exam_number, args.database_url, args.dry_run)
+    return run_export(args.section, args.exam_number, args.database_url, args.dry_run, args.publish)
 
 
 if __name__ == "__main__":

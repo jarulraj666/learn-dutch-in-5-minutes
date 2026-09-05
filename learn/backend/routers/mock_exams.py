@@ -243,11 +243,12 @@ async def fail_speaking_job(job_id: str, authorization: str | None = Header(defa
 async def list_mock_exams(_: OptionalUser, section: str | None = None) -> list[MockExamSummary]:
     query = (
         "SELECT id, section, level, exam_number, title, time_limit_minutes, total_questions, "
-        "parts_count, pass_threshold, max_score, status, is_free_preview FROM mock_exams"
+        "parts_count, pass_threshold, max_score, status, is_free_preview FROM mock_exams "
+        "WHERE status = 'published'"
     )
     params: tuple = ()
     if section:
-        query += " WHERE section = %s"
+        query += " AND section = %s"
         params = (section,)
     query += " ORDER BY section, exam_number"
 

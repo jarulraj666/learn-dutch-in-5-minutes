@@ -105,7 +105,8 @@ export function SectionPricingTabs({ examCountBySection }: { examCountBySection:
                 <p className="mt-2 text-xs text-slate-500">{format}</p>
                 <p className="mt-4">
                   <span className="text-sm text-slate-400 line-through">€13</span>{" "}
-                  <span className="text-2xl font-bold text-emerald-600">€7</span>
+                  <span className="text-2xl font-bold text-emerald-600">€7</span>{" "}
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-600">-46%</span>
                 </p>
                 <CheckoutButton
                   product="section"

@@ -128,8 +128,13 @@ def mark_mock_exam_job_exported(exam_id: str) -> None:
 _CHILD_TABLES = ("mock_exam_questions", "mock_exam_passages")
 
 
-def upsert_mock_exam(cur, artifact: dict[str, Any]) -> None:
-    """Upsert one mock exam (and replace its passages/questions) into Postgres."""
+def upsert_mock_exam(cur, artifact: dict[str, Any], status: str = "draft") -> None:
+    """Upsert one mock exam (and replace its passages/questions) into Postgres.
+
+    Defaults to status='draft' so newly exported exams need an explicit publish
+    step (via the admin app) before learners can see them; pass status='published'
+    to preserve the old auto-publish behaviour.
+    """
     from psycopg.types.json import Jsonb
 
     exam_id = artifact["id"]
@@ -144,13 +149,12 @@ def upsert_mock_exam(cur, artifact: dict[str, Any]) -> None:
             title = EXCLUDED.title, instructions = EXCLUDED.instructions,
             time_limit_minutes = EXCLUDED.time_limit_minutes,
             total_questions = EXCLUDED.total_questions, parts_count = EXCLUDED.parts_count,
-            pass_threshold = EXCLUDED.pass_threshold, max_score = EXCLUDED.max_score,
-            status = EXCLUDED.status
+            pass_threshold = EXCLUDED.pass_threshold, max_score = EXCLUDED.max_score
         """,
         (exam_id, artifact["section"], artifact["level"], artifact["exam_number"],
          artifact["title"], artifact["instructions"], artifact["time_limit_minutes"],
          artifact["total_questions"], artifact["parts_count"], artifact["pass_threshold"],
-         artifact["max_score"], "published"),
+         artifact["max_score"], status),
     )
 
     # Replace children so upstream regeneration/deletions propagate cleanly.
@@ -192,10 +196,10 @@ def upsert_mock_exam(cur, artifact: dict[str, Any]) -> None:
     )
 
 
-def push_mock_exam_to_postgres(artifact: dict[str, Any], database_url: str) -> None:
+def push_mock_exam_to_postgres(artifact: dict[str, Any], database_url: str, status: str = "draft") -> None:
     import psycopg
 
     with psycopg.connect(database_url) as conn:
         with conn.cursor() as cur:
-            upsert_mock_exam(cur, artifact)
+            upsert_mock_exam(cur, artifact, status=status)
         conn.commit()

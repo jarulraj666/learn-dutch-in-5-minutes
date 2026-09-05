@@ -1,0 +1,1057 @@
+{
+  "version": 1,
+  "description": "Approved A2 writing exam plans. Content generation uses this file directly for listed exams so reruns do not create duplicate or drifting questions.",
+  "source": "Generated from staged a2-writing-1..5 artifacts on 2026-09-05.",
+  "exams": {
+    "1": {
+      "section": "writing",
+      "level": "A2",
+      "exam_number": 1,
+      "title": "Schrijven - Oefenexamen 1",
+      "instructions": "Maak de 4 schrijfopdrachten. Lees bij elke opdracht eerst de situatie en schrijf daarna je antwoord in het Nederlands.",
+      "time_limit_minutes": 40,
+      "total_questions": 4,
+      "parts_count": 4,
+      "pass_threshold": null,
+      "max_score": 37,
+      "passages": [
+        {
+          "id": "a2-writing-1-p1",
+          "order_index": 1,
+          "part_number": 3,
+          "passage_type": "text",
+          "title": "Inschrijfformulier Kookschool De Smakelijke Tafel",
+          "display_prompt_nl": "",
+          "content_nl": "Inschrijfformulier Kookschool De Smakelijke Tafel\n\nPersoonsgegevens\nVoor- en achternaam:\nAdres:\nPostcode:\nWoonplaats:\nTelefoonnummer:\nGeslacht:\nO man / O vrouw\nGeboortedatum:\n\nWelke cursus wilt u volgen?\nO Italiaans koken\nO Aziatisch koken\nO Bakken en desserts\n\nOp welke dag wilt u les?\nO Maandagavond\nO Woensdagavond\nO Zaterdagochtend\n\nWaarom wilt u deze cursus volgen?\n\nHoeveel ervaring heeft u met koken?",
+          "content_en": null,
+          "scene_description": "",
+          "presenter_gender": null,
+          "media_urls": [],
+          "render_manifest_path": null,
+          "image_prompt": null
+        }
+      ],
+      "questions": [
+        {
+          "id": "a2-writing-1-q1",
+          "passage_id": null,
+          "part_number": 1,
+          "order_index": 1,
+          "question_text": "Afspraak verzetten\n\nU heeft morgen om 10:00 uur een afspraak met de tandarts, meneer Bakir. U bent erg verkouden en u kunt niet komen. U wilt de afspraak verzetten.\n\nU schrijft een e-mail aan meneer Bakir.\n\n• U schrijft waarom u mailt.\n• U schrijft waarom u niet kunt komen.\n• U vraagt om een nieuwe afspraak op een andere dag.\n\nSchrijf de e-mail.\nSchrijf in hele zinnen.",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 10,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 4
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 2
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 2
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Beste meneer Bakir,\n\nIk mail u over mijn afspraak van morgen om 10:00 uur. Ik ben erg verkouden en ik kan helaas niet komen. Kan ik een nieuwe afspraak maken voor volgende week?\n\nMet vriendelijke groet,\nJan de Boer",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        },
+        {
+          "id": "a2-writing-1-q2",
+          "passage_id": null,
+          "part_number": 2,
+          "order_index": 2,
+          "question_text": "Mijn favoriete feest\n\nU krijgt elke week een wijkkrant. Iedereen uit de buurt mag iets voor deze krant schrijven.\n\nSchrijf een tekst over uw favoriete feest.\nGeef in uw tekst antwoord op deze vragen:\n• Welk feest vindt u het leukst?\n• Wat doet u meestal op die dag?\n• Met wie viert u dit feest?\n\nSchrijf ten minste drie zinnen.\n\nDit is mijn tekst over mijn favoriete feest:",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 10,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 4
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 2
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 2
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Mijn favoriete feest is het Suikerfeest. Op die dag eet ik heerlijk eten met mijn familie en vrienden. We geven elkaar ook leuke cadeautjes. Het is altijd erg gezellig.",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        },
+        {
+          "id": "a2-writing-1-q3",
+          "passage_id": "a2-writing-1-p1",
+          "part_number": 3,
+          "order_index": 3,
+          "question_text": "Inschrijfformulier kookcursus\n\nU wilt een kookcursus volgen bij Kookschool De Smakelijke Tafel. Bedenk zelf uw gegevens en vul het formulier in.\n\nVul het formulier in.",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 7,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 3
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 1
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 1
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Inschrijfformulier Kookschool De Smakelijke Tafel\n\nPersoonsgegevens\nVoor- en achternaam: Jan de Boer\nAdres: Kerkstraat 15\nPostcode: 1012 JS\nWoonplaats: Amsterdam\nTelefoonnummer: 06 12345678\nGeslacht: X man / O vrouw\nGeboortedatum: 12-05-1988\n\nWelke cursus wilt u volgen?\nX Italiaans koken\nO Aziatisch koken\nO Bakken en desserts\n\nOp welke dag wilt u les?\nO Maandagavond\nX Woensdagavond\nO Zaterdagochtend\n\nWaarom wilt u deze cursus volgen?\nIk wil graag beter Italiaans leren koken voor mijn familie.\n\nHoeveel ervaring heeft u met koken?\nIk kook al een paar jaar thuis, maar ik wil nieuwe recepten leren.",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        },
+        {
+          "id": "a2-writing-1-q4",
+          "passage_id": null,
+          "part_number": 4,
+          "order_index": 4,
+          "question_text": "Briefje voor docent Jansen\n\nU kunt volgende week dinsdag niet naar de les Nederlands komen. U moet naar het ziekenhuis voor een controle.\n\nSchrijf een briefje voor uw docent, mevrouw Jansen.\n\n• U vertelt dat u niet naar de les komt.\n• U legt uit waarom u er niet bent.\n• U vraagt wat het huiswerk is voor de volgende week.\n\nSchrijf in hele zinnen.\n\nHallo mevrouw Jansen,\n\nAlvast bedankt!\nGroeten,",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 10,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 4
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 2
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 2
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Hallo mevrouw Jansen,\n\nAanstaande dinsdag kan ik helaas niet naar de les Nederlands komen. Ik moet die ochtend naar het ziekenhuis voor een controle. Kunt u mij laten weten wat het huiswerk is voor de volgende week?\n\nAlvast bedankt!\nGroeten,\nJan de Boer",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        }
+      ]
+    },
+    "2": {
+      "section": "writing",
+      "level": "A2",
+      "exam_number": 2,
+      "title": "Schrijven - Oefenexamen 2",
+      "instructions": "Maak de 4 schrijfopdrachten. Lees bij elke opdracht eerst de situatie en schrijf daarna je antwoord in het Nederlands.",
+      "time_limit_minutes": 40,
+      "total_questions": 4,
+      "parts_count": 4,
+      "pass_threshold": null,
+      "max_score": 37,
+      "passages": [
+        {
+          "id": "a2-writing-2-p1",
+          "order_index": 1,
+          "part_number": 2,
+          "passage_type": "text",
+          "title": "Inschrijfformulier Muziekschool Het Harmonieorkest",
+          "display_prompt_nl": "",
+          "content_nl": "Inschrijfformulier Muziekschool Het Harmonieorkest\n\nPersoonsgegevens\nVoor- en achternaam:\nAdres:\nPostcode:\nWoonplaats:\nTelefoonnummer:\nGeslacht:\nO man / O vrouw\nGeboortedatum:\n\nWelk instrument wilt u leren spelen?\nO Gitaar\nO Piano\nO Drumstel\n\nOp welke dag wilt u les krijgen?\nO Maandag\nO Woensdag\nO Vrijdag\n\nWaarom wilt u dit instrument leren spelen?\nHoeveel ervaring heeft u al met muziek maken?",
+          "content_en": null,
+          "scene_description": "",
+          "presenter_gender": null,
+          "media_urls": [],
+          "render_manifest_path": null,
+          "image_prompt": null
+        }
+      ],
+      "questions": [
+        {
+          "id": "a2-writing-2-q1",
+          "passage_id": null,
+          "part_number": 1,
+          "order_index": 1,
+          "question_text": "Dienst ruilen\n\nU werkt in een supermarkt. U moet op zaterdagavond werken, maar uw zus gaat trouwen. U wilt ruilen met uw collega, Peter.\n\nU schrijft een e-mail aan Peter.\n• U vertelt waarom u op zaterdagavond niet kunt werken.\n• U vraagt of Peter uw dienst wil overnemen.\n• U vraagt wanneer u een dienst van Peter kunt overnemen.\n\nSchrijf de e-mail.\nSchrijf in hele zinnen.",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 10,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 4
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 2
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 2
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Beste Peter,\n\nAankomende zaterdagavond moet ik werken, maar ik kan helaas niet komen. Mijn zus gaat namelijk trouwen en ik ga naar haar bruiloft.\nZou jij mijn dienst op zaterdagavond van mij kunnen overnemen?\nWanneer schikt het jou dat ik een dienst van jou overneem? Laat het me gerust weten.\n\nMet vriendelijke groet,\n[Naam]",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        },
+        {
+          "id": "a2-writing-2-q2",
+          "passage_id": "a2-writing-2-p1",
+          "part_number": 2,
+          "order_index": 2,
+          "question_text": "Inschrijfformulier muziekschool\n\nU wilt muziekles nemen bij Muziekschool Het Harmonieorkest. Bedenk zelf uw gegevens en vul het formulier in.\n\nVul het formulier in.",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 7,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 3
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 1
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 1
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Voor- en achternaam: Jan de Groot\nAdres: Schoolstraat 15\nPostcode: 1011 AB\nWoonplaats: Amsterdam\nTelefoonnummer: 06 12345678\nGeslacht: O man\nGeboortedatum: 12-05-1985\nWelk instrument wilt u leren spelen?: O Piano\nOp welke dag wilt u les krijgen?: O Woensdag\nWaarom wilt u dit instrument leren spelen?: Ik vind pianomuziek heel mooi en ik wil graag liedjes kunnen spelen.\nHoeveel ervaring heeft u al met muziek maken?: Ik heb nog geen ervaring, ik ben een beginner.",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        },
+        {
+          "id": "a2-writing-2-q3",
+          "passage_id": null,
+          "part_number": 3,
+          "order_index": 3,
+          "question_text": "Mijn favoriete kleding\n\nU krijgt elke week een wijkkrant. Iedereen uit de buurt mag iets voor deze krant schrijven.\n\nSchrijf een tekst over uw favoriete kleding.\nGeef in uw tekst antwoord op de volgende drie vragen:\n• Wat voor kleding draagt u het liefst?\n• Waarom draagt u deze kleding graag?\n• Waar koopt u deze kleding meestal?\n\nSchrijf ten minste drie zinnen.\n\nDit is mijn tekst over mijn favoriete kleding:",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 10,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 4
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 2
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 2
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Ik draag het liefst een spijkerbroek met een warme trui. Deze kleding zit erg comfortabel en het staat me goed. Meestal koop ik mijn kleding in het winkelcentrum bij mij in de buurt.",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        },
+        {
+          "id": "a2-writing-2-q4",
+          "passage_id": null,
+          "part_number": 4,
+          "order_index": 4,
+          "question_text": "Briefje voor de buren\n\nU gaat twee weken op vakantie. U wilt vragen of uw buren, meneer en mevrouw Visser, uw planten water willen geven en de post willen verzamelen.\n\nSchrijf een briefje voor uw buren.\n• U vertelt wanneer u op vakantie gaat en hoe lang.\n• U vraagt of zij de planten water willen geven en de post willen pakken.\n• U schrijft waar de sleutel van uw huis ligt.\n\nSchrijf in hele zinnen.",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 10,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 4
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 2
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 2
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Hallo meneer en mevrouw Visser,\n\nAanstaande maandag ga ik twee weken op vakantie naar Frankrijk. Zouden jullie gedurende deze twee weken mijn planten water kunnen geven en mijn post willen verzamelen? De huissleutel ligt bij de achterdeur onder de rode bloempot.\n\nAlvast bedankt!\n\nGroeten,\n[Naam]",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        }
+      ]
+    },
+    "3": {
+      "section": "writing",
+      "level": "A2",
+      "exam_number": 3,
+      "title": "Schrijven - Oefenexamen 3",
+      "instructions": "Maak de 4 schrijfopdrachten. Lees bij elke opdracht eerst de situatie en schrijf daarna je antwoord in het Nederlands.",
+      "time_limit_minutes": 40,
+      "total_questions": 4,
+      "parts_count": 4,
+      "pass_threshold": null,
+      "max_score": 37,
+      "passages": [
+        {
+          "id": "a2-writing-3-p1",
+          "order_index": 1,
+          "part_number": 3,
+          "passage_type": "two_picture",
+          "title": "Meldingsformulier Gemeente",
+          "display_prompt_nl": "",
+          "content_nl": "Meldingsformulier Gemeente\n\nPersoonsgegevens\nVoor- en achternaam:\nAdres:\nPostcode:\nWoonplaats:\nTelefoonnummer:\nE-mailadres:\n\nLocatie van het probleem\nIn welke straat zijn er problemen?:\n\nOmschrijving van de problemen\nWat zijn de problemen?:",
+          "content_en": null,
+          "scene_description": "Plaatje 1: Een straat met een kapotte lantaarnpaal waarvan het glas gebroken is op de stoep. Plaatje 2: Een overvolle openbare vuilnisbak waar vuilniszakken en los afval omheen op straat liggen.",
+          "presenter_gender": null,
+          "media_urls": [],
+          "render_manifest_path": null,
+          "image_prompt": null
+        }
+      ],
+      "questions": [
+        {
+          "id": "a2-writing-3-q1",
+          "passage_id": null,
+          "part_number": 1,
+          "order_index": 1,
+          "question_text": "Vrije dag aanvragen\n\nU werkt in een magazijn. U heeft volgende maand een vrije dag nodig omdat uw zoon een kennismakingsdag heeft op zijn nieuwe school. U wilt een vrije dag aanvragen.\n\nU schrijft een e-mail aan uw leidinggevende, mevrouw Hendriks.\n• U vertelt waarom u de e-mail schrijft.\n• U zegt op welke datum u vrij wilt hebben.\n• U vraagt of het mogelijk is om vrij te krijgen.\n• U vertelt welke collega uw werk overneemt.\n\nSchrijf de e-mail.\nSchrijf in hele zinnen.",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 10,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 4
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 2
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 2
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Beste mevrouw Hendriks,\n\nIk schrijf deze e-mail omdat ik graag een vrije dag wil aanvragen. Op vrijdag 12 mei heeft mijn zoon een kennismakingsdag op zijn nieuwe school. Kan ik op die dag vrij krijgen? Mijn collega Jan gaat mijn taken in het magazijn overnemen.\n\nMet vriendelijke groet,\nKarim El Amrani",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        },
+        {
+          "id": "a2-writing-3-q2",
+          "passage_id": null,
+          "part_number": 2,
+          "order_index": 2,
+          "question_text": "Mijn hobby\n\nU krijgt elke week een wijkkrant. Iedereen uit de buurt mag iets voor deze krant schrijven.\n\nSchrijf een tekst over uw hobby.\nGeef in uw tekst antwoord op de volgende drie vragen:\n• Wat is uw hobby en hoe lang doet u dit al?\n• Waar en met wie doet u dit het liefst?\n• Waarom vindt u deze hobby zo leuk?\n\nSchrijf minstens 3 zinnen.\n\nDit is mijn tekst over mijn hobby:",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 10,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 4
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 2
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 2
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Mijn hobby is tuinieren en ik doe dit nu twee jaar. Ik werk het liefst in de buurtmoestuin samen met mijn buren. Ik vind tuinieren erg leuk omdat ik lekker buiten ben en mijn eigen groenten kan verbouwen.",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        },
+        {
+          "id": "a2-writing-3-q3",
+          "passage_id": "a2-writing-3-p1",
+          "part_number": 3,
+          "order_index": 3,
+          "question_text": "Kijk naar de plaatjes. U ziet twee problemen in uw straat: een kapotte lantaarnpaal en een overvolle vuilnisbak met afval op straat. U wilt deze problemen melden bij de gemeente. Bedenk zelf uw persoonsgegevens en de straatnaam.\n\nVul het formulier in.",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 7,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 3
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 1
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 1
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Voor- en achternaam: Karim El Amrani\nAdres: Schoolstraat 45\nPostcode: 2511 AB\nWoonplaats: Den Haag\nTelefoonnummer: 06 12345678\nE-mailadres: karim@email.nl\n\nIn welke straat zijn er problemen?: Schoolstraat\n\nWat zijn de problemen?: Er is een lantaarnpaal kapot en er ligt glas op de stoep. Ook is de vuilnisbak overvol en ligt er veel afval op straat.",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        },
+        {
+          "id": "a2-writing-3-q4",
+          "passage_id": null,
+          "part_number": 4,
+          "order_index": 4,
+          "question_text": "Briefje voor de oppas\n\nU gaat vanavond naar de film. De oppas, Lotte, komt op uw kinderen passen. U laat een briefje voor haar achter in de keuken.\n\nSchrijf een briefje voor Lotte.\n• U vertelt hoe laat de kinderen naar bed moeten.\n• U zegt wat de kinderen mogen eten of drinken voor het slapen.\n• U geeft uw telefoonnummer voor als er iets is.\n\nSchrijf in hele zinnen.",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 10,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 4
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 2
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 2
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Hallo Lotte,\n\nDe kinderen moeten om acht uur naar bed. Ze mogen voor het slapen een beker warme melk drinken en een appel eten. Als er iets is, kun je mij bellen op 06 87654321.\n\nAlvast bedankt!\n\nGroeten,\nKarim",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        }
+      ]
+    },
+    "4": {
+      "section": "writing",
+      "level": "A2",
+      "exam_number": 4,
+      "title": "Schrijven - Oefenexamen 4",
+      "instructions": "Maak de 4 schrijfopdrachten. Lees bij elke opdracht eerst de situatie en schrijf daarna je antwoord in het Nederlands.",
+      "time_limit_minutes": 40,
+      "total_questions": 4,
+      "parts_count": 4,
+      "pass_threshold": null,
+      "max_score": 37,
+      "passages": [
+        {
+          "id": "a2-writing-4-p1",
+          "order_index": 1,
+          "part_number": 3,
+          "passage_type": "text",
+          "title": "Schadeformulier Inboedelverzekering",
+          "display_prompt_nl": "",
+          "content_nl": "Schadeformulier Inboedelverzekering\n\nPersoonsgegevens\nAchternaam:\nVoorletters:\nAdres:\nTelefoonnummer:\nE-mailadres:\n\nDatum van de schade:\n\nOmschrijving gestolen spullen en schade:\n• \n• \n•",
+          "content_en": null,
+          "scene_description": "",
+          "presenter_gender": null,
+          "media_urls": [],
+          "render_manifest_path": null,
+          "image_prompt": null
+        },
+        {
+          "id": "a2-writing-4-p2",
+          "order_index": 2,
+          "part_number": 3,
+          "passage_type": "three_picture",
+          "title": "Afbeeldingen van de schade",
+          "display_prompt_nl": "",
+          "content_nl": "None",
+          "content_en": null,
+          "scene_description": "Image 1: A smartphone with a badly cracked glass screen. Image 2: A stolen bicycle represented by a severed chain lock on the street. Image 3: A laptop computer with coffee spilled across the keyboard.",
+          "presenter_gender": null,
+          "media_urls": [],
+          "render_manifest_path": null,
+          "image_prompt": null
+        }
+      ],
+      "questions": [
+        {
+          "id": "a2-writing-4-q1",
+          "passage_id": null,
+          "part_number": 1,
+          "order_index": 1,
+          "question_text": "Mijn weekend\n\nU krijgt elke week een wijkkrant. Iedereen uit de buurt mag iets voor deze krant schrijven.\n\nSchrijf een tekst over uw weekend.\nGeef in uw tekst antwoord op de volgende drie vragen:\n• Wat doet u meestal in het weekend?\n• Met wie brengt u het weekend door?\n• Waarom vindt u het weekend fijn?\n\nSchrijf minimaal drie zinnen.\n\nDit is mijn tekst over mijn weekend:",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 10,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 4
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 2
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 2
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 1
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "In het weekend ga ik meestal boodschappen doen en maak ik een lange wandeling. Ik breng het weekend graag door met mijn familie en vrienden. Ik vind het weekend erg fijn omdat ik dan niet hoef te werken en kan uitrusten.",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        },
+        {
+          "id": "a2-writing-4-q2",
+          "passage_id": null,
+          "part_number": 2,
+          "order_index": 2,
+          "question_text": "Gereedschap lenen\n\nU gaat dit weekend uw slaapkamer verven. U heeft een ladder nodig, maar u heeft er zelf geen. U wilt een ladder lenen van uw collega, Thomas.\n\nU schrijft een e-mail aan Thomas.\n• U vertelt wat u dit weekend gaat doen.\n• U vraagt of u zijn ladder mag lenen.\n• U zegt wanneer u de ladder weer terugbrengt.\n\nSchrijf de e-mail.\n\nSchrijf in hele zinnen.",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 10,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 4
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 2
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 2
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 1
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Beste Thomas,\n\nDit weekend ga ik mijn slaapkamer verven. Mag ik jouw ladder lenen voor een paar dagen? Ik breng de ladder op maandag weer aan je terug.\n\nMet vriendelijke groet,\n[Naam]",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        },
+        {
+          "id": "a2-writing-4-q3",
+          "passage_id": "a2-writing-4-p1",
+          "part_number": 3,
+          "order_index": 3,
+          "question_text": "Kijk naar de plaatjes. U heeft schade in uw huis gehad. U ziet een telefoon met een kapot scherm, een gestolen fiets en een laptop met waterschade. U wilt deze schade melden bij uw verzekering. Bedenk zelf uw persoonsgegevens en de datum van de schade.\n\nVul het formulier in.",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 7,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 3
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 1
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 1
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Achternaam: De Jong\nVoorletters: P.\nAdres: Schoolstraat 15, 1011 AB Amsterdam\nTelefoonnummer: 0612345678\nE-mailadres: p.dejong@email.nl\n\nDatum van de schade: 12-10-2023\n\nOmschrijving gestolen spullen en schade:\n• Telefoon met een kapot scherm\n• Gestolen fiets\n• Laptop met waterschade",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        },
+        {
+          "id": "a2-writing-4-q4",
+          "passage_id": null,
+          "part_number": 4,
+          "order_index": 4,
+          "question_text": "Briefje voor de huismeester\n\nU heeft een probleem in uw appartement. De verwarming in de woonkamer doet het niet meer en het is heel koud. U bent vanmiddag niet thuis.\n\nSchrijf een briefje voor de huismeester, meneer Hendriks.\n• U schrijft wat het probleem is.\n• U schrijft waar het probleem is in het appartement.\n• U vraagt wanneer hij langs kan komen.\n\nSchrijf in hele zinnen.\n\nHallo meneer Hendriks,\n\n\n\nAlvast bedankt!\n\nGroeten,",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 10,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 4
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 2
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 2
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 1
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Hallo meneer Hendriks,\n\nDe verwarming doet het niet meer en het is erg koud. Het probleem is in de woonkamer van mijn appartement. Wanneer kunt u langskomen om te kijken? Vanmiddag ben ik helaas niet thuis.\n\nAlvast bedankt!\n\nGroeten,\n[Naam]",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        }
+      ]
+    },
+    "5": {
+      "section": "writing",
+      "level": "A2",
+      "exam_number": 5,
+      "title": "Schrijven - Oefenexamen 5",
+      "instructions": "Maak de 4 schrijfopdrachten. Lees bij elke opdracht eerst de situatie en schrijf daarna je antwoord in het Nederlands.",
+      "time_limit_minutes": 40,
+      "total_questions": 4,
+      "parts_count": 4,
+      "pass_threshold": null,
+      "max_score": 37,
+      "passages": [
+        {
+          "id": "a2-writing-5-p1",
+          "order_index": 1,
+          "part_number": 2,
+          "passage_type": "text",
+          "title": "Inschrijfformulier Fitnesscentrum Fit & Gezond",
+          "display_prompt_nl": "",
+          "content_nl": "Inschrijfformulier Fitnesscentrum Fit & Gezond\n\nPersoonsgegevens\nVoor- en achternaam:\nAdres:\nPostcode:\nWoonplaats:\nTelefoonnummer:\nGeslacht:\nO man / O vrouw\nGeboortedatum:\n\nWelke groepsles wilt u nu gaan doen?\nO Pilates\nO Bodypump\nO Zumba\n\nHoe vaak wilt u komen?\nO 1x per week\nO 2x per week\nO meer dan 2x per week\n\nWaarom kiest u voor deze groepsles?\n\nHoe is uw gezondheid?",
+          "content_en": null,
+          "scene_description": "",
+          "presenter_gender": null,
+          "media_urls": [],
+          "render_manifest_path": null,
+          "image_prompt": null
+        }
+      ],
+      "questions": [
+        {
+          "id": "a2-writing-5-q1",
+          "passage_id": null,
+          "part_number": 1,
+          "order_index": 1,
+          "question_text": "Aantekeningen vragen\n\nU was afgelopen woensdag ziek en kon niet naar de les Nederlands komen. U wilt de aantekeningen van de les lenen van uw klasgenoot, Sarah.\n\nU schrijft een e-mail aan Sarah.\n• U vertelt waarom u er afgelopen woensdag niet was.\n• U vraagt of u haar aantekeningen mag lenen.\n• U stelt voor om voor de volgende les af te spreken.\n\nSchrijf de e-mail.\nSchrijf in hele zinnen.",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 10,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 4
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 2
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 2
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Beste Sarah,\n\nAfgelopen woensdag was ik ziek, dus ik kon niet naar de les Nederlands komen. Ik heb de lesstof gemist. Mag ik jouw aantekeningen van de les lenen? Kunnen we volgende week een half uur voor de les afspreken bij de kantine?\n\nMet vriendelijke groet,\nJan",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        },
+        {
+          "id": "a2-writing-5-q2",
+          "passage_id": "a2-writing-5-p1",
+          "part_number": 2,
+          "order_index": 2,
+          "question_text": "Inschrijfformulier fitnesscentrum\n\nU wilt gaan sporten bij Fitnesscentrum Fit & Gezond. Bedenk zelf uw gegevens en vul het formulier in.\n\nVul het formulier in.",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 7,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 3
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 1
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 1
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Voor- en achternaam: Maria Santos\nAdres: Schoolstraat 45\nPostcode: 1012 AB\nWoonplaats: Amsterdam\nTelefoonnummer: 06 98765432\nGeslacht: O vrouw\nGeboortedatum: 15-08-1992\nWelke groepsles wilt u nu gaan doen?: O Pilates\nHoe vaak wilt u komen?: O 2x per week\nWaarom kiest u voor deze groepsles?: Ik wil sterker worden en meer bewegen.\nHoe is uw gezondheid?: Mijn gezondheid is goed.",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        },
+        {
+          "id": "a2-writing-5-q3",
+          "passage_id": null,
+          "part_number": 3,
+          "order_index": 3,
+          "question_text": "Mijn lievelingseten\n\nU krijgt elke week een wijkkrant. Iedereen uit de buurt mag iets voor deze krant schrijven.\n\nSchrijf een tekst over uw lievelingseten.\nGeef in uw tekst antwoord op de volgende drie vragen:\n• Wat is uw lievelingseten?\n• Hoe vaak eet of kookt u dit?\n• Met wie eet u dit het liefst samen?\n\nSchrijf ten minste drie zinnen.\n\nDit is mijn tekst over mijn lievelingseten:",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 10,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 4
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 2
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 2
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Mijn lievelingseten is spaghetti met verse tomatensaus en groenten. Ik kook dit gerecht ongeveer een keer per week voor mezelf en mijn familie. Ik eet dit het liefst samen met mijn partner en mijn kinderen aan een grote tafel.",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        },
+        {
+          "id": "a2-writing-5-q4",
+          "passage_id": null,
+          "part_number": 4,
+          "order_index": 4,
+          "question_text": "Briefje voor de schoonmaker\n\nU heeft een nieuwe schoonmaker, Mark. Hij komt vandaag voor het eerst bij u thuis werken. U moet zelf naar uw werk en bent niet thuis. U laat een briefje voor hem achter op de keukentafel.\n\nSchrijf een briefje voor Mark.\n• U heet hem welkom.\n• U vertelt waar de schoonmaakspullen staan.\n• U vraagt hem om de sleutel in de brievenbus te doen als hij klaar is.\n\nSchrijf in hele zinnen.",
+          "question_audio_url": null,
+          "question_options_audio_url": null,
+          "option_audio_cues": null,
+          "question_type": "open_written",
+          "explanation": "",
+          "max_score": 10,
+          "year_asked": null,
+          "category": null,
+          "options": null,
+          "answer": null,
+          "grading_rubric": [
+            {
+              "criterion": "adequacy_understandability",
+              "max_points": 4
+            },
+            {
+              "criterion": "grammar",
+              "max_points": 2
+            },
+            {
+              "criterion": "spelling",
+              "max_points": 1
+            },
+            {
+              "criterion": "vocabulary",
+              "max_points": 2
+            },
+            {
+              "criterion": "cohesion",
+              "max_points": 1
+            }
+          ],
+          "model_answer": "Hallo Mark,\n\nWelkom in mijn huis! De schoonmaakspullen staan in de kast onder de trap in de gang. Wil je als je klaar bent de sleutel in de brievenbus doen?\n\nAlvast bedankt!\n\nGroeten,\nAlex",
+          "option_image_prompts": null,
+          "option_audio_urls": null,
+          "option_media_urls": null,
+          "audio_script": null
+        }
+      ]
+    }
+  }
+}

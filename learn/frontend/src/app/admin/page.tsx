@@ -38,9 +38,14 @@ export default async function AdminPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Admin</h1>
-        <Link href="/admin/feedback" className="btn-secondary text-sm">
-          Review feedback
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/admin/mock-exams" className="btn-secondary text-sm">
+            Mock exams
+          </Link>
+          <Link href="/admin/feedback" className="btn-secondary text-sm">
+            Review feedback
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">

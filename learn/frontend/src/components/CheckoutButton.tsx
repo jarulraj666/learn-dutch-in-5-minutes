@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { callApi } from "@/lib/format";
 import type { CheckoutResponse, MockExamSection } from "@/lib/types";
 
@@ -16,7 +16,7 @@ export function CheckoutButton({ product, section, label, className }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function start() {
+  const start = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -24,16 +24,34 @@ export function CheckoutButton({ product, section, label, className }: Props) {
         method: "POST",
         body: JSON.stringify({ product, section }),
       });
+      window.sessionStorage.removeItem("pending-checkout");
       window.location.href = res.checkout_url;
     } catch (e) {
       if (e instanceof Error && e.message.includes("Sign in required")) {
-        window.location.href = "/api/auth/google/start?return_to=/pricing";
+        window.sessionStorage.setItem("pending-checkout", JSON.stringify({ product, section }));
+        window.location.href = "/api/auth/google/start?return_to=%2Fpricing%3Fresume_checkout%3D1";
         return;
       }
       setError("Could not start checkout. Please try again.");
       setLoading(false);
     }
-  }
+  }, [product, section]);
+
+  useEffect(() => {
+    if (window.location.search !== "?resume_checkout=1") return;
+
+    try {
+      const pending = JSON.parse(window.sessionStorage.getItem("pending-checkout") ?? "null") as {
+        product?: Props["product"];
+        section?: Props["section"];
+      } | null;
+      if (pending?.product === product && pending?.section === section) {
+        void start();
+      }
+    } catch {
+      window.sessionStorage.removeItem("pending-checkout");
+    }
+  }, [product, section, start]);
 
   return (
     <div>

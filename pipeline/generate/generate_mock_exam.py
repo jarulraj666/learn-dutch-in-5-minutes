@@ -44,7 +44,7 @@ _VALID_KNM_CATEGORIES = {
 
 
 def _load_approved_exam_plan(section: str, exam_number: int) -> dict[str, Any] | None:
-    if section not in {"listening", "knm"}:
+    if section not in {"listening", "knm", "reading", "writing"}:
         return None
     scenario_path = settings.ROOT / "config" / f"mock_exam_{section}_scenarios.json"
     if not scenario_path.exists():

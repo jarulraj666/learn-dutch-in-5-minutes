@@ -72,7 +72,9 @@ export default async function MockExamSectionPage({ params }: { params: { sectio
       {!hasSectionAccess && exams.some((e) => !e.is_free_preview) && (
         <div className="card flex flex-wrap items-center justify-between gap-4 p-5">
           <p className="text-sm text-slate-600">
-            <span className="animate-pulse text-base font-bold text-emerald-600">Your first exam in this section is free — try it now.</span>{" "}
+            <span className="animate-pulse text-base font-extrabold text-purple-700">
+              Your first exam in this section is <span className="text-orange-500">free</span> — try it now.
+            </span>{" "}
             Unlock the rest of {label} with a one-time payment — 3 months of unlimited retakes, no subscription.
           </p>
           <div className="flex items-center gap-3">
