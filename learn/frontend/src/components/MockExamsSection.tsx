@@ -44,8 +44,8 @@ export function MockExamsSection({ mockExams }: { mockExams: MockExamSummary[] }
         <h2 className="text-center text-3xl font-bold">Inburgering Exams</h2>
       </div>
       <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-600">
-        Full-length practice exams for your inburgering (civic integration) requirement, matching the real
-        Staatsexamen NT2 Programma I.
+        Practice on the same screen you'll see on exam day — the same layout,
+        timer and question format as the real Staatsexamen NT2 Programma I. Build confidence before it counts.
       </p>
 
       <div className="mx-auto mt-6 flex max-w-5xl justify-center gap-2">

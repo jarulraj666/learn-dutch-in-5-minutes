@@ -169,8 +169,12 @@ function AudioVolumeTest() {
     oscillator.frequency.value = 440;
     gain.gain.value = volume * 0.12;
     oscillator.connect(gain).connect(audioContext.destination);
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.7);
+    // Some browsers (notably Safari) create AudioContext in a "suspended" state even
+    // after a user gesture, so audio silently never plays unless explicitly resumed.
+    void audioContext.resume().then(() => {
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.7);
+    });
     oscillator.onended = () => void audioContext.close();
   }
   return (

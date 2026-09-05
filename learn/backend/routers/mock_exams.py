@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import re
 import secrets
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
@@ -60,9 +62,28 @@ def _safe_media_path(rel_path: str) -> Path:
     return p
 
 
+_EXAM_ID_PATTERN = re.compile(r"^[a-z0-9]+-(reading|listening|writing|speaking|knm)-\d+$")
+
+
+async def _require_media_access(path: Path, user: dict | None) -> None:
+    """Media files live under output/mock_exams/<visuals|audio|video>/<exam_id>/...,
+    but question/option audio nests further (e.g. .../<exam_id>/options/...), so search
+    every path segment for the exam id rather than assuming it's the immediate parent."""
+    exam_id = next((part for part in path.parts if _EXAM_ID_PATTERN.match(part)), None)
+    exam = await db.fetch_one(
+        "SELECT section, is_free_preview FROM mock_exams WHERE id = %s", (exam_id,)
+    ) if exam_id else None
+    if not exam:
+        if user is None:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "LOGIN_REQUIRED")
+        return
+    await _require_exam_access(exam, user)
+
+
 @router.get("/mock-exams/media/image")
-async def serve_mock_exam_image(_: CurrentUser, path: str):
+async def serve_mock_exam_image(user: OptionalUser, path: str):
     p = _safe_media_path(path)
+    await _require_media_access(p, user)
     media_type = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}.get(
         p.suffix.lower(), "image/png"
     )
@@ -70,8 +91,9 @@ async def serve_mock_exam_image(_: CurrentUser, path: str):
 
 
 @router.get("/mock-exams/media/audio")
-async def serve_mock_exam_audio(_: CurrentUser, path: str):
+async def serve_mock_exam_audio(user: OptionalUser, path: str):
     p = _safe_media_path(path)
+    await _require_media_access(p, user)
     media_type = {".mp3": "audio/mpeg", ".ogg": "audio/ogg", ".wav": "audio/wav"}.get(
         p.suffix.lower(), "application/octet-stream"
     )
@@ -79,8 +101,9 @@ async def serve_mock_exam_audio(_: CurrentUser, path: str):
 
 
 @router.get("/mock-exams/media/video")
-async def serve_mock_exam_video(_: CurrentUser, path: str):
+async def serve_mock_exam_video(user: OptionalUser, path: str):
     p = _safe_media_path(path)
+    await _require_media_access(p, user)
     return FileResponse(p, media_type="video/mp4")
 
 
@@ -264,8 +287,22 @@ async def get_mock_exam(exam_id: str, _: AdminUser) -> MockExamDetailAdmin:
     )
 
 
+def _anonymous_allowed(exam: dict) -> bool:
+    """Free-preview exams are open to anonymous visitors, except speaking (needs a signed-in user for recording storage and grading)."""
+    return bool(exam["is_free_preview"]) and exam["section"] != "speaking"
+
+
+async def _require_exam_access(exam: dict, user: dict | None) -> None:
+    if _anonymous_allowed(exam):
+        return
+    if user is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "LOGIN_REQUIRED")
+    if not exam["is_free_preview"] and not await has_section_access(user["id"], exam["section"]):
+        raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, "PREMIUM_REQUIRED")
+
+
 @router.get("/mock-exams/{exam_id}/take", response_model=MockExamTakeDetail)
-async def take_mock_exam(exam_id: str, user: CurrentUser) -> MockExamTakeDetail:
+async def take_mock_exam(exam_id: str, user: OptionalUser) -> MockExamTakeDetail:
     """Learner-facing exam view: never includes answers, explanations or rubrics."""
     exam = await db.fetch_one(
         "SELECT id, section, level, exam_number, title, instructions, time_limit_minutes, "
@@ -275,8 +312,8 @@ async def take_mock_exam(exam_id: str, user: CurrentUser) -> MockExamTakeDetail:
     )
     if not exam:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Mock exam not found")
-    if not exam["is_free_preview"] and not await has_section_access(user["id"], exam["section"]):
-        raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, "PREMIUM_REQUIRED")
+    await _require_exam_access(exam, user)
+
 
     passages = await db.fetch_all(
         "SELECT id, order_index, part_number, passage_type, title, display_prompt_nl, content_nl, content_en, media_urls "
@@ -507,16 +544,16 @@ async def _process_speaking_attempt(attempt_id: int) -> None:
 
 
 @router.post("/mock-exams/{exam_id}/submit", response_model=MockExamAttemptResult)
-async def submit_mock_exam(exam_id: str, payload: MockExamSubmission, user: CurrentUser, background_tasks: BackgroundTasks) -> MockExamAttemptResult:
-    """Grade server-side (so the answer key never reaches the browser before submission)
-    and persist the attempt so the learner can review it later."""
+async def submit_mock_exam(exam_id: str, payload: MockExamSubmission, user: OptionalUser, background_tasks: BackgroundTasks) -> MockExamAttemptResult:
+    """Grade server-side (so the answer key never reaches the browser before submission).
+    Signed-in learners get their attempt persisted for later review; anonymous visitors
+    (free-preview exams only) get an immediate result that isn't saved anywhere."""
     exam = await db.fetch_one(
         "SELECT section, pass_threshold, max_score, is_free_preview FROM mock_exams WHERE id = %s", (exam_id,)
     )
     if not exam:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Mock exam not found")
-    if not exam["is_free_preview"] and not await has_section_access(user["id"], exam["section"]):
-        raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, "PREMIUM_REQUIRED")
+    await _require_exam_access(exam, user)
 
     exam_section = exam["section"]
     if exam_section == "writing":
@@ -560,19 +597,21 @@ async def submit_mock_exam(exam_id: str, payload: MockExamSubmission, user: Curr
             if result.writing_feedback is not None
         }
 
-    row = await db.fetch_one(
-        """
-         INSERT INTO mock_exam_attempts (user_id, exam_id, attempt_no, score, total, percent, label, status, answers)
-        SELECT %s, %s,
-             COALESCE(max(attempt_no), 0) + 1, %s, %s, %s, %s, %s, %s
-        FROM mock_exam_attempts WHERE user_id = %s AND exam_id = %s
-        RETURNING id, attempt_no, created_at
-        """,
-         (user["id"], exam_id, score, gradable, percent, label, "processing" if exam_section == "speaking" else "completed", Jsonb(stored_answers),
-         user["id"], exam_id),
-    )
+    row = None
+    if user is not None:
+        row = await db.fetch_one(
+            """
+             INSERT INTO mock_exam_attempts (user_id, exam_id, attempt_no, score, total, percent, label, status, answers)
+            SELECT %s, %s,
+                 COALESCE(max(attempt_no), 0) + 1, %s, %s, %s, %s, %s, %s
+            FROM mock_exam_attempts WHERE user_id = %s AND exam_id = %s
+            RETURNING id, attempt_no, created_at
+            """,
+             (user["id"], exam_id, score, gradable, percent, label, "processing" if exam_section == "speaking" else "completed", Jsonb(stored_answers),
+             user["id"], exam_id),
+        )
 
-    if exam_section == "speaking":
+    if exam_section == "speaking" and row is not None:
         await db.execute(
             "UPDATE mock_exam_speaking_recordings SET attempt_id = %s "
             "WHERE user_id = %s AND exam_id = %s AND attempt_id IS NULL",
@@ -590,13 +629,13 @@ async def submit_mock_exam(exam_id: str, payload: MockExamSubmission, user: Curr
 
     return MockExamAttemptResult(
         exam_id=exam_id,
-        attempt_no=row["attempt_no"],
+        attempt_no=row["attempt_no"] if row is not None else 0,
         score=score,
         total=gradable,
         percent=percent,
         label=label,
         status="processing" if exam_section == "speaking" else "completed",
-        created_at=row["created_at"],
+        created_at=row["created_at"] if row is not None else datetime.now(timezone.utc),
         results=results,
     )
 

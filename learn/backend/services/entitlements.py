@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import db
 
-PRICES_CENTS = {"section": 900, "full": 2500}
+PRICES_CENTS = {"section": 700, "full": 2500}
 ENTITLEMENT_DAYS = 90
 
 

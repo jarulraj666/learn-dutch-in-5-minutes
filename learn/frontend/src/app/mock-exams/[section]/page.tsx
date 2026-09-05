@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Lock } from "lucide-react";
 import { learnerSession } from "@/lib/learner-session";
 import { api, ApiError } from "@/lib/api";
 import { CheckoutButton } from "@/components/CheckoutButton";
+import { AuthGateLink } from "@/components/AuthGateLink";
 import type { Entitlement, MockExamAttemptSummary, MockExamSection, MockExamSummary } from "@/lib/types";
 
 const SECTION_LABELS: Record<string, string> = {
@@ -16,14 +16,16 @@ const SECTION_LABELS: Record<string, string> = {
 
 export default async function MockExamSectionPage({ params }: { params: { section: string } }) {
   const session = await learnerSession();
-  if (!session?.user) redirect("/signin");
+  const loggedIn = !!session?.user;
 
   const { section } = params;
   const label = SECTION_LABELS[section] ?? section;
 
   let exams: MockExamSummary[] = [];
   try {
-    exams = await api<MockExamSummary[]>(`/api/mock-exams?section=${encodeURIComponent(section)}`);
+    exams = await api<MockExamSummary[]>(`/api/mock-exams?section=${encodeURIComponent(section)}`, {
+      authenticated: loggedIn,
+    });
   } catch (error) {
     if (error instanceof ApiError && error.status === 403) {
       return <p className="text-slate-600">You do not have access to this page.</p>;
@@ -32,27 +34,29 @@ export default async function MockExamSectionPage({ params }: { params: { sectio
   }
 
   let entitlements: Entitlement[] = [];
-  try {
-    entitlements = await api<Entitlement[]>("/api/billing/me");
-  } catch {
-    // Treat as no active entitlements rather than breaking the page.
+  let bestAttempts: (MockExamAttemptSummary | null)[] = exams.map(() => null);
+  if (loggedIn) {
+    try {
+      entitlements = await api<Entitlement[]>("/api/billing/me");
+    } catch {
+      // Treat as no active entitlements rather than breaking the page.
+    }
+    bestAttempts = await Promise.all(
+      exams.map(async (exam) => {
+        try {
+          const attempts = await api<MockExamAttemptSummary[]>(`/api/mock-exams/${exam.id}/attempts`);
+          return attempts.reduce<MockExamAttemptSummary | null>(
+            (best, a) => (!best || a.percent > best.percent ? a : best),
+            null,
+          );
+        } catch {
+          return null;
+        }
+      }),
+    );
   }
   const hasSectionAccess = entitlements.some(
     (e) => e.product === "full" || (e.product === "section" && e.section === section),
-  );
-
-  const bestAttempts = await Promise.all(
-    exams.map(async (exam) => {
-      try {
-        const attempts = await api<MockExamAttemptSummary[]>(`/api/mock-exams/${exam.id}/attempts`);
-        return attempts.reduce<MockExamAttemptSummary | null>(
-          (best, a) => (!best || a.percent > best.percent ? a : best),
-          null,
-        );
-      } catch {
-        return null;
-      }
-    }),
   );
 
   return (
@@ -62,13 +66,14 @@ export default async function MockExamSectionPage({ params }: { params: { sectio
           ← Back
         </Link>
         <h1 className="mt-2 text-3xl font-bold">{label}</h1>
-        <p className="mt-1 text-slate-600">Choose a practice exam to start.</p>
+        <p className="mt-1 text-slate-600">Practice on the real exam interface — choose an exam to start.</p>
       </div>
 
       {!hasSectionAccess && exams.some((e) => !e.is_free_preview) && (
         <div className="card flex flex-wrap items-center justify-between gap-4 p-5">
           <p className="text-sm text-slate-600">
-            Your first exam in this section is free. Unlock the rest of {label} for 3 months.
+            <span className="animate-pulse text-base font-bold text-emerald-600">Your first exam in this section is free — try it now.</span>{" "}
+            Unlock the rest of {label} with a one-time payment — 3 months of unlimited retakes, no subscription.
           </p>
           <div className="flex items-center gap-3">
             <CheckoutButton
@@ -116,17 +121,26 @@ export default async function MockExamSectionPage({ params }: { params: { sectio
                   </p>
                 )}
                 {locked ? (
-                  <Link href="/pricing" className="btn-secondary mt-4 inline-block px-5 py-2 text-sm">
+                  <Link
+                    href="/pricing"
+                    className="mt-4 inline-block rounded-full bg-slate-200 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-300"
+                  >
                     Unlock to start
                   </Link>
                 ) : (
-                  <Link href={`/mock-exams/${section}/${exam.id}`} className="btn-primary mt-4 inline-block px-5 py-2 text-sm">
+                  <AuthGateLink
+                    href={`/mock-exams/${section}/${exam.id}`}
+                    loggedIn={loggedIn || (exam.is_free_preview && section !== "speaking")}
+                    className="btn-primary mt-4 inline-block px-5 py-2 text-sm"
+                  >
                     {best ? "Reattempt" : "Start exam"}
+                  </AuthGateLink>
+                )}
+                {loggedIn && (
+                  <Link href={`/mock-exams/${section}/${exam.id}/attempts`} className="mt-4 block text-sm font-semibold text-brand-700 hover:underline">
+                    View attempts
                   </Link>
                 )}
-                <Link href={`/mock-exams/${section}/${exam.id}/attempts`} className="mt-4 block text-sm font-semibold text-brand-700 hover:underline">
-                  View attempts
-                </Link>
               </div>
             );
           })}

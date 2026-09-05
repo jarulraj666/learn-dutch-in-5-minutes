@@ -1474,6 +1474,31 @@ function ResultView({
     );
   }
 
+  if (result.attempt_no === 0) {
+    return (
+      <div className="space-y-6">
+        <Link href={`/mock-exams/${exam.section}`} className="text-sm text-brand-700 hover:underline">
+          ← Back to {exam.section} exams
+        </Link>
+        <div className="card mx-auto max-w-md p-8 text-center">
+          <h2 className="text-xl font-semibold">You&apos;ve completed the exam!</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Sign in with Google to view your score and detailed feedback — it&apos;s free.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = `/api/auth/google/start?return_to=${encodeURIComponent(window.location.pathname)}`;
+            }}
+            className="btn-primary mt-6 px-5 py-2 text-sm"
+          >
+            Continue with Google
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Link href={`/mock-exams/${exam.section}`} className="text-sm text-brand-700 hover:underline">
@@ -1710,6 +1735,25 @@ export function TakeExamClient({ examId, viewAttemptNo }: { examId: string; view
     [exam],
   );
 
+  if (loadError?.includes("LOGIN_REQUIRED")) {
+    return (
+      <div className="card mx-auto max-w-md p-8 text-center">
+        <h2 className="text-xl font-semibold">Sign in to start this exam</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Sign in with Google to take practice exams and track your results — it&apos;s free.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = `/api/auth/google/start?return_to=${encodeURIComponent(window.location.pathname)}`;
+          }}
+          className="btn-primary mt-6 px-5 py-2 text-sm"
+        >
+          Continue with Google
+        </button>
+      </div>
+    );
+  }
   if (loadError?.includes("PREMIUM_REQUIRED")) {
     return (
       <div className="card mx-auto max-w-md p-8 text-center">

@@ -91,10 +91,10 @@ export default async function HomePage() {
   const heroSlides: HeroSlide[] = [
     {
       id: "exams",
-      eyebrow: "Inburgering exam prep · A2",
-      title: "Pass Your Inburgering Exam",
-      body: `${examCount > 0 ? `${examCount} full-length` : "Full-length"} A2-level reading, listening, writing, speaking and KNM exams for your inburgering (civic integration) requirement — practised under the real time limits. Your first exam per section is free.`,
-      primaryCta: { label: "Try a free inburgering exam", href: "/mock-exams/reading" },
+      eyebrow: "Real exam simulator · A2",
+      title: "Try Your Free Exam Now",
+      body: `Same screen, same timer, same question format as the real exam. ${examCount > 0 ? `${examCount} full-length` : "Full-length"} reading, listening, writing, speaking and KNM exams — practice until you're ready. Try your free exam now.`,
+      primaryCta: { label: "Try a free exam now", href: "/mock-exams/reading" },
       className: "bg-gradient-to-br from-brand-700 to-brand-900",
     },
     {
@@ -109,10 +109,10 @@ export default async function HomePage() {
     },
     {
       id: "premium",
-      eyebrow: "Premium — coming soon",
-      title: "Unlock Every Inburgering Exam",
-      body: "Go Premium for unlimited inburgering practice exams across every section and level, plus AI feedback on your writing and speaking answers.",
-      primaryCta: { label: "See Premium plans", href: "/pricing" },
+      eyebrow: "One-time payment · 3 months access",
+      title: "Unlimited Practice, One Simple Price",
+      body: "Unlock every inburgering exam section for 3 months with a single payment — no subscription, no auto-renewal. Repeat exams as often as you like until you feel ready for the real thing.",
+      primaryCta: { label: "See pricing", href: "/pricing" },
       className: "bg-gradient-to-br from-amber-500 to-orange-600",
     },
   ];
@@ -146,11 +146,12 @@ export default async function HomePage() {
             </span>
             <h3 className="mt-4 text-xl font-semibold">Inburgering Exams</h3>
             <p className="mt-2 text-sm text-slate-600">
-              {examCount > 0 ? `${examCount} full-length exams` : "Full-length exams"} covering reading, listening,
-              writing, speaking and KNM — matching the real inburgering (Staatsexamen NT2) exam.
+              {examCount > 0 ? `${examCount} full-length exams` : "Full-length exams"} that look and feel just like the
+              real exam — reading, listening, writing, speaking and KNM. Practice the format and timing before
+              test day.
             </p>
             <span className="mt-4 inline-block rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-              Free preview, then Premium
+              Free preview, then one-time unlock
             </span>
             <Link href="/mock-exams/reading" className="btn-primary mt-4 block w-fit px-5 py-2 text-sm">
               Start an exam

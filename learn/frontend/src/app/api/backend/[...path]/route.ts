@@ -34,6 +34,16 @@ function resolve(segments: string[]): string | null {
   return ALLOWED.some((re) => re.test(path)) ? path : null;
 }
 
+// These endpoints support anonymous access on the backend (free-preview exams);
+// everything else still requires a signed-in session token.
+const ANONYMOUS_ALLOWED: RegExp[] = [
+  /^mock-exams\/[\w.-]+\/take$/,
+  /^mock-exams\/[\w.-]+\/submit$/,
+  /^mock-exams\/media\/image$/,
+  /^mock-exams\/media\/audio$/,
+  /^mock-exams\/media\/video$/,
+];
+
 async function forward(req: NextRequest, segments: string[]) {
   const path = resolve(segments);
   if (!path) {
@@ -41,11 +51,12 @@ async function forward(req: NextRequest, segments: string[]) {
   }
 
   const token = sessionToken();
-  if (!token) {
+  if (!token && !ANONYMOUS_ALLOWED.some((re) => re.test(path))) {
     return NextResponse.json({ detail: "Sign in required" }, { status: 401 });
   }
 
-  const headers = new Headers({ Authorization: `Bearer ${token}` });
+  const headers = new Headers();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
   const contentType = req.headers.get("Content-Type");
   if (contentType) headers.set("Content-Type", contentType);
   const range = req.headers.get("Range");
