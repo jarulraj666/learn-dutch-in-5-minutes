@@ -380,10 +380,17 @@ async def generate_mock_exam_question_audio(
 ):
     """Generate the spoken clip for one question from its audio script."""
     from pipeline import settings
-    from pipeline.generate.generate_mock_exam import generate_knm_question_audio, knm_question_audio_script
+    from pipeline.generate.generate_mock_exam import generate_knm_question_audio, generate_listening_question_audio, knm_question_audio_script
     from pipeline.core.store_mock_exam import save_mock_exam_job
 
     job, artifact, question = _load_question(exam_id, question_id)
+    if job["section"] == "listening":
+        await asyncio.to_thread(generate_listening_question_audio, exam_id, question, ROOT / "output", True)
+        if not question.get("question_options_audio_url"):
+            raise HTTPException(status_code=502, detail="Could not generate question and option audio")
+        save_mock_exam_job(exam_id, job["section"], job["exam_number"], job["level"], artifact, job["status"])
+        return {"path": question["question_options_audio_url"], "question_id": question_id}
+
     passage = next((p for p in artifact.get("passages", []) if p["id"] == question.get("passage_id")), None)
     script = (question.get("audio_script") or knm_question_audio_script(question, passage)).strip()
     if not script:

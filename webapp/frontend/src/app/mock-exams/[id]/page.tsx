@@ -78,6 +78,11 @@ function genericTtsScript(script: string, addPictureReminder = false): string {
   return completeScript;
 }
 
+function mediaUrl(type: "image" | "audio" | "video", path: string): string {
+  if (path.startsWith("https://") || path.startsWith("http://")) return path;
+  return `${API_URL}/api/media/${type}?path=${encodeURIComponent(path)}`;
+}
+
 export default function MockExamDetailPage() {
   const params = useParams();
   const examId = params.id as string;
@@ -362,7 +367,9 @@ function MediaTab({
   const pictureChoiceQuestions = artifact.questions.filter(
     (q) => q.option_image_prompts && q.option_image_prompts.length > 0
   );
-  const spokenQuestions = artifact.questions.filter((q) => q.audio_script?.trim());
+  const spokenQuestions = artifact.questions.filter(
+    (q) => q.audio_script?.trim() || (artifact.section === "listening" && q.question_type === "multiple_choice")
+  );
   if (mediaOnly.length === 0 && pictureChoiceQuestions.length === 0 && spokenQuestions.length === 0) {
     return <p className="text-gray-500 text-sm">This section has no media (text-only passages).</p>;
   }
@@ -379,10 +386,10 @@ function MediaTab({
             {p.media_urls.map((m) => (
               <div key={m.url} className="border border-gray-700 rounded p-1">
                 {m.type === "image" && (
-                  <img src={`${API_URL}/api/media/image?path=${encodeURIComponent(m.url)}`} alt="" className="h-24" />
+                  <img src={mediaUrl("image", m.url)} alt="" className="h-24" />
                 )}
-                {m.type === "audio" && <audio controls src={`${API_URL}/api/media/audio?path=${encodeURIComponent(m.url)}`} />}
-                {m.type === "video" && <video controls className="h-40" src={`${API_URL}/api/media/video?path=${encodeURIComponent(m.url)}`} />}
+                {m.type === "audio" && <audio controls src={mediaUrl("audio", m.url)} />}
+                {m.type === "video" && <video controls className="h-40" src={mediaUrl("video", m.url)} />}
               </div>
             ))}
             {p.media_urls.length === 0 && <span className="text-gray-500 text-xs">No media generated yet</span>}
@@ -536,7 +543,7 @@ function MediaTab({
                 <div key={key} className="border border-gray-700 rounded p-2 space-y-1 w-40">
                   <span className="text-xs text-gray-400">Option {String.fromCharCode(65 + i)}: {q.options?.[i]}</span>
                   {url ? (
-                    <img src={`${API_URL}/api/media/image?path=${encodeURIComponent(url)}`} alt="" className="h-20 w-full object-cover rounded" />
+                    <img src={mediaUrl("image", url)} alt="" className="h-20 w-full object-cover rounded" />
                   ) : (
                     <span className="block text-xs text-gray-500">No image yet</span>
                   )}
@@ -600,6 +607,7 @@ function QuestionAudioList({
       </p>
       {questions.map((q) => {
         const scriptKey = `${q.id}-audio-script`;
+        const audioScript = questionAudioScript(q);
         return (
           <div key={q.id} className="rounded border border-gray-700/60 p-2 space-y-2">
             <p className="text-xs text-gray-300">{q.order_index}. {q.question_text}</p>
@@ -607,7 +615,7 @@ function QuestionAudioList({
               <audio
                 controls
                 className="h-8 w-full max-w-sm"
-                src={`${API_URL}/api/media/audio?path=${encodeURIComponent(q.question_audio_url)}`}
+                src={mediaUrl("audio", q.question_audio_url)}
               />
             ) : (
               <span className="block text-xs text-gray-500">No audio yet</span>
@@ -634,13 +642,19 @@ function QuestionAudioList({
               </label>
             </div>
             {openPrompt === scriptKey && (
-              <pre className="bg-black/40 p-2 rounded text-xs whitespace-pre-wrap">{q.audio_script}</pre>
+              <pre className="bg-black/40 p-2 rounded text-xs whitespace-pre-wrap">{audioScript}</pre>
             )}
           </div>
         );
       })}
     </div>
   );
+}
+
+function questionAudioScript(question: Question): string {
+  if (question.audio_script?.trim()) return question.audio_script;
+  if (!question.options?.length) return question.question_text;
+  return [question.question_text, ...question.options].join("\n");
 }
 
 function mockExamAudioScript(passage: Passage, question: Question | undefined): string {

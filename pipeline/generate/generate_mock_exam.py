@@ -737,7 +737,9 @@ def generate_knm_question_audio(
     return True
 
 
-def generate_listening_question_audio(exam_id: str, question: dict[str, Any], output_root: Path) -> None:
+def generate_listening_question_audio(
+    exam_id: str, question: dict[str, Any], output_root: Path, overwrite: bool = False
+) -> None:
     """Generate Gemini TTS clips for the question and each answer option."""
     if question.get("question_type") != "multiple_choice":
         return
@@ -745,7 +747,7 @@ def generate_listening_question_audio(exam_id: str, question: dict[str, Any], ou
     question_id = question["id"]
     question_audio_path = media_dir / "questions_fast" / f"{question_id}.wav"
     try:
-        question_ready = question_audio_path.exists() or _synthesize_text_audio(
+        question_ready = (question_audio_path.exists() and not overwrite) or _synthesize_text_audio(
             question.get("question_text", ""), question_audio_path
         )
     except Exception:
@@ -757,9 +759,8 @@ def generate_listening_question_audio(exam_id: str, question: dict[str, Any], ou
     option_audio_urls: list[str | None] = []
     for index, option in enumerate(question.get("options") or [], start=1):
         option_audio_path = media_dir / "options_fast" / f"{question_id}-o{index}.wav"
-        option_label = chr(64 + index)
         try:
-            option_ready = option_audio_path.exists() or _synthesize_text_audio(f"{option_label}. {option}", option_audio_path)
+            option_ready = (option_audio_path.exists() and not overwrite) or _synthesize_text_audio(option, option_audio_path)
         except Exception:
             LOGGER.exception("mock_exam media: option audio failed for %s option %d", question_id, index)
             option_ready = False
@@ -769,6 +770,9 @@ def generate_listening_question_audio(exam_id: str, question: dict[str, Any], ou
             option_audio_urls.append(None)
     if option_audio_urls:
         question["option_audio_urls"] = option_audio_urls
+    combined_path = question_audio_path.with_name(f"{question['id']}-with-options.wav")
+    if overwrite:
+        combined_path.unlink(missing_ok=True)
     _combine_listening_question_audio(question, output_root)
 
 

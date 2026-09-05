@@ -717,6 +717,8 @@ function SpeakingExam({
   }
 
   function showQuestion(index: number) {
+    activeMediaPlayer()?.pause();
+    document.querySelectorAll<HTMLAudioElement>("audio").forEach((audio) => audio.pause());
     setCurrentIndex(index);
     setPartIntroduction(null);
   }
@@ -724,6 +726,8 @@ function SpeakingExam({
   function showPartIntroduction(partNumber: number | null) {
     const firstQuestionIndex = questions.findIndex((item) => item.part_number === partNumber);
     if (firstQuestionIndex < 0 || partNumber === null) return;
+    activeMediaPlayer()?.pause();
+    document.querySelectorAll<HTMLAudioElement>("audio").forEach((audio) => audio.pause());
     setCurrentIndex(firstQuestionIndex);
     setPartIntroduction(partNumber);
   }
@@ -735,6 +739,8 @@ function SpeakingExam({
     }
     const nextIndex = Math.min(questions.length - 1, currentIndex + 1);
     const nextPart = questions[nextIndex]?.part_number;
+    activeMediaPlayer()?.pause();
+    document.querySelectorAll<HTMLAudioElement>("audio").forEach((audio) => audio.pause());
     setCurrentIndex(nextIndex);
     if (nextPart !== question.part_number) setPartIntroduction(nextPart ?? null);
   }
@@ -742,21 +748,29 @@ function SpeakingExam({
   function goPrevious() {
     if (partIntroduction !== null) {
       const previousIndex = Math.max(0, currentIndex - 1);
+      activeMediaPlayer()?.pause();
+      document.querySelectorAll<HTMLAudioElement>("audio").forEach((audio) => audio.pause());
       setCurrentIndex(previousIndex);
       setPartIntroduction(null);
       return;
     }
     if (currentIndex === 0) {
+      activeMediaPlayer()?.pause();
+      document.querySelectorAll<HTMLAudioElement>("audio").forEach((audio) => audio.pause());
       setPartIntroduction(question.part_number);
       return;
     }
     const previousIndex = Math.max(0, currentIndex - 1);
     const previousPart = questions[previousIndex]?.part_number;
     if (previousPart !== question.part_number) {
+      activeMediaPlayer()?.pause();
+      document.querySelectorAll<HTMLAudioElement>("audio").forEach((audio) => audio.pause());
       setCurrentIndex(questions.findIndex((item) => item.part_number === previousPart));
       setPartIntroduction(previousPart ?? null);
       return;
     }
+    activeMediaPlayer()?.pause();
+    document.querySelectorAll<HTMLAudioElement>("audio").forEach((audio) => audio.pause());
     setCurrentIndex(previousIndex);
   }
 
@@ -1824,7 +1838,7 @@ export function TakeExamClient({ examId, viewAttemptNo }: { examId: string; view
                   </p>
                   <hr className="my-6 border-slate-300" />
                   {passage.title && <p className="text-[0.95rem] font-bold">{passage.title}</p>}
-                  <PassageMedia mediaUrls={passage.media_urls} />
+                  <PassageMedia key={passage.id} mediaUrls={passage.media_urls} />
                   {body && (
                     <div className="mt-4">
                       <PassageContent text={body} />
