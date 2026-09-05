@@ -26,7 +26,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Practice",
     items: [
-      { href: "/mock-exams/reading", label: "Inburgering Exams", icon: ClipboardCheck, match: "/mock-exams" },
+      { href: "/#mock-exams", label: "Inburgering Exams", icon: ClipboardCheck },
     ],
   },
   {

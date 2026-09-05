@@ -94,7 +94,7 @@ export default async function HomePage() {
       eyebrow: "Real exam simulator · A2",
       title: "Try Your Free Exam Now",
       body: `Same screen, same timer, same question format as the real exam. ${examCount > 0 ? `${examCount} full-length` : "Full-length"} reading, listening, writing, speaking and KNM exams — practice until you're ready. Try your free exam now.`,
-      primaryCta: { label: "Try a free exam now", href: "/mock-exams/reading" },
+      primaryCta: { label: "Try a free exam now", href: "/#mock-exams" },
       className: "bg-gradient-to-br from-brand-700 to-brand-900",
     },
     {
@@ -160,7 +160,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <MockExamsSection mockExams={mockExams} />
+      <div id="mock-exams">
+        <MockExamsSection mockExams={mockExams} />
+      </div>
 
       <section>
         <h2 className="text-center text-3xl font-bold">Find Your Level, Start Today</h2>

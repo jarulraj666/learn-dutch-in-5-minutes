@@ -18,7 +18,7 @@ export function Nav() {
   return (
     <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-30">
       <div className="container mx-auto px-4 max-w-7xl flex items-center gap-1 h-14">
-        <span className="font-bold text-white mr-4 text-sm tracking-wide">🇳🇱 Dutch Videos</span>
+        <span className="font-bold text-white mr-4 text-sm tracking-wide">Learn Dutch In 5 Minutes · Admin</span>
         {LINKS.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}

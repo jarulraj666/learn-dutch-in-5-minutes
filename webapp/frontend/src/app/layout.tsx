@@ -3,8 +3,8 @@ import "./globals.css";
 import { Nav } from "@/components/Nav";
 
 export const metadata: Metadata = {
-  title: "Dutch Video Dashboard",
-  description: "Manage Dutch language video generation",
+  title: "Learn Dutch In 5 Minutes · Admin",
+  description: "Admin app for managing Learn Dutch In 5 Minutes content, pipelines, and practice exams.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

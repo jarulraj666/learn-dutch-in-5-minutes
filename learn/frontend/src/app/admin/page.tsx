@@ -39,9 +39,6 @@ export default async function AdminPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Admin</h1>
         <div className="flex gap-2">
-          <Link href="/admin/mock-exams" className="btn-secondary text-sm">
-            Mock exams
-          </Link>
           <Link href="/admin/feedback" className="btn-secondary text-sm">
             Review feedback
           </Link>

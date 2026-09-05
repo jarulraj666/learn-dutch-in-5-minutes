@@ -16,6 +16,12 @@ type MockExamJob = {
   updated_at: string | null;
 };
 
+type PipelineRun = {
+  job_id: string;
+  started_at: string;
+  args: string[];
+};
+
 const SECTIONS = ["reading", "listening", "writing", "speaking", "knm"];
 const STAGES = ["draft", "content_generated", "media_generated", "exported"];
 
@@ -23,6 +29,8 @@ const fetcher = (url: string) => apiFetch<MockExamJob[]>(url);
 
 export default function MockExamsPage() {
   const [section, setSection] = useState("");
+  const [examNumber, setExamNumber] = useState(1);
+  const [pipelineRun, setPipelineRun] = useState<PipelineRun | null>(null);
   const params = new URLSearchParams();
   if (section) params.set("section", section);
 
@@ -36,17 +44,25 @@ export default function MockExamsPage() {
   }, {});
 
   const runStage = async (stage: string, sec?: string, examNumber?: number) => {
-    await apiFetch("/api/mock-exams/run", {
-      method: "POST",
-      body: JSON.stringify({ stage, section: sec, exam_number: examNumber }),
-    });
-    mutate();
+    try {
+      const run = await apiFetch<PipelineRun>("/api/mock-exams/run", {
+        method: "POST",
+        body: JSON.stringify({ stage, section: sec, exam_number: examNumber }),
+      });
+      setPipelineRun(run);
+      mutate();
+    } catch (error) {
+      window.alert(String(error));
+    }
   };
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">A2 Mock Exams</h1>
+        <div>
+          <h1 className="text-2xl font-bold">A2 Mock Exams</h1>
+          <p className="mt-1 text-sm text-gray-400">Admin management: generate, process, and publish practice exams.</p>
+        </div>
         <div className="flex gap-2">
           {STAGES.map((s) => (
             <div key={s} className="bg-gray-800 rounded px-3 py-1.5 text-xs">
@@ -58,7 +74,24 @@ export default function MockExamsPage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <p className="text-sm text-gray-400">
+        Generate one numbered exam or generate all five exams in the selected category. Existing exams remain in the list.
+      </p>
+      {pipelineRun && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-sky-700/50 bg-sky-900/20 px-4 py-3 text-sm">
+          <div>
+            <p className="font-medium text-sky-200">Pipeline run started</p>
+            <p className="mt-1 font-mono text-xs text-sky-400">{pipelineRun.args.slice(2).join(" ")}</p>
+          </div>
+          <Link
+            href={`/run?job=${pipelineRun.job_id}`}
+            className="rounded-lg bg-sky-600 px-3 py-2 font-medium text-white hover:bg-sky-500"
+          >
+            View live pipeline run
+          </Link>
+        </div>
+      )}
+      <div className="flex flex-wrap items-end gap-2">
         <select
           value={section}
           onChange={(e) => setSection(e.target.value)}
@@ -69,11 +102,29 @@ export default function MockExamsPage() {
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
+        <label className="text-xs text-gray-400">
+          Specific exam number
+          <input
+            type="number"
+            min={1}
+            max={99}
+            value={examNumber}
+            onChange={(e) => setExamNumber(Number(e.target.value))}
+            className="ml-2 w-20 bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-sm text-white"
+          />
+        </label>
+        <button
+          onClick={() => runStage("content", section, examNumber)}
+          disabled={!section || examNumber < 1 || examNumber > 99}
+          className="bg-emerald-600 hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 text-white px-3 py-1.5 rounded text-sm"
+        >
+          Generate Exam #{examNumber || ""}
+        </button>
         <button
           onClick={() => runStage("content", section || undefined)}
           className="bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded text-sm"
         >
-          Generate Content{section ? ` (${section})` : " (all 25)"}
+          {section ? `Generate all 5 ${section} exams` : "Generate all 5 exams in every category"}
         </button>
       </div>
 

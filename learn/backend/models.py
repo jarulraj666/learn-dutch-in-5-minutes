@@ -418,7 +418,3 @@ class Entitlement(BaseModel):
     expires_at: datetime
 
 
-class MockExamGenerateRequest(BaseModel):
-    section: str
-    exam_number: int
-    stage: str = "content"
