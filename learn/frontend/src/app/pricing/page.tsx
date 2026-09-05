@@ -3,7 +3,8 @@ import { Check, Clock, Lock, MonitorCheck, RefreshCw } from "lucide-react";
 import { CheckoutButton } from "@/components/CheckoutButton";
 import { SectionPricingTabs } from "@/components/SectionPricingTabs";
 import { api } from "@/lib/api";
-import type { MockExamSummary } from "@/lib/types";
+import { learnerSession } from "@/lib/learner-session";
+import type { Entitlement, MockExamSummary } from "@/lib/types";
 
 export const metadata = { title: "Pricing · Learn Dutch in 5 Minutes" };
 
@@ -50,12 +51,22 @@ const SECTION_LABELS: Record<(typeof SECTION_KEYS)[number], string> = {
 };
 
 export default async function PricingPage({ searchParams }: { searchParams: { checkout?: string } }) {
+  const session = await learnerSession();
   let mockExams: MockExamSummary[] = [];
+  let entitlements: Entitlement[] = [];
   try {
     mockExams = await api<MockExamSummary[]>("/api/mock-exams", { authenticated: false });
   } catch {
     // Pricing page must still render even if the API is unavailable.
   }
+  if (session?.user) {
+    try {
+      entitlements = await api<Entitlement[]>("/api/billing/me");
+    } catch {
+      // Treat missing billing data as no active entitlement.
+    }
+  }
+  const hasFullAccess = entitlements.some((entitlement) => entitlement.product === "full");
   const examCountBySection = mockExams.reduce<Record<string, number>>((counts, exam) => {
     counts[exam.section] = (counts[exam.section] ?? 0) + 1;
     return counts;
@@ -145,11 +156,22 @@ export default async function PricingPage({ searchParams }: { searchParams: { ch
               );
             })}
           </div>
-          <CheckoutButton product="full" label="Unlock everything — €25" className="btn-primary mt-6 px-5 py-2 text-sm" />
+          {hasFullAccess ? (
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <span className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
+                Unlocked for 3 months
+              </span>
+              <Link href="/mock-exams/reading" className="text-sm font-semibold text-brand-700 hover:underline">
+                Go to practice exams
+              </Link>
+            </div>
+          ) : (
+            <CheckoutButton product="full" label="Unlock everything — €25" className="btn-primary mt-6 px-5 py-2 text-sm" />
+          )}
         </article>
       </section>
 
-      <SectionPricingTabs examCountBySection={examCountBySection} />
+      <SectionPricingTabs examCountBySection={examCountBySection} hasFullAccess={hasFullAccess} />
     </div>
   );
 }

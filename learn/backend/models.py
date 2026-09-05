@@ -414,6 +414,7 @@ class CheckoutResponse(BaseModel):
 class Entitlement(BaseModel):
     product: str
     section: str | None
+    started_at: datetime
     expires_at: datetime
 
 

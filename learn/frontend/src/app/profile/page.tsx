@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { learnerSession } from "@/lib/learner-session";
 import { api } from "@/lib/api";
+import { formatDate } from "@/lib/format";
 import { SettingsForm } from "./SettingsForm";
-import type { Certificate, UserProfile } from "@/lib/types";
+import type { Certificate, Entitlement, UserProfile } from "@/lib/types";
 
 export const metadata = { title: "Profile · Learn Dutch in 5 Minutes" };
 
@@ -12,6 +13,7 @@ export default async function ProfilePage() {
 
   const profile = await api<UserProfile>("/api/me");
   const data = await api<{ certificates: Certificate[] }>("/api/me/export").catch(() => null);
+  const entitlements = await api<Entitlement[]>("/api/billing/me").catch(() => []);
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -32,6 +34,26 @@ export default async function ProfilePage() {
       </header>
 
       <SettingsForm initial={profile.settings} />
+
+      <section className="card p-6">
+        <h2 className="font-semibold">Exam access</h2>
+        {entitlements.length > 0 ? (
+          <div className="mt-4 space-y-3 text-sm">
+            {entitlements.map((entitlement) => (
+              <div key={`${entitlement.product}-${entitlement.section ?? "all"}`} className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 px-4 py-3">
+                <span className="font-medium">
+                  {entitlement.product === "full" ? "Complete package" : `${entitlement.section} section`}
+                </span>
+                <span className="text-slate-600">
+                  {formatDate(entitlement.started_at)} – {formatDate(entitlement.expires_at)}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-1 text-sm text-slate-600">No active exam access.</p>
+        )}
+      </section>
 
       {data?.certificates && data.certificates.length > 0 && (
         <section className="card p-6">

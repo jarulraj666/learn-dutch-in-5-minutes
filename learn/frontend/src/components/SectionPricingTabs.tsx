@@ -56,7 +56,13 @@ const SECTION_CARDS = [
 ] as const;
 
 /** Level-tabbed pricing grid for single-section unlocks; only A2 has exams today. */
-export function SectionPricingTabs({ examCountBySection }: { examCountBySection: Record<string, number> }) {
+export function SectionPricingTabs({
+  examCountBySection,
+  hasFullAccess,
+}: {
+  examCountBySection: Record<string, number>;
+  hasFullAccess: boolean;
+}) {
   const [level, setLevel] = useState<(typeof LEVEL_TABS)[number]>("A2");
 
   return (
@@ -103,17 +109,28 @@ export function SectionPricingTabs({ examCountBySection }: { examCountBySection:
                   {questions} · {minutes}
                 </p>
                 <p className="mt-2 text-xs text-slate-500">{format}</p>
-                <p className="mt-4">
-                  <span className="text-sm text-slate-400 line-through">€13</span>{" "}
-                  <span className="text-2xl font-bold text-emerald-600">€7</span>{" "}
-                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-600">-46%</span>
-                </p>
-                <CheckoutButton
-                  product="section"
-                  section={key as MockExamSection}
-                  label="Unlock"
-                  className="btn-primary mt-4 w-full px-5 py-2 text-sm"
-                />
+                {hasFullAccess ? (
+                  <>
+                    <p className="mt-4 text-sm font-bold text-emerald-700">Included in your package</p>
+                    <a href={`/mock-exams/${key}`} className="mt-4 inline-block text-sm font-semibold text-brand-700 hover:underline">
+                      Practice this section
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-4">
+                      <span className="text-sm text-slate-400 line-through">€13</span>{" "}
+                      <span className="text-2xl font-bold text-emerald-600">€7</span>{" "}
+                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-600">-46%</span>
+                    </p>
+                    <CheckoutButton
+                      product="section"
+                      section={key as MockExamSection}
+                      label="Unlock"
+                      className="btn-primary mt-4 w-full px-5 py-2 text-sm"
+                    />
+                  </>
+                )}
               </article>
             );
           })}

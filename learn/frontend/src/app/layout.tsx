@@ -6,7 +6,7 @@ import { CookieNotice } from "@/components/CookieNotice";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Learn Dutch in 5 Minutes",
+  title: "Learn Dutch In 5 Minutes",
   description:
     "Short, structured Dutch video lessons with vocabulary, grammar notes, transcripts and quizzes. Free.",
   metadataBase: new URL(process.env.NEXTAUTH_URL ?? "https://learndutchin5minutes.nl"),

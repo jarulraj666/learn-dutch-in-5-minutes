@@ -317,5 +317,6 @@ export interface CheckoutResponse {
 export interface Entitlement {
   product: "section" | "full";
   section: MockExamSection | null;
+  started_at: string;
   expires_at: string;
 }
