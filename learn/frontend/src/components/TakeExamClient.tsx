@@ -1509,7 +1509,7 @@ function ResultView({
 
       <div className="space-y-4">
         {result.results
-          .filter((r) => r.graded || exam.section === "writing")
+          .filter((r) => r.graded || exam.section === "writing" || exam.section === "speaking")
           .filter((r) => {
             if (answerFilter === "correct") return r.graded && r.correct === true;
             if (answerFilter === "incorrect") return r.graded && r.correct === false;
@@ -1576,6 +1576,8 @@ function ResultView({
                   <p className="mt-2 text-sm font-semibold text-slate-500">Not filled / skipped</p>
                 ) : exam.section === "writing" ? (
                   <p className="mt-2 text-sm text-slate-500">Not evaluated</p>
+                ) : exam.section === "speaking" ? (
+                  <p className="mt-2 text-sm font-semibold text-slate-500">Not answered</p>
                 ) : (
                   <p className={clsx("mt-1 text-sm", r.correct ? "text-emerald-700" : "text-red-700")}>
                     Your answer: {r.given ?? "(no answer)"} {r.correct ? "✓" : `— correct answer: ${r.answer}`}

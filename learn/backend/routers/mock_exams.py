@@ -192,9 +192,16 @@ async def complete_speaking_job(job_id: str, payload: SpeakingJobCompletion, aut
     speaking_recordings.delete(job["storage_path"])
     remaining = await db.fetch_one("SELECT count(*) AS total FROM speaking_transcription_jobs WHERE attempt_id = %s AND status IN ('pending', 'processing')", (job["attempt_id"],))
     if remaining and remaining["total"] == 0:
-        completed = await db.fetch_all("SELECT r.feedback_label FROM speaking_transcription_jobs j JOIN mock_exam_speaking_recordings r ON r.id = j.recording_id WHERE j.attempt_id = %s", (job["attempt_id"],))
-        score = sum({"Excellent": 2, "Good": 1}.get(row["feedback_label"], 1) for row in completed)
-        total = len(completed) * 2
+        questions = await db.fetch_all(
+            "SELECT id FROM mock_exam_questions WHERE exam_id = (SELECT exam_id FROM mock_exam_attempts WHERE id = %s)",
+            (job["attempt_id"],),
+        )
+        score = sum(
+            {"Excellent": 2, "Good": 1}.get(str(feedback.get("label")), 1)
+            for feedback in feedback_by_id.values()
+            if isinstance(feedback, dict)
+        )
+        total = len(questions) * 2
         percent = round(score * 100 / total) if total else 0
         await db.execute("UPDATE mock_exam_attempts SET score = %s, total = %s, percent = %s, label = %s, status = 'completed' WHERE id = %s", (score, total, percent, _score_label(percent, percent >= 60), job["attempt_id"]))
     return {"status": "completed"}

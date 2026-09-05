@@ -80,15 +80,10 @@ export function KnmExam({
     player.currentTime = Math.max(0, Math.min(player.duration || Infinity, player.currentTime + seconds));
   }
 
-  function toggleAudio() {
-    if (!questionAudioUrl) return;
-    const player = audioRef.current;
-    if (player) {
-      if (player.paused) void player.play();
-      else player.pause();
-      return;
-    }
-    const audio = new Audio(mediaProxyUrl("audio", questionAudioUrl));
+  function startAudio(audioUrl: string | null) {
+    if (!audioUrl) return;
+    stopAudio();
+    const audio = new Audio(mediaProxyUrl("audio", audioUrl));
     audio.playbackRate = QUESTION_AUDIO_PLAYBACK_RATE;
     audio.volume = volume;
     audioRef.current = audio;
@@ -106,6 +101,23 @@ export function KnmExam({
     void audio.play().catch(() => setAudioPlaying(false));
   }
 
+  function toggleAudio() {
+    if (!questionAudioUrl) return;
+    const player = audioRef.current;
+    if (player) {
+      if (player.paused) void player.play();
+      else player.pause();
+      return;
+    }
+    startAudio(questionAudioUrl);
+  }
+
+  function audioForQuestion(index: number) {
+    const nextQuestion = questions[index];
+    const nextPassage = nextQuestion?.passage_id ? passageById.get(nextQuestion.passage_id) : undefined;
+    return nextQuestion?.question_audio_url ?? nextPassage?.media_urls.find((media) => media.type === "audio")?.url ?? null;
+  }
+
   function showQuestion(index: number) {
     stopAudio();
     setThemeIntro(null);
@@ -120,13 +132,18 @@ export function KnmExam({
   function goNext() {
     if (themeIntro !== null) {
       setThemeIntro(null);
+      startAudio(audioForQuestion(currentIndex));
       return;
     }
     const next = Math.min(questions.length - 1, currentIndex + 1);
     stopAudio();
     setCurrentIndex(next);
     const nextCategory = questions[next]?.category;
-    if (nextCategory && nextCategory !== question?.category) setThemeIntro(nextCategory);
+    if (nextCategory && nextCategory !== question?.category) {
+      setThemeIntro(nextCategory);
+    } else {
+      startAudio(audioForQuestion(next));
+    }
   }
 
   function goPrevious() {
@@ -173,10 +190,6 @@ export function KnmExam({
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume;
   }, [volume]);
-
-  useEffect(() => {
-    stopAudio();
-  }, [question?.id]);
 
   useEffect(() => () => {
     audioRef.current?.pause();
