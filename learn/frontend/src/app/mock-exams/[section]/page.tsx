@@ -107,9 +107,13 @@ export default async function MockExamSectionPage({ params }: { params: { sectio
                       <Lock size={11} />
                       Premium
                     </span>
-                  ) : (
+                  ) : exam.is_free_preview ? (
                     <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
                       Free
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                      Paid
                     </span>
                   )}
                 </div>

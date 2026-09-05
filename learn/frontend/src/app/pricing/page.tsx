@@ -76,7 +76,7 @@ export default async function PricingPage({ searchParams }: { searchParams: { ch
     <div className="space-y-10">
       {searchParams.checkout === "pending" && (
         <div className="mx-auto max-w-2xl rounded-xl bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-700">
-          Thanks! We&apos;re confirming your payment — access unlocks within a minute of it clearing.
+          Thanks! We&apos;re confirming your payment. A2 practice exams are available now.
         </div>
       )}
 
