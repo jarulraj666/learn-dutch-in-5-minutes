@@ -43,11 +43,11 @@ export default function MockExamsPage() {
     return acc;
   }, {});
 
-  const runStage = async (stage: string, sec?: string, examNumber?: number) => {
+  const runStage = async (stage: string, sec?: string, examNumber?: number, publish = false) => {
     try {
       const run = await apiFetch<PipelineRun>("/api/mock-exams/run", {
         method: "POST",
-        body: JSON.stringify({ stage, section: sec, exam_number: examNumber }),
+        body: JSON.stringify({ stage, section: sec, exam_number: examNumber, publish }),
       });
       setPipelineRun(run);
       mutate();
@@ -169,6 +169,12 @@ export default function MockExamsPage() {
                   className="text-xs text-sky-400 hover:underline"
                 >
                   Export & publish
+                </button>
+                <button
+                  onClick={() => runStage("export", j.section, j.exam_number, true)}
+                  className="text-xs text-amber-400 hover:underline"
+                >
+                  Export & publish locally
                 </button>
               </td>
             </tr>

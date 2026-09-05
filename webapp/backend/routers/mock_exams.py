@@ -33,6 +33,7 @@ class RunRequest(BaseModel):
     section: str | None = None
     exam_number: int | None = None
     stage: str  # content | media | question_audio | export | production_sync
+    publish: bool = False
 
 
 @router.post("/mock-exams/run")
@@ -45,6 +46,8 @@ async def run_mock_exam_job(req: RunRequest):
         cmd += ["--section", req.section]
     if req.exam_number:
         cmd += ["--exam-number", str(req.exam_number)]
+    if req.stage == "export" and req.publish:
+        cmd.append("--publish")
 
     job = await pipeline_runner.start_custom_job(cmd)
     return {"job_id": job.job_id, "started_at": job.started_at, "args": job.args}
