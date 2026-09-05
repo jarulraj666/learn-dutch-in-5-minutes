@@ -11,6 +11,7 @@ import hmac
 import json
 import time
 from typing import Any
+from urllib.parse import urlencode
 
 import httpx
 
@@ -27,7 +28,10 @@ class StripeError(RuntimeError):
 def _headers() -> dict[str, str]:
     if not settings.STRIPE_SECRET_KEY:
         raise StripeError("STRIPE_SECRET_KEY is not configured")
-    return {"Authorization": f"Bearer {settings.STRIPE_SECRET_KEY}"}
+    return {
+        "Authorization": f"Bearer {settings.STRIPE_SECRET_KEY}",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
 
 
 def _flatten(data: dict[str, Any], parent: str = "") -> list[tuple[str, Any]]:
@@ -74,7 +78,10 @@ async def create_checkout_session(
         ],
     }
     async with httpx.AsyncClient(timeout=15) as client:
-        resp = await client.post(f"{_BASE_URL}/checkout/sessions", data=_flatten(payload), headers=_headers())
+        # httpx 0.28's AsyncClient mishandles data= as a list of tuples (needed for
+        # repeated keys like payment_method_types[]), so encode the body ourselves.
+        body = urlencode(_flatten(payload), doseq=False).encode()
+        resp = await client.post(f"{_BASE_URL}/checkout/sessions", content=body, headers=_headers())
     if resp.status_code >= 400:
         raise StripeError(f"Stripe create_checkout_session failed ({resp.status_code}): {resp.text}")
     return resp.json()
