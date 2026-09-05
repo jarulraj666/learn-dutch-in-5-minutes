@@ -1710,6 +1710,19 @@ export function TakeExamClient({ examId, viewAttemptNo }: { examId: string; view
     [exam],
   );
 
+  if (loadError?.includes("PREMIUM_REQUIRED")) {
+    return (
+      <div className="card mx-auto max-w-md p-8 text-center">
+        <h2 className="text-xl font-semibold">This exam is Premium</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Unlock this section or the complete package to continue this exam.
+        </p>
+        <Link href="/pricing" className="btn-primary mt-6 inline-block px-5 py-2 text-sm">
+          See plans
+        </Link>
+      </div>
+    );
+  }
   if (loadError) return <p className="text-red-600">{loadError}</p>;
   if (!exam || (viewAttemptNo && !result)) return <p className="text-slate-500">Loading…</p>;
   if (result) return <ResultView exam={exam} result={result} />;

@@ -5,10 +5,11 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import clsx from "clsx";
-import { BookOpen, LayoutDashboard, Layers, Mail, MessageSquareText, Menu, ShieldCheck, User, X } from "lucide-react";
+import { BookOpen, ClipboardCheck, LayoutDashboard, Layers, Mail, MessageSquareText, Menu, ShieldCheck, User, X } from "lucide-react";
 
 const NAV = [
   { href: "/courses", label: "Courses", icon: BookOpen },
+  { href: "/mock-exams/reading", label: "Inburgering Exams", icon: ClipboardCheck, match: "/mock-exams" },
   { href: "/dashboard", label: "My learning", icon: LayoutDashboard },
   { href: "/flashcards", label: "Flashcards", icon: Layers },
   { href: "/feedback", label: "Feedback", icon: MessageSquareText },
@@ -47,13 +48,13 @@ export function SiteHeader({ user }: Props) {
         </Link>
 
         <nav className="ml-auto hidden items-center gap-1 md:flex">
-          {navItems.map(({ href, label, icon: Icon }) => (
+          {navItems.map(({ href, label, icon: Icon, match }) => (
             <Link
               key={href}
               href={href}
               className={clsx(
                 "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition",
-                pathname.startsWith(href)
+                pathname.startsWith(match ?? href)
                   ? "bg-brand-50 text-brand-700"
                   : "text-slate-600 hover:bg-slate-100",
               )}

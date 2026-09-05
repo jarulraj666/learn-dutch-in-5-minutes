@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { MockExamSummary } from "@/lib/types";
+import { PremiumBadge } from "@/components/PremiumBadge";
 
 const LEVEL_TABS = ["A2", "B1", "B2", "C1", "C2"] as const;
 
@@ -40,10 +41,11 @@ export function MockExamsSection({ mockExams }: { mockExams: MockExamSummary[] }
   return (
     <section>
       <div className="flex items-center justify-center gap-2">
-        <h2 className="text-center text-3xl font-bold">Mock Exams</h2>
+        <h2 className="text-center text-3xl font-bold">Inburgering Exams</h2>
       </div>
       <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-600">
-        Full-length practice exams matching the real Staatsexamen NT2 Programma I.
+        Full-length practice exams for your inburgering (civic integration) requirement, matching the real
+        Staatsexamen NT2 Programma I.
       </p>
 
       <div className="mx-auto mt-6 flex max-w-5xl justify-center gap-2">
@@ -73,11 +75,21 @@ export function MockExamsSection({ mockExams }: { mockExams: MockExamSummary[] }
         <div className="mx-auto mt-8 grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {SECTIONS.map(({ key, label }) => {
             const exams = mockExams.filter((e) => e.section === key);
+            const freeCount = exams.filter((e) => e.is_free_preview).length;
+            const premiumCount = exams.length - freeCount;
             const cardBody = (
               <>
-                <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold uppercase text-brand-700">
-                  {key}
-                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold uppercase text-brand-700">
+                    {key}
+                  </span>
+                  {freeCount > 0 && (
+                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                      Free preview
+                    </span>
+                  )}
+                  {premiumCount > 0 && <PremiumBadge label={`+${premiumCount} more`} linkToPricing={false} />}
+                </div>
                 <h4 className="mt-3 font-semibold">{label}</h4>
                 {exams.length > 0 ? (
                   <p className="mt-2 text-sm text-slate-600">

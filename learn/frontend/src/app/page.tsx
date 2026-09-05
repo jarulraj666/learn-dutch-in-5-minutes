@@ -1,17 +1,18 @@
 import Link from "next/link";
-import Image from "next/image";
 import {
   BookOpenCheck,
   Clock,
   GraduationCap,
   Languages,
   ListChecks,
+  PenSquare,
+  PlayCircle,
   Subtitles,
 } from "lucide-react";
 import { api } from "@/lib/api";
-import { learnerSession } from "@/lib/learner-session";
 import { TestimonialCarousel } from "@/components/TestimonialCarousel";
 import { MockExamsSection } from "@/components/MockExamsSection";
+import { HeroCarousel, type HeroSlide } from "@/components/HeroCarousel";
 import type { CourseSummary, FeedbackPublic, MockExamSummary, PublicStats } from "@/lib/types";
 
 const FEATURES = [
@@ -67,8 +68,6 @@ export default async function HomePage() {
   let courses: CourseSummary[] = [];
   let stats: PublicStats = { active_learners: 350 };
   let testimonials: FeedbackPublic[] = [];
-  const session = await learnerSession();
-  const isAdmin = session?.user?.is_admin ?? false;
   let mockExams: MockExamSummary[] = [];
   try {
     courses = await api<CourseSummary[]>("/api/courses", { authenticated: false });
@@ -76,58 +75,91 @@ export default async function HomePage() {
     // The landing page must render even when the API is unavailable.
   }
   try {
-    [stats, testimonials] = await Promise.all([
+    [stats, testimonials, mockExams] = await Promise.all([
       api<PublicStats>("/api/public/stats", { authenticated: false }),
       api<FeedbackPublic[]>("/api/feedback/public", { authenticated: false }),
+      api<MockExamSummary[]>("/api/mock-exams", { authenticated: false }),
     ]);
   } catch {
     // Fall back to defaults above.
   }
-  if (isAdmin) {
-    try {
-      mockExams = await api<MockExamSummary[]>("/api/mock-exams");
-    } catch {
-      // Admin-only preview section; hide it rather than break the page.
-    }
-  }
   const published = courses.filter((c) => c.status === "published");
   const lessonCount = published.reduce((n, c) => n + c.lesson_count, 0);
   const unitCount = published.reduce((n, c) => n + c.module_count, 0);
+  const examCount = mockExams.length;
+
+  const heroSlides: HeroSlide[] = [
+    {
+      id: "exams",
+      eyebrow: "Inburgering exam prep · A2",
+      title: "Pass Your Inburgering Exam",
+      body: `${examCount > 0 ? `${examCount} full-length` : "Full-length"} A2-level reading, listening, writing, speaking and KNM exams for your inburgering (civic integration) requirement — practised under the real time limits. Your first exam per section is free.`,
+      primaryCta: { label: "Try a free inburgering exam", href: "/mock-exams/reading" },
+      className: "bg-gradient-to-br from-brand-700 to-brand-900",
+    },
+    {
+      id: "courses",
+      showLogo: true,
+      eyebrow: "100% Free",
+      title: "Learn Dutch in 5 Minutes a Day",
+      body: "A complete, free Dutch course built from short video lessons. Grammar starts in the very first unit, so you build real sentences from day one.",
+      primaryCta: { label: "Browse video courses", href: "/courses" },
+      secondaryCta: { label: "My learning", href: "/dashboard" },
+      className: "bg-brand",
+    },
+    {
+      id: "premium",
+      eyebrow: "Premium — coming soon",
+      title: "Unlock Every Inburgering Exam",
+      body: "Go Premium for unlimited inburgering practice exams across every section and level, plus AI feedback on your writing and speaking answers.",
+      primaryCta: { label: "See Premium plans", href: "/pricing" },
+      className: "bg-gradient-to-br from-amber-500 to-orange-600",
+    },
+  ];
 
   return (
     <div className="space-y-20">
-      <section className="rounded-3xl bg-brand px-6 py-16 text-center text-white sm:px-12">
-        <Image
-          src="/logo.png"
-          alt=""
-          width={112}
-          height={112}
-          priority
-          className="mx-auto mb-6 rounded-full shadow-lg ring-4 ring-white/30"
-        />
-        <h1 className="mx-auto max-w-3xl text-4xl font-bold leading-tight sm:text-5xl">
-          Learn Dutch in 5 Minutes a Day
-        </h1>
-        <p className="mx-auto mt-4 max-w-2xl text-lg opacity-90">
-          A complete, free Dutch course built from short video lessons. Grammar starts in the
-          very first unit, so you build real sentences from day one — with vocabulary,
-          transcripts and quizzes for every episode.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-4">
-          <Link
-            href="/courses"
-            className="rounded-full bg-white px-8 py-3 font-semibold text-brand-700 transition hover:-translate-y-0.5"
-          >
-            Start learning
-          </Link>
-          <Link
-            href="/dashboard"
-            className="rounded-full border border-white/60 px-8 py-3 font-semibold transition hover:bg-white/10"
-          >
-            My learning
-          </Link>
+      <HeroCarousel slides={heroSlides} />
+
+      <section>
+        <h2 className="text-center text-3xl font-bold">Everything you need, in two places</h2>
+        <div className="mx-auto mt-10 grid max-w-4xl gap-6 sm:grid-cols-2">
+          <article className="card p-8">
+            <span className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-700">
+              <PlayCircle size={22} />
+            </span>
+            <h3 className="mt-4 text-xl font-semibold">Video Courses</h3>
+            <p className="mt-2 text-sm text-slate-600">
+              {lessonCount > 0 ? `${lessonCount}+ five-minute lessons` : "Five-minute lessons"} from A1 to B2, with
+              vocabulary, transcripts and quizzes built in.
+            </p>
+            <span className="mt-4 inline-block rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+              Free
+            </span>
+            <Link href="/courses" className="btn-primary mt-4 block w-fit px-5 py-2 text-sm">
+              Browse courses
+            </Link>
+          </article>
+          <article className="card p-8">
+            <span className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-700">
+              <PenSquare size={22} />
+            </span>
+            <h3 className="mt-4 text-xl font-semibold">Inburgering Exams</h3>
+            <p className="mt-2 text-sm text-slate-600">
+              {examCount > 0 ? `${examCount} full-length exams` : "Full-length exams"} covering reading, listening,
+              writing, speaking and KNM — matching the real inburgering (Staatsexamen NT2) exam.
+            </p>
+            <span className="mt-4 inline-block rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+              Free preview, then Premium
+            </span>
+            <Link href="/mock-exams/reading" className="btn-primary mt-4 block w-fit px-5 py-2 text-sm">
+              Start an exam
+            </Link>
+          </article>
         </div>
       </section>
+
+      <MockExamsSection mockExams={mockExams} />
 
       <section>
         <h2 className="text-center text-3xl font-bold">Find Your Level, Start Today</h2>
@@ -163,8 +195,6 @@ export default async function HomePage() {
           })}
         </div>
       </section>
-
-      {isAdmin && <MockExamsSection mockExams={mockExams} />}
 
       <section>
         <h2 className="text-center text-3xl font-bold">Everything in one place</h2>

@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import db
 import settings
-from routers import admin, auth, catalog, certificates, feedback, flashcards, health, me, mock_exams, progress, quiz
+from routers import admin, auth, billing, catalog, certificates, feedback, flashcards, health, me, mock_exams, progress, quiz
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -41,5 +41,5 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-for module in (health, auth, catalog, progress, quiz, flashcards, certificates, me, feedback, admin, mock_exams):
+for module in (health, auth, catalog, progress, quiz, flashcards, certificates, me, feedback, admin, mock_exams, billing):
     app.include_router(module.router, prefix="/api")

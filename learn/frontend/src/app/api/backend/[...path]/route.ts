@@ -24,6 +24,8 @@ const ALLOWED: RegExp[] = [
   /^mock-exams\/media\/image$/,
   /^mock-exams\/media\/audio$/,
   /^mock-exams\/media\/video$/,
+  /^billing\/checkout$/,
+  /^billing\/me$/,
 ];
 
 function resolve(segments: string[]): string | null {

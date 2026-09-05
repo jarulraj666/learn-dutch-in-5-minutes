@@ -12,6 +12,7 @@ export interface MockExamSummary {
   pass_threshold: number | null;
   max_score: number | null;
   status: "draft" | "published";
+  is_free_preview: boolean;
 }
 
 export interface MockExamPassagePublic {
@@ -305,4 +306,16 @@ export interface AdminFeedback {
   status: "pending" | "published" | "rejected";
   created_at: string;
   published_at: string | null;
+}
+
+export type MockExamSection = "reading" | "listening" | "writing" | "speaking" | "knm";
+
+export interface CheckoutResponse {
+  checkout_url: string;
+}
+
+export interface Entitlement {
+  product: "section" | "full";
+  section: MockExamSection | null;
+  expires_at: string;
 }

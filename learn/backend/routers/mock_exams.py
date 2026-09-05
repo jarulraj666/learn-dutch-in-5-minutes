@@ -11,8 +11,9 @@ from psycopg.types.json import Jsonb
 
 import db
 import settings
-from auth import AdminUser, CurrentUser
+from auth import AdminUser, CurrentUser, OptionalUser
 from services import speaking_recordings
+from services.entitlements import has_section_access
 from models import (
     MockExamAttemptResult,
     MockExamAttemptSummary,
@@ -216,10 +217,10 @@ async def fail_speaking_job(job_id: str, authorization: str | None = Header(defa
 
 
 @router.get("/mock-exams", response_model=list[MockExamSummary])
-async def list_mock_exams(_: CurrentUser, section: str | None = None) -> list[MockExamSummary]:
+async def list_mock_exams(_: OptionalUser, section: str | None = None) -> list[MockExamSummary]:
     query = (
         "SELECT id, section, level, exam_number, title, time_limit_minutes, total_questions, "
-        "parts_count, pass_threshold, max_score, status FROM mock_exams"
+        "parts_count, pass_threshold, max_score, status, is_free_preview FROM mock_exams"
     )
     params: tuple = ()
     if section:
@@ -235,7 +236,7 @@ async def list_mock_exams(_: CurrentUser, section: str | None = None) -> list[Mo
 async def get_mock_exam(exam_id: str, _: AdminUser) -> MockExamDetailAdmin:
     exam = await db.fetch_one(
         "SELECT id, section, level, exam_number, title, instructions, time_limit_minutes, "
-        "total_questions, parts_count, pass_threshold, max_score, status "
+        "total_questions, parts_count, pass_threshold, max_score, status, is_free_preview "
         "FROM mock_exams WHERE id = %s",
         (exam_id,),
     )
@@ -264,16 +265,18 @@ async def get_mock_exam(exam_id: str, _: AdminUser) -> MockExamDetailAdmin:
 
 
 @router.get("/mock-exams/{exam_id}/take", response_model=MockExamTakeDetail)
-async def take_mock_exam(exam_id: str, _: CurrentUser) -> MockExamTakeDetail:
+async def take_mock_exam(exam_id: str, user: CurrentUser) -> MockExamTakeDetail:
     """Learner-facing exam view: never includes answers, explanations or rubrics."""
     exam = await db.fetch_one(
         "SELECT id, section, level, exam_number, title, instructions, time_limit_minutes, "
-        "total_questions, parts_count, pass_threshold, max_score, status "
+        "total_questions, parts_count, pass_threshold, max_score, status, is_free_preview "
         "FROM mock_exams WHERE id = %s",
         (exam_id,),
     )
     if not exam:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Mock exam not found")
+    if not exam["is_free_preview"] and not await has_section_access(user["id"], exam["section"]):
+        raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, "PREMIUM_REQUIRED")
 
     passages = await db.fetch_all(
         "SELECT id, order_index, part_number, passage_type, title, display_prompt_nl, content_nl, content_en, media_urls "
@@ -508,12 +511,14 @@ async def submit_mock_exam(exam_id: str, payload: MockExamSubmission, user: Curr
     """Grade server-side (so the answer key never reaches the browser before submission)
     and persist the attempt so the learner can review it later."""
     exam = await db.fetch_one(
-        "SELECT pass_threshold, max_score FROM mock_exams WHERE id = %s", (exam_id,)
+        "SELECT section, pass_threshold, max_score, is_free_preview FROM mock_exams WHERE id = %s", (exam_id,)
     )
     if not exam:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Mock exam not found")
+    if not exam["is_free_preview"] and not await has_section_access(user["id"], exam["section"]):
+        raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, "PREMIUM_REQUIRED")
 
-    exam_section = (await db.fetch_one("SELECT section FROM mock_exams WHERE id = %s", (exam_id,)))["section"]
+    exam_section = exam["section"]
     if exam_section == "writing":
         questions = await db.fetch_all(
             "SELECT q.id, q.question_type, q.question_text, q.grading_rubric, q.model_answer, q.max_score, "

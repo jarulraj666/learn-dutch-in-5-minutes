@@ -49,3 +49,15 @@ R2_ENDPOINT_URL = os.environ.get("R2_ENDPOINT_URL", "")
 R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID", "")
 R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY", "")
 R2_BUCKET = os.environ.get("R2_BUCKET", "")
+
+# Mollie (payments). Test API keys start with "test_", live keys with "live_".
+MOLLIE_API_KEY = os.environ.get("MOLLIE_API_KEY", "")
+# Must be a publicly reachable URL so Mollie's servers can call the webhook.
+API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8001").rstrip("/")
+
+# Stripe (payments). Test secret keys start with "sk_test_", live with "sk_live_".
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+
+# Which provider /billing/checkout uses: "mollie" or "stripe".
+PAYMENT_PROVIDER = os.environ.get("PAYMENT_PROVIDER", "stripe")

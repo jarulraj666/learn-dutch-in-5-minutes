@@ -266,6 +266,7 @@ class MockExamSummary(BaseModel):
     pass_threshold: int | None
     max_score: int | None
     status: str
+    is_free_preview: bool
 
 
 class MockExamPassageAdmin(BaseModel):
@@ -399,3 +400,18 @@ class MockExamAttemptSummary(BaseModel):
     label: str
     status: str = "completed"
     created_at: datetime
+
+
+class CheckoutRequest(BaseModel):
+    product: str  # 'section' | 'full'
+    section: str | None = None  # required when product == 'section'
+
+
+class CheckoutResponse(BaseModel):
+    checkout_url: str
+
+
+class Entitlement(BaseModel):
+    product: str
+    section: str | None
+    expires_at: datetime

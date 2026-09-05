@@ -139,9 +139,14 @@ CREATE TABLE IF NOT EXISTS mock_exams (
     pass_threshold     INTEGER,                    -- score needed to pass, e.g. 18; NULL where not published (speaking)
     max_score          INTEGER,                    -- e.g. 25, 37, 40; NULL where not published (speaking)
     status             TEXT        NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+    is_free_preview    BOOLEAN     NOT NULL DEFAULT FALSE,  -- unlocked for non-subscribers
     created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (section, exam_number)
 );
+
+ALTER TABLE mock_exams ADD COLUMN IF NOT EXISTS is_free_preview BOOLEAN NOT NULL DEFAULT FALSE;
+-- Backfill: the first exam in each section is the free preview until subscriptions launch.
+UPDATE mock_exams SET is_free_preview = TRUE WHERE exam_number = 1 AND is_free_preview = FALSE;
 
 CREATE TABLE IF NOT EXISTS mock_exam_passages (
     id                  TEXT PRIMARY KEY,
@@ -324,6 +329,41 @@ CREATE TABLE IF NOT EXISTS speaking_transcription_jobs (
 
 CREATE INDEX IF NOT EXISTS idx_speaking_transcription_jobs_pending
     ON speaking_transcription_jobs(status, created_at);
+
+-- One-time payments (Mollie or Stripe) granting timed access to premium mock exams.
+-- 'section' unlocks a single exam section, 'full' unlocks every section.
+CREATE TABLE IF NOT EXISTS premium_purchases (
+    id                  UUID        PRIMARY KEY,
+    user_id             UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    product             TEXT        NOT NULL CHECK (product IN ('section', 'full')),
+    section             TEXT        CHECK (section IN ('reading', 'listening', 'writing', 'speaking', 'knm')),
+    amount_cents        INTEGER     NOT NULL,
+    currency            TEXT        NOT NULL DEFAULT 'EUR',
+    provider            TEXT        NOT NULL DEFAULT 'mollie' CHECK (provider IN ('mollie', 'stripe')),
+    provider_payment_id TEXT        NOT NULL,
+    status              TEXT        NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'paid', 'failed', 'expired', 'canceled')),
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    paid_at             TIMESTAMPTZ,
+    expires_at          TIMESTAMPTZ,
+    UNIQUE (provider, provider_payment_id)
+);
+
+-- Pre-existing dev databases created this table with a Mollie-only column name; migrate in place.
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'premium_purchases' AND column_name = 'mollie_payment_id'
+    ) THEN
+        ALTER TABLE premium_purchases RENAME COLUMN mollie_payment_id TO provider_payment_id;
+        ALTER TABLE premium_purchases ADD COLUMN IF NOT EXISTS provider TEXT NOT NULL DEFAULT 'mollie';
+        ALTER TABLE premium_purchases DROP CONSTRAINT IF EXISTS premium_purchases_mollie_payment_id_key;
+        ALTER TABLE premium_purchases ADD CONSTRAINT premium_purchases_provider_payment_id_key UNIQUE (provider, provider_payment_id);
+    END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_premium_purchases_user ON premium_purchases(user_id, status, expires_at);
+
 
 -- SM-2 spaced repetition over lesson_vocabulary.
 CREATE TABLE IF NOT EXISTS flashcard_reviews (
