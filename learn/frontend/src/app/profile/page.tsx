@@ -42,7 +42,9 @@ export default async function ProfilePage() {
             {entitlements.map((entitlement) => (
               <div key={`${entitlement.product}-${entitlement.section ?? "all"}`} className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 px-4 py-3">
                 <span className="font-medium">
-                  {entitlement.product === "full" ? "Complete package" : `${entitlement.section} section`}
+                  {entitlement.product === "full"
+                    ? "Complete A2 Inburgering practice exam"
+                    : `${entitlement.section} section`}
                 </span>
                 <span className="text-slate-600">
                   {formatDate(entitlement.started_at)} – {formatDate(entitlement.expires_at)}
