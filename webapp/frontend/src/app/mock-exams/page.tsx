@@ -165,10 +165,10 @@ export default function MockExamsPage() {
                   Media
                 </button>
                 <button
-                  onClick={() => runStage("export", j.section, j.exam_number)}
+                  onClick={() => runStage("production_sync", j.section, j.exam_number)}
                   className="text-xs text-sky-400 hover:underline"
                 >
-                  Export
+                  Export & publish
                 </button>
               </td>
             </tr>

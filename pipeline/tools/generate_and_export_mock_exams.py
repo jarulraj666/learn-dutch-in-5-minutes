@@ -171,7 +171,7 @@ def run_production_sync(section: str | None, exam_number: int | None, dry_run: b
             uploaded = 0 if dry_run else upload_mock_exam_media(artifact)
             print(f"{exam_id}: {uploaded} media file(s) uploaded; syncing to production")
             if not dry_run:
-                push_mock_exam_to_postgres(artifact, database_url)
+                push_mock_exam_to_postgres(artifact, database_url, status="published")
                 save_mock_exam_job(exam_id, sec, num, artifact["level"], artifact, status="exported")
                 mark_mock_exam_job_exported(exam_id)
         except ObjectStorageError as exc:

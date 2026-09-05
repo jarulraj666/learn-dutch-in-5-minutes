@@ -149,7 +149,11 @@ def upsert_mock_exam(cur, artifact: dict[str, Any], status: str = "draft") -> No
             title = EXCLUDED.title, instructions = EXCLUDED.instructions,
             time_limit_minutes = EXCLUDED.time_limit_minutes,
             total_questions = EXCLUDED.total_questions, parts_count = EXCLUDED.parts_count,
-            pass_threshold = EXCLUDED.pass_threshold, max_score = EXCLUDED.max_score
+            pass_threshold = EXCLUDED.pass_threshold, max_score = EXCLUDED.max_score,
+            status = CASE
+                WHEN mock_exams.status = 'published' THEN mock_exams.status
+                ELSE EXCLUDED.status
+            END
         """,
         (exam_id, artifact["section"], artifact["level"], artifact["exam_number"],
          artifact["title"], artifact["instructions"], artifact["time_limit_minutes"],
