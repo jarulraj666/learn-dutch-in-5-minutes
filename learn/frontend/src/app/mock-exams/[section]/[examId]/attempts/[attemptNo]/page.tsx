@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { learnerSession } from "@/lib/learner-session";
-import { TakeExamClient } from "@/components/TakeExamClient";
+import { ExamPageClient } from "@/components/ExamPageClient";
 
 export default async function MockExamAttemptPage({
   params,
@@ -10,5 +10,5 @@ export default async function MockExamAttemptPage({
   const session = await learnerSession();
   if (!session?.user) redirect("/signin");
 
-  return <TakeExamClient examId={params.examId} viewAttemptNo={Number(params.attemptNo)} />;
+  return <ExamPageClient examId={params.examId} viewAttemptNo={Number(params.attemptNo)} />;
 }

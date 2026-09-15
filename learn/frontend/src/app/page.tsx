@@ -153,7 +153,7 @@ export default async function HomePage() {
             <span className="mt-4 inline-block rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
               Free preview, then one-time unlock
             </span>
-            <Link href="/mock-exams/reading" className="btn-primary mt-4 block w-fit px-5 py-2 text-sm">
+            <Link href="/#mock-exams" className="btn-primary mt-4 block w-fit px-5 py-2 text-sm">
               Start an exam
             </Link>
           </article>

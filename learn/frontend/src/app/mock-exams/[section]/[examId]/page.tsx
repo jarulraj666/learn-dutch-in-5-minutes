@@ -1,5 +1,5 @@
-import { TakeExamClient } from "@/components/TakeExamClient";
+import { ExamPageClient } from "@/components/ExamPageClient";
 
 export default async function TakeMockExamPage({ params }: { params: { examId: string } }) {
-  return <TakeExamClient examId={params.examId} />;
+  return <ExamPageClient examId={params.examId} />;
 }
