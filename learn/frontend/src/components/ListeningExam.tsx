@@ -270,7 +270,7 @@ export function ListeningExam({
   if (!question) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex h-screen w-screen flex-col overflow-hidden bg-[#f1f2f4]">
+    <div className="relative z-50 flex min-h-[100dvh] w-full flex-col overflow-hidden bg-[#f1f2f4]">
       <ExamHeader
         title={exam.title}
         backHref={`/mock-exams/${exam.section}`}
