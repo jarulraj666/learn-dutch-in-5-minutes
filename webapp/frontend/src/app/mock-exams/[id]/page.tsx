@@ -39,6 +39,7 @@ type Question = {
   option_media_urls?: (string | null)[] | null;
   audio_script?: string | null;
   question_audio_url?: string | null;
+  question_options_audio_url?: string | null;
 };
 
 type MockExamArtifact = {
@@ -478,13 +479,15 @@ function MediaTab({
                       >
                         {openPrompt === `${p.id}-audio-script` ? "Hide audio script" : "Show audio script"}
                       </button>
-                      <button
-                        onClick={() => generatePassageAudio(p.id)}
-                        disabled={uploading === `${p.id}-audio-generate`}
-                        className="text-xs text-emerald-400 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {uploading === `${p.id}-audio-generate` ? "Generating audio..." : "Generate audio"}
-                      </button>
+                      {(["audio", "one_picture", "two_picture", "three_picture"] as const).includes(p.passage_type as "audio" | "one_picture" | "two_picture" | "three_picture") && (
+                        <button
+                          onClick={() => generatePassageAudio(p.id)}
+                          disabled={uploading === `${p.id}-audio-generate`}
+                          className="text-xs text-emerald-400 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {uploading === `${p.id}-audio-generate` ? "Generating passage audio..." : "Generate passage audio"}
+                        </button>
+                      )}
                       <label className="inline-block cursor-pointer text-xs text-gray-400">
                         {uploading === `${p.id}-audio` ? "Uploading..." : "Upload audio"}
                         <input
@@ -573,7 +576,9 @@ function MediaTab({
       ))}
 
       <QuestionAudioList
-        questions={spokenQuestions.filter((q) => !mediaOnly.some((p) => p.id === q.passage_id))}
+        questions={artifact.section === "listening"
+          ? spokenQuestions
+          : spokenQuestions.filter((q) => !mediaOnly.some((p) => p.id === q.passage_id))}
         openPrompt={openPrompt}
         uploading={uploading}
         onToggleScript={(key) => setOpenPrompt(openPrompt === key ? null : key)}
@@ -603,7 +608,7 @@ function QuestionAudioList({
   return (
     <div className="space-y-2 border-t border-gray-700/60 pt-2">
       <p className="text-xs uppercase tracking-wide text-gray-400">
-        Question audio ({questions.filter((q) => q.question_audio_url).length}/{questions.length} recorded)
+        Question audio ({questions.filter((q) => q.question_options_audio_url || q.question_audio_url).length}/{questions.length} recorded)
       </p>
       {questions.map((q) => {
         const scriptKey = `${q.id}-audio-script`;
@@ -611,11 +616,11 @@ function QuestionAudioList({
         return (
           <div key={q.id} className="rounded border border-gray-700/60 p-2 space-y-2">
             <p className="text-xs text-gray-300">{q.order_index}. {q.question_text}</p>
-            {q.question_audio_url ? (
+            {(q.question_options_audio_url || q.question_audio_url) ? (
               <audio
                 controls
                 className="h-8 w-full max-w-sm"
-                src={mediaUrl("audio", q.question_audio_url)}
+                src={mediaUrl("audio", q.question_options_audio_url || q.question_audio_url || "")}
               />
             ) : (
               <span className="block text-xs text-gray-500">No audio yet</span>
@@ -629,7 +634,7 @@ function QuestionAudioList({
                 disabled={uploading === `${q.id}-audio-generate`}
                 className="text-xs text-emerald-400 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {uploading === `${q.id}-audio-generate` ? "Generating audio..." : "Generate audio"}
+                {uploading === `${q.id}-audio-generate` ? "Generating question audio..." : "Generate question + options audio"}
               </button>
               <label className="inline-block cursor-pointer text-xs text-gray-400">
                 {uploading === `${q.id}-audio` ? "Uploading..." : "Upload audio"}
@@ -652,9 +657,9 @@ function QuestionAudioList({
 }
 
 function questionAudioScript(question: Question): string {
-  if (question.audio_script?.trim()) return question.audio_script;
-  if (!question.options?.length) return question.question_text;
-  return [question.question_text, ...question.options].join("\n");
+  const lead = question.audio_script?.trim() || question.question_text;
+  const lines = [lead, ...(question.options ?? [])].filter((line) => line.trim());
+  return lines.map((line) => `Speaker1: ${line.trim()}`).join("\n");
 }
 
 function mockExamAudioScript(passage: Passage, question: Question | undefined): string {

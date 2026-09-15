@@ -105,6 +105,13 @@ GEMINI_KEY_ROTATOR = KeyRotator(GEMINI_API_KEYS, "gemini")
 GEMINI_IMAGE_KEY_ROTATOR = KeyRotator(GEMINI_IMAGE_CREATION_API_KEYS, "gemini_image")
 GEMINI_TTS_KEY_ROTATOR = KeyRotator(GEMINI_TTS_API_KEYS, "gemini_tts")
 
+# Per-key cap on Gemini TTS requests/minute. Each GEMINI_TTS_API_KEYS entry is
+# assumed to belong to its own separate Google Cloud project (independent quota),
+# so this throttles each key individually — not shared across the pool — mainly
+# to absorb same-key retries/rotator-wave reuse landing within one minute.
+# Set to 0 to disable (rely on per-key 60s use-cooldown only).
+GEMINI_TTS_MAX_RPM = int(os.getenv("GEMINI_TTS_MAX_RPM", "2"))
+
 # STT: WhisperX (medium model). Device is auto-detected (CUDA if available, else CPU).
 # Override compute type via WHISPERX_COMPUTE_TYPE (default: float16 on GPU, int8 on CPU).
 WHISPERX_MODEL = os.getenv("WHISPERX_MODEL", "medium")

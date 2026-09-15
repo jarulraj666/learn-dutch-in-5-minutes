@@ -10,7 +10,6 @@ import base64
 import hashlib
 import json
 import logging
-import random
 import re
 import threading
 import time
@@ -23,6 +22,8 @@ from google import genai
 from google.genai import types
 
 from pipeline import settings
+from pipeline.clients.key_rotator import AllKeysRateLimitedError
+from pipeline.clients.rate_limiter import get_rpm_limiter
 from pipeline.utils import iter_dialogue_turns
 
 LOGGER = logging.getLogger(__name__)
@@ -141,6 +142,7 @@ class GeminiTTSClient:
             api_key: Google GenAI API key.
         """
         self.client = genai.Client(api_key=api_key)
+        self._api_key = api_key
 
     def _normalize_speaker_genders(
         self,
@@ -248,8 +250,8 @@ class GeminiTTSClient:
         genders = self._normalize_speaker_genders(speaker_genders)
 
         same_gender = genders["Speaker1"] == genders["Speaker2"]
-        female_selected = random.sample(female_pool, 2) if same_gender and genders["Speaker1"] == "female" and len(female_pool) >= 2 else None
-        male_selected = random.sample(male_pool, 2) if same_gender and genders["Speaker1"] == "male" and len(male_pool) >= 2 else None
+        female_selected = female_pool[:2] if same_gender and genders["Speaker1"] == "female" and len(female_pool) >= 2 else None
+        male_selected = male_pool[:2] if same_gender and genders["Speaker1"] == "male" and len(male_pool) >= 2 else None
 
         def _voice_for(speaker_id: str) -> str:
             gender = genders.get(speaker_id, "")
@@ -352,6 +354,7 @@ class GeminiTTSClient:
 
         for attempt in range(max_retries):
             try:
+                get_rpm_limiter("gemini_tts", self._api_key, settings.GEMINI_TTS_MAX_RPM).acquire()
                 response = self.client.models.generate_content(
                     model=self.PRIMARY_MODEL,
                     contents=prompt,
@@ -634,6 +637,15 @@ class GeminiTTSClient:
             dialogue: List of dialogue dictionaries with speaker and line items.
             wav_path: Path to the generated WAV audio file.
         
+
+    def _wait_for_available_keys(self) -> list[str]:
+        while True:
+            try:
+                return list(self._rotator.next_key_cycle())
+            except RuntimeError:
+                wait_seconds = self._rotator.seconds_until_available()
+                LOGGER.info("All Gemini TTS keys are cooling down; waiting %.1f seconds", wait_seconds)
+                time.sleep(max(0.1, wait_seconds))
         Returns:
             List of SpeakerTimestamp objects with timings based on actual audio.
         """
@@ -696,6 +708,8 @@ class RotatingGeminiTTSClient:
     """
 
     provider_name: str = "gemini"
+    KEY_USE_COOLDOWN_SECONDS = 60.0
+    MAX_KEY_WAIT_SECONDS = 120.0
 
     def __init__(self, rotator: "KeyRotator") -> None:  # noqa: F821
         self._rotator = rotator
@@ -718,9 +732,8 @@ class RotatingGeminiTTSClient:
             LOGGER.error("Empty dialogue provided.")
             return False
 
-        # Advance the preferred key for every audio request. Fallback keys retain
-        # their original order when the preferred key is rate-limited.
-        available_keys = list(self._rotator.next_key_cycle())
+        # Reserve keys in waves so a key is never reused before its cooldown ends.
+        available_keys = self._wait_for_available_keys()
 
         # Use first key for setup: chunking, speech config, prompt building.
         setup_client = GeminiTTSClient(available_keys[0])
@@ -757,16 +770,15 @@ class RotatingGeminiTTSClient:
             total, len(available_keys), GeminiTTSClient.PRIMARY_MODEL,
         )
 
-        # Build per-chunk tasks: assign keys round-robin
-        chunk_tasks: list[tuple[int, list, str, Path, str]] = []
+        # Build chunk metadata first. Keys are assigned per wave below.
+        chunk_tasks: list[tuple[int, list, str, Path]] = []
         for idx, chunk in enumerate(dialogue_chunks, start=1):
             prompt = setup_client._load_prompt(
                 chunk, level=level, category=category,
                 speaker_genders=speaker_genders, speaker_roles=speaker_roles,
             )
             chunk_file = target_file.with_name(f"{target_file.stem}_chunk_{idx}.wav")
-            api_key = available_keys[(idx - 1) % len(available_keys)]
-            chunk_tasks.append((idx, chunk, prompt, chunk_file, api_key))
+            chunk_tasks.append((idx, chunk, prompt, chunk_file))
 
         pcm_results: dict[int, bytes] = {}
         _mark_lock = threading.Lock()
@@ -778,49 +790,52 @@ class RotatingGeminiTTSClient:
             chunk_file: Path,
             primary_key: str,
         ) -> tuple[int, bytes]:
-            # Try primary (round-robin) key first, then remaining keys as fallback.
-            fallback_keys = [k for k in available_keys if k != primary_key]
-            keys_to_try = [primary_key] + fallback_keys
+            keys_to_try = [primary_key, *[key for key in available_keys if key != primary_key]]
             for api_key in keys_to_try:
                 client = GeminiTTSClient(api_key)
                 try:
                     pcm = client._process_one_chunk(
-                        chunk,
-                        idx,
-                        total,
-                        prompt,
-                        speech_config,
-                        chunk_file,
-                        cached_hash,
-                        dialogue_hash,
-                        speaker_genders=speaker_genders,
+                        chunk, idx, total, prompt, speech_config, chunk_file,
+                        cached_hash, dialogue_hash, speaker_genders=speaker_genders,
                     )
                     return idx, pcm
                 except RuntimeError as exc:
-                    if str(exc).startswith("RATE_LIMITED:"):
-                        with _mark_lock:
-                            self._rotator.mark_rate_limited(api_key, exc=exc)
-                        LOGGER.warning(
-                            "chunk %d: key rate-limited, trying next key (%d remaining)",
-                            idx, len(keys_to_try) - keys_to_try.index(api_key) - 1,
-                        )
-                        continue
-                    raise
-            raise RuntimeError(f"All {len(keys_to_try)} key(s) exhausted for chunk {idx}")
+                    if not str(exc).startswith("RATE_LIMITED:"):
+                        raise
+                    with _mark_lock:
+                        self._rotator.mark_rate_limited(api_key, exc=exc)
+                        if self._rotator.all_rate_limited():
+                            raise AllKeysRateLimitedError(
+                                f"All {len(self._rotator)} Gemini TTS keys are rate-limited (429); stopping."
+                            ) from exc
+                    LOGGER.warning(
+                        "chunk %d: TTS key rate-limited; trying next key (%d remaining)",
+                        idx,
+                        len(keys_to_try) - keys_to_try.index(api_key) - 1,
+                    )
+            raise RuntimeError(f"All {len(keys_to_try)} Gemini TTS keys exhausted for chunk {idx}")
 
-        with ThreadPoolExecutor(max_workers=total) as executor:
-            future_to_idx = {
-                executor.submit(_run_chunk, idx, chunk, prompt, chunk_file, api_key): idx
-                for idx, chunk, prompt, chunk_file, api_key in chunk_tasks
-            }
-            for future in as_completed(future_to_idx):
-                chunk_idx = future_to_idx[future]
-                try:
-                    result_idx, pcm = future.result()
-                    pcm_results[result_idx] = pcm
-                except Exception as exc:
-                    LOGGER.error("chunk %d processing failed: %s", chunk_idx, exc)
-                    raise
+        for wave_start in range(0, len(chunk_tasks), len(available_keys)):
+            wave = chunk_tasks[wave_start:wave_start + len(available_keys)]
+            if wave_start:
+                available_keys = self._wait_for_available_keys()
+            wave_keys = available_keys[:len(wave)]
+            for api_key in wave_keys:
+                self._rotator.mark_used(api_key, self.KEY_USE_COOLDOWN_SECONDS)
+
+            with ThreadPoolExecutor(max_workers=len(wave)) as executor:
+                future_to_idx = {
+                    executor.submit(_run_chunk, *task, api_key): task[0]
+                    for task, api_key in zip(wave, wave_keys)
+                }
+                for future in as_completed(future_to_idx):
+                    chunk_idx = future_to_idx[future]
+                    try:
+                        result_idx, pcm = future.result()
+                        pcm_results[result_idx] = pcm
+                    except Exception as exc:
+                        LOGGER.error("chunk %d processing failed: %s", chunk_idx, exc)
+                        raise
 
         # Concatenate chunks in order, trim silence, write final WAV
         full_pcm = b"".join(pcm_results[i] for i in range(1, total + 1))
@@ -831,6 +846,31 @@ class RotatingGeminiTTSClient:
         LOGGER.info("✓ Full dialogue audio generated & saved: %s", target_file)
         return True
 
+    def _wait_for_available_keys(self) -> list[str]:
+        waited_seconds = 0.0
+        while True:
+            try:
+                return list(self._rotator.next_key_cycle())
+            except RuntimeError as exc:
+                if self._rotator.all_rate_limited():
+                    raise AllKeysRateLimitedError(
+                        "Gemini TTS stopped: every key is rate-limited (429)."
+                    ) from exc
+                wait_seconds = self._rotator.seconds_until_available()
+                remaining = self.MAX_KEY_WAIT_SECONDS - waited_seconds
+                if remaining <= 0:
+                    raise RuntimeError(
+                        "Gemini TTS stopped: no API key became available within 2 minutes."
+                    ) from exc
+                sleep_seconds = min(max(0.1, wait_seconds), remaining)
+                LOGGER.info(
+                    "All Gemini TTS keys cooling down; waiting %.1f seconds (%.1f seconds remaining)",
+                    sleep_seconds,
+                    remaining,
+                )
+                time.sleep(sleep_seconds)
+                waited_seconds += sleep_seconds
+
     def generate_dialogue_audio_with_timestamps(
         self,
         dialogue: list[dict[str, str]],
@@ -840,7 +880,8 @@ class RotatingGeminiTTSClient:
         speaker_genders: dict[str, str] | None = None,
         speaker_roles: dict[str, str] | None = None,
     ) -> "tuple[bool, list]":
-        for api_key in self._rotator.available_keys():
+        for api_key in self._wait_for_available_keys():
+            self._rotator.mark_used(api_key, self.KEY_USE_COOLDOWN_SECONDS)
             client = GeminiTTSClient(api_key)
             try:
                 return client.generate_dialogue_audio_with_timestamps(
@@ -855,6 +896,10 @@ class RotatingGeminiTTSClient:
                 if str(exc).startswith("RATE_LIMITED:"):
                     LOGGER.warning("TTS key rate-limited, rotating to next key")
                     self._rotator.mark_rate_limited(api_key, exc=exc)
+                    if self._rotator.all_rate_limited():
+                        raise AllKeysRateLimitedError(
+                            "All Gemini TTS keys are rate-limited (429); stopping."
+                        ) from exc
                     continue
                 raise
         raise RuntimeError("No TTS keys available")

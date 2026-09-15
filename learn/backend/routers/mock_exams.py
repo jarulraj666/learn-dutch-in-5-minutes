@@ -13,7 +13,7 @@ from psycopg.types.json import Jsonb
 
 import db
 import settings
-from auth import AdminUser, CurrentUser, OptionalUser
+from auth import AdminUser, CurrentUser, OptionalUser, is_admin
 from services import speaking_recordings
 from services.entitlements import has_section_access
 from models import (
@@ -298,6 +298,8 @@ async def _require_exam_access(exam: dict, user: dict | None) -> None:
         return
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "LOGIN_REQUIRED")
+    if is_admin(user):
+        return
     if not exam["is_free_preview"] and not await has_section_access(user["id"], exam["section"]):
         raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, "PREMIUM_REQUIRED")
 

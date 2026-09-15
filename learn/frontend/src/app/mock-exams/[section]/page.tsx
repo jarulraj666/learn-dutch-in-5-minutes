@@ -17,6 +17,7 @@ const SECTION_LABELS: Record<string, string> = {
 export default async function MockExamSectionPage({ params }: { params: { section: string } }) {
   const session = await learnerSession();
   const loggedIn = !!session?.user;
+  const isAdmin = session?.user?.is_admin ?? false;
 
   const { section } = params;
   const label = SECTION_LABELS[section] ?? section;
@@ -55,7 +56,7 @@ export default async function MockExamSectionPage({ params }: { params: { sectio
       }),
     );
   }
-  const hasSectionAccess = entitlements.some(
+  const hasSectionAccess = isAdmin || entitlements.some(
     (e) => e.product === "full" || (e.product === "section" && e.section === section),
   );
 

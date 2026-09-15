@@ -106,7 +106,15 @@ def run_question_audio(section: str | None, exam_number: int | None, dry_run: bo
             continue
 
         artifact = job["artifact"]
-        voiced = generate_mock_exam_question_audio(artifact, overwrite=overwrite)
+        def save_progress(_: dict) -> None:
+            if not dry_run:
+                save_mock_exam_job(exam_id, sec, num, artifact["level"], artifact, status="media_generated")
+
+        voiced = generate_mock_exam_question_audio(
+            artifact,
+            overwrite=overwrite,
+            on_question_saved=save_progress,
+        )
         print(f"{exam_id}: audio ready for {voiced}/{len(artifact.get('questions', []))} question(s)")
         if not dry_run:
             save_mock_exam_job(exam_id, sec, num, artifact["level"], artifact, status="media_generated")

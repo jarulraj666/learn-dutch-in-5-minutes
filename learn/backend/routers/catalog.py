@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, status
 
 import db
-from auth import OptionalUser
+from auth import OptionalUser, is_admin
 from models import (
     CourseDetail,
     CourseSummary,
@@ -54,6 +54,7 @@ async def get_course(course_id: str, user: OptionalUser) -> CourseDetail:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Course not found")
 
     user_id = user["id"] if user else None
+    admin_access = bool(user and is_admin(user))
     module_rows = await db.fetch_all(
         """
         SELECT id, category, title, description, order_index, is_optional
@@ -64,7 +65,7 @@ async def get_course(course_id: str, user: OptionalUser) -> CourseDetail:
     lesson_rows = await db.fetch_all(
         """
         SELECT l.id, l.module_id, l.title, l.title_nl, l.title_en, l.summary, l.duration_sec,
-               l.order_index, l.is_premium,
+               l.order_index, %s AS is_premium,
                COALESCE(p.percent, 0) AS percent,
                (p.completed_at IS NOT NULL) AS completed,
                (
@@ -77,7 +78,7 @@ async def get_course(course_id: str, user: OptionalUser) -> CourseDetail:
         WHERE l.course_id = %s
         ORDER BY l.order_index, l.id
         """,
-        (user_id, user_id, course_id),
+        (not admin_access, user_id, user_id, course_id),
     )
 
     by_module: dict[str, list[LessonSummary]] = {}
@@ -134,15 +135,16 @@ async def _neighbours(course_id: str, lesson_id: str) -> tuple[str | None, str |
 
 @router.get("/lessons/{lesson_id}", response_model=LessonDetail)
 async def get_lesson(lesson_id: str, user: OptionalUser) -> LessonDetail:
+    admin_access = bool(user and is_admin(user))
     lesson = await db.fetch_one(
         """
         SELECT l.id, l.course_id, l.module_id, m.category, l.title, l.title_nl, l.title_en,
-               l.summary, l.description, l.youtube_video_id, l.duration_sec, l.is_premium
+               l.summary, l.description, l.youtube_video_id, l.duration_sec, %s AS is_premium
         FROM lessons l
         JOIN modules m ON m.id = l.module_id
         WHERE l.id = %s
         """,
-        (lesson_id,),
+        (not admin_access, lesson_id),
     )
     if not lesson:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Lesson not found")

@@ -73,21 +73,21 @@ export function ExamFooter({
   return (
     <footer className={clsx(NAVY, "shrink-0 px-4 py-5 sm:px-6")}>
       <div className="relative w-full">
-        <div className="flex items-center justify-between gap-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
           {onPrevious ? (
             <button
               onClick={onPrevious}
               disabled={previousDisabled}
-              className={clsx(ORANGE, "inline-flex min-w-[11rem] items-center justify-center gap-2 rounded-full px-6 py-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-900 transition disabled:bg-[#8ea6c4] disabled:text-white/80 disabled:hover:bg-[#8ea6c4]")}
+              className={clsx(ORANGE, "inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-900 transition disabled:bg-[#8ea6c4] disabled:text-white/80 disabled:hover:bg-[#8ea6c4] sm:w-auto sm:min-w-[11rem] sm:px-6")}
             >
               ‹ Vorige
             </button>
-          ) : <span className="min-w-[11rem]" />}
-          <div className="relative flex items-center gap-8 text-white">{children}</div>
+          ) : <span className="hidden sm:block sm:min-w-[11rem]" />}
+          <div className="relative order-first flex w-full items-center justify-center gap-5 text-white sm:order-none sm:w-auto sm:gap-8">{children}</div>
           <button
             onClick={onPrimary}
             disabled={primaryDisabled}
-            className={clsx(ORANGE, "inline-flex min-w-[11rem] items-center justify-center gap-2 rounded-full px-6 py-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-900 transition disabled:opacity-60")}
+            className={clsx(ORANGE, "inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-900 transition disabled:opacity-60 sm:w-auto sm:min-w-[11rem] sm:px-6")}
           >
             {primaryLabel}
           </button>

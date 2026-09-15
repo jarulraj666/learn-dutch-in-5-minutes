@@ -62,7 +62,8 @@ export function KnmExam({
   const passage = question?.passage_id ? passageById.get(question.passage_id) : undefined;
   const passageImage = passage?.media_urls.find((media) => media.type === "image");
   const isLast = currentIndex === questions.length - 1;
-  const questionAudioUrl = question?.question_audio_url
+  const questionAudioUrl = question?.question_options_audio_url
+    ?? question?.question_audio_url
     ?? passage?.media_urls.find((media) => media.type === "audio")?.url
     ?? null;
   const incompleteQuestionIds = questions.filter((item) => !answers[item.id]).map((item) => item.id);
@@ -115,7 +116,10 @@ export function KnmExam({
   function audioForQuestion(index: number) {
     const nextQuestion = questions[index];
     const nextPassage = nextQuestion?.passage_id ? passageById.get(nextQuestion.passage_id) : undefined;
-    return nextQuestion?.question_audio_url ?? nextPassage?.media_urls.find((media) => media.type === "audio")?.url ?? null;
+    return nextQuestion?.question_options_audio_url
+      ?? nextQuestion?.question_audio_url
+      ?? nextPassage?.media_urls.find((media) => media.type === "audio")?.url
+      ?? null;
   }
 
   function showQuestion(index: number) {

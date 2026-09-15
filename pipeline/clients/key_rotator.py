@@ -24,6 +24,7 @@ import hashlib
 import json
 import logging
 import re
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
@@ -35,6 +36,12 @@ _DEFAULT_STATE_FILE = Path(__file__).resolve().parent.parent.parent / "output" /
 # Keys whose API-provided retry delay is below this threshold are still
 # rate-limited for this minimum instead (to avoid sub-minute micro-bans).
 _MIN_COOLDOWN_SECONDS = 60.0
+
+
+class AllKeysRateLimitedError(RuntimeError):
+    """Raised when every key in the pool has actually received a 429 (not merely
+    reserved via ``mark_used``). Callers should treat this as fatal and stop,
+    rather than waiting for a reservation cooldown to expire."""
 
 
 def _hash_key(key: str) -> str:
@@ -134,8 +141,17 @@ class KeyRotator:
         self._state_file = state_file
         # hash -> expiry datetime (UTC)
         self._cooldowns: dict[str, datetime] = {}
+        # hash -> expiry datetime (UTC), populated only by mark_rate_limited (actual 429s),
+        # kept separate from _cooldowns so we can tell a real rate-limit apart from a
+        # normal-use reservation (mark_used) when deciding whether to give up entirely.
+        self._rate_limited: dict[str, datetime] = {}
         self._next_key_index = 0
+        # Guards _cooldowns/_next_key_index/state-file I/O for concurrent (threaded) callers.
+        self._lock = threading.Lock()
         self._load_state()
+
+    def __len__(self) -> int:
+        return len(self._keys)
 
     # ------------------------------------------------------------------
     # Public API
@@ -147,32 +163,67 @@ class KeyRotator:
         Raises:
             RuntimeError: If every key in the pool is currently rate-limited.
         """
-        now = datetime.now(tz=timezone.utc)
-        available = [k for k in self._keys if not self._is_rate_limited(k, now)]
+        with self._lock:
+            now = datetime.now(tz=timezone.utc)
+            available = [k for k in self._keys if not self._is_rate_limited(k, now)]
 
-        if not available:
-            earliest = self._earliest_expiry()
-            msg = (
-                f"All {len(self._keys)} key(s) in pool '{self._pool_name}' are rate-limited."
+            if not available:
+                earliest = self._earliest_expiry()
+                msg = (
+                    f"All {len(self._keys)} key(s) in pool '{self._pool_name}' are rate-limited."
+                )
+                if earliest:
+                    msg += f" Earliest retry at {earliest.isoformat()}."
+                raise RuntimeError(msg)
+
+            LOGGER.debug(
+                "key_rotator pool=%s available=%d/%d",
+                self._pool_name,
+                len(available),
+                len(self._keys),
             )
-            if earliest:
-                msg += f" Earliest retry at {earliest.isoformat()}."
-            raise RuntimeError(msg)
-
-        LOGGER.debug(
-            "key_rotator pool=%s available=%d/%d",
-            self._pool_name,
-            len(available),
-            len(self._keys),
-        )
         yield from available
 
     def next_key_cycle(self) -> Iterator[str]:
         """Yield available keys starting with the next key in round-robin order."""
         available = list(self.available_keys())
-        start = self._next_key_index % len(available)
-        self._next_key_index = (start + 1) % len(available)
+        with self._lock:
+            start = self._next_key_index % len(available)
+            self._next_key_index = (start + 1) % len(available)
         yield from available[start:] + available[:start]
+
+    def mark_used(self, key: str, cooldown_seconds: float) -> None:
+        """Reserve a key after a successful request for the requested duration."""
+        from datetime import timedelta
+
+        expiry = datetime.now(tz=timezone.utc) + timedelta(seconds=cooldown_seconds)
+        key_hash = _hash_key(key)
+        with self._lock:
+            current = self._cooldowns.get(key_hash)
+            if current is None or expiry > current:
+                self._cooldowns[key_hash] = expiry
+                self._save_state()
+
+    def seconds_until_available(self) -> float:
+        """Return seconds until at least one key is available, or zero."""
+        with self._lock:
+            expiry = self._earliest_expiry()
+        if expiry is None:
+            return 0.0
+        return max(0.0, (expiry - datetime.now(tz=timezone.utc)).total_seconds())
+
+    def all_rate_limited(self) -> bool:
+        """Return True if every key in the pool currently has an active 429 cooldown.
+
+        Unlike ``available_keys()`` raising, this ignores plain in-use reservations
+        (``mark_used``) and only counts keys that actually received a 429.
+        """
+        now = datetime.now(tz=timezone.utc)
+        with self._lock:
+            return all(
+                (expiry := self._rate_limited.get(_hash_key(k))) is not None and expiry > now
+                for k in self._keys
+            )
 
     def mark_rate_limited(self, key: str, exc: Exception | None = None) -> None:
         """Mark *key* as rate-limited.
@@ -194,8 +245,10 @@ class KeyRotator:
         from datetime import timedelta
         expiry = now + timedelta(seconds=cooldown_seconds)
         key_hash = _hash_key(key)
-        self._cooldowns[key_hash] = expiry
-        self._save_state()
+        with self._lock:
+            self._cooldowns[key_hash] = expiry
+            self._rate_limited[key_hash] = expiry
+            self._save_state()
 
         LOGGER.warning(
             "key_rotator pool=%s key_hash=%s rate_limited cooldown=%.0fs source=%s expiry=%s",

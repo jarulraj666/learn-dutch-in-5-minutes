@@ -270,17 +270,23 @@ async def generate_mock_exam_passage_audio(
 
     artifact = job["artifact"]
     passage = next((p for p in artifact.get("passages", []) if p["id"] == passage_id), None)
-    if not passage or passage.get("passage_type") not in {"one_picture", "two_picture", "three_picture"}:
-        raise HTTPException(status_code=404, detail=f"Picture passage {passage_id} not found in {exam_id}")
+    if not passage or passage.get("passage_type") not in {"audio", "one_picture", "two_picture", "three_picture"}:
+        raise HTTPException(status_code=404, detail=f"Audio-capable passage {passage_id} not found in {exam_id}")
     question = next((q for q in artifact.get("questions", []) if q.get("passage_id") == passage_id), None)
-    if not question or not question.get("question_text"):
-        raise HTTPException(status_code=400, detail="Passage has no audio script")
+    if passage.get("passage_type") == "audio":
+        script = str(passage.get("content_nl", "")).strip()
+        if not script:
+            raise HTTPException(status_code=400, detail="Passage has no spoken transcript")
+        audio_passage = passage
+    else:
+        if not question or not question.get("question_text"):
+            raise HTTPException(status_code=400, detail="Passage has no audio script")
+        script = _with_part_two_reminder(question["question_text"])
+        audio_passage = {**passage, "content_nl": script}
     if not settings.TTS_PROVIDER:
         raise HTTPException(status_code=503, detail="TTS_PROVIDER is not configured")
 
     audio_path = ROOT / "output" / "mock_exams" / "audio" / exam_id / f"{passage_id}.wav"
-    script = _with_part_two_reminder(question["question_text"])
-    audio_passage = {**passage, "content_nl": script}
     generated = await asyncio.to_thread(_synthesize_passage_audio, audio_passage, audio_path)
     if not generated:
         raise HTTPException(status_code=502, detail="Could not generate passage audio")
@@ -381,32 +387,42 @@ async def generate_mock_exam_question_audio(
     exam_id: str,
     question_id: str = Form(...),
 ):
-    """Generate the spoken clip for one question from its audio script."""
+    """Generate the spoken clip for one question and its options, shared across all sections."""
     from pipeline import settings
-    from pipeline.generate.generate_mock_exam import generate_knm_question_audio, generate_listening_question_audio, knm_question_audio_script
+    from pipeline.generate.generate_mock_exam import _generate_combined_question_audio, knm_question_audio_script
     from pipeline.core.store_mock_exam import save_mock_exam_job
 
     job, artifact, question = _load_question(exam_id, question_id)
-    if job["section"] == "listening":
-        await asyncio.to_thread(generate_listening_question_audio, exam_id, question, ROOT / "output", True)
-        if not question.get("question_options_audio_url"):
-            raise HTTPException(status_code=502, detail="Could not generate question and option audio")
-        save_mock_exam_job(exam_id, job["section"], job["exam_number"], job["level"], artifact, job["status"])
-        return {"path": question["question_options_audio_url"], "question_id": question_id}
+    section = job["section"]
 
-    passage = next((p for p in artifact.get("passages", []) if p["id"] == question.get("passage_id")), None)
-    script = (question.get("audio_script") or knm_question_audio_script(question, passage)).strip()
+    if section == "listening":
+        if question.get("question_type") != "multiple_choice":
+            raise HTTPException(status_code=400, detail="Question is not multiple-choice")
+        script = str(question.get("question_text", "")).strip()
+        provider_name = "gemini"
+    else:
+        passage = next((p for p in artifact.get("passages", []) if p["id"] == question.get("passage_id")), None)
+        script = (question.get("audio_script") or knm_question_audio_script(question, passage)).strip()
+        question["audio_script"] = script
+        provider_name = "elevenlabs" if section == "speaking" else "gemini"
+
     if not script:
         raise HTTPException(status_code=400, detail="Question has no audio script")
-    if not settings.GEMINI_TTS_API_KEYS:
+    if provider_name == "gemini" and not settings.GEMINI_TTS_API_KEYS:
         raise HTTPException(status_code=503, detail="GEMINI_TTS_API_KEYS is not configured")
 
-    question["audio_script"] = script
     generated = await asyncio.to_thread(
-        generate_knm_question_audio, exam_id, question, ROOT / "output", True
+        _generate_combined_question_audio,
+        exam_id,
+        question,
+        ROOT / "output",
+        script,
+        provider_name,
+        True,
     )
     if not generated:
-        raise HTTPException(status_code=502, detail="Could not generate question audio")
+        raise HTTPException(status_code=502, detail="Could not generate question and option audio")
 
     save_mock_exam_job(exam_id, job["section"], job["exam_number"], job["level"], artifact, job["status"])
-    return {"path": question["question_audio_url"], "question_id": question_id, "script": script}
+    return {"path": question["question_options_audio_url"], "question_id": question_id, "script": script}
+

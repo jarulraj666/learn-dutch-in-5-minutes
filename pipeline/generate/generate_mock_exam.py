@@ -18,9 +18,10 @@ import random
 import re
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from pipeline import settings
+from pipeline.clients.key_rotator import AllKeysRateLimitedError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -174,6 +175,23 @@ def _normalize_passage(raw: Any, exam_id: str, index: int) -> dict[str, Any] | N
     passage_type = str(raw.get("passage_type", "")).strip().lower()
     if passage_type not in _VALID_PASSAGE_TYPES:
         return None
+    raw_speaker_genders = raw.get("speaker_genders") if isinstance(raw.get("speaker_genders"), dict) else {}
+    raw_speaker_roles = raw.get("speaker_roles") if isinstance(raw.get("speaker_roles"), dict) else {}
+    speaker_genders = {
+        str(speaker): str(gender).strip().lower()
+        for speaker, gender in raw_speaker_genders.items()
+        if str(gender).strip().lower() in {"female", "male"}
+    }
+    speaker_roles = {
+        str(speaker): str(role).strip()
+        for speaker, role in raw_speaker_roles.items()
+        if str(role).strip()
+    }
+    if passage_type == "audio" and not speaker_genders:
+        speaker_genders = {"Speaker1": "female", "Speaker2": "male"}
+    if passage_type == "audio" and not speaker_roles:
+        speaker_roles = {speaker: "speaker" for speaker in speaker_genders}
+
     return {
         "id": f"{exam_id}-p{index}",
         "order_index": index,
@@ -185,6 +203,8 @@ def _normalize_passage(raw: Any, exam_id: str, index: int) -> dict[str, Any] | N
         "content_en": (str(raw["content_en"]).strip() if raw.get("content_en") else None),
         "scene_description": str(raw.get("scene_description", "")).strip(),
         "presenter_gender": (str(raw.get("presenter_gender", "")).strip().lower() if passage_type == "video" else None),
+        "speaker_genders": speaker_genders if passage_type == "audio" else None,
+        "speaker_roles": speaker_roles if passage_type == "audio" else None,
         "media_urls": raw.get("media_urls") if isinstance(raw.get("media_urls"), list) else [],
         "render_manifest_path": str(raw.get("render_manifest_path", "")).strip() or None,
         "image_prompt": raw.get("image_prompt") if raw.get("image_prompt") else None,
@@ -290,7 +310,10 @@ def normalize_mock_exam(raw: dict[str, Any], section: str, exam_number: int) -> 
                 if norm["presenter_gender"] not in {"female", "male"}:
                     norm["presenter_gender"] = "female" if i % 2 == 0 else "male"
                 norm["image_prompt"] = [_build_exam_image_prompt(
-                    norm["scene_description"] or norm["content_nl"], norm["presenter_gender"]
+                    norm["scene_description"] or norm["content_nl"],
+                    norm["presenter_gender"],
+                    norm.get("speaker_genders"),
+                    norm.get("speaker_roles"),
                 )]
             if section == "listening" and not norm["display_prompt_nl"]:
                 norm["display_prompt_nl"] = _default_listening_display_prompt(norm)
@@ -544,7 +567,12 @@ def _image_scene_description(scene_description: str) -> str:
     return scene or scene_description
 
 
-def _build_exam_image_prompt(scene_description: str, presenter_gender: str | None = None) -> str:
+def _build_exam_image_prompt(
+    scene_description: str,
+    presenter_gender: str | None = None,
+    speaker_genders: dict[str, str] | None = None,
+    speaker_roles: dict[str, str] | None = None,
+) -> str:
     """Build a single-scene image prompt with no forced character count.
 
     Deliberately does NOT reuse prompts/image_prompt.md or
@@ -552,17 +580,29 @@ def _build_exam_image_prompt(scene_description: str, presenter_gender: str | Non
     characters, which is wrong for exam picture-description tasks that show
     one everyday scene (which may have 0, 1 or several people in it).
     """
+    is_multi_speaker = speaker_genders is not None and len(speaker_genders) > 1
     presenter = (
         f"The image contains exactly one adult {presenter_gender} speaking presenter. "
         "They face straight toward the camera at eye level, clearly visible from the front. "
         "Do not include any other people, including in the background, reflections, posters, or screens.\n"
-        if presenter_gender in {"female", "male"} else ""
+        if presenter_gender in {"female", "male"} and not is_multi_speaker else ""
     )
+    speakers = ""
+    if speaker_genders:
+        descriptions = []
+        for speaker, gender in speaker_genders.items():
+            role = (speaker_roles or {}).get(speaker, "speaker")
+            descriptions.append(f"one adult {gender} {role}")
+        speakers = (
+            "Show the people who speak in the audio as " + ", ".join(descriptions) + ". "
+            "Keep their appearance consistent with these genders and roles.\n"
+        )
     image_scene = _image_scene_description(scene_description)
     return (
         "Create one high-quality naturalistic 16:9 assessment photograph "
         "depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\n"
         f"{presenter}"
+        f"{speakers}"
         f"Scene: {image_scene}\n"
         "Rules: no text, captions, watermarks or speech bubbles anywhere in the image. "
         "People and objects should be clear and unambiguous, since a learner must describe what they see."
@@ -649,10 +689,17 @@ def _listening_passage_dialogue(passage: dict[str, Any]) -> tuple[list[dict[str,
     script = str(passage.get("content_nl", "")).strip()
     scene = str(passage.get("scene_description", "")).lower()
     parts = [part.strip() for part in re.split(r"\s+-\s+", script) if part.strip()]
+    stored_genders = passage.get("speaker_genders") or {}
+    stored_roles = passage.get("speaker_roles") or {}
     if len(parts) < 2:
-        return [{"Speaker1": script}], {"Speaker1": "female", "Speaker2": "male"}, {"Speaker1": "narrator", "Speaker2": "speaker"}
+        return [{"Speaker1": script}], {"Speaker1": stored_genders.get("Speaker1", "female")}, {"Speaker1": stored_roles.get("Speaker1", "narrator")}
 
     turns = [{"Speaker1" if index % 2 == 0 else "Speaker2": line} for index, line in enumerate(parts)]
+    if all(speaker in stored_genders for speaker in ("Speaker1", "Speaker2")):
+        return turns, stored_genders, {
+            "Speaker1": stored_roles.get("Speaker1", "speaker"),
+            "Speaker2": stored_roles.get("Speaker2", "speaker"),
+        }
     speaker_genders, speaker_roles = _listening_roles_from_scene(scene, parts[0])
     return turns, speaker_genders, speaker_roles
 
@@ -677,21 +724,29 @@ def _synthesize_passage_audio(passage: dict[str, Any], output_path: Path, provid
             speaker_roles=speaker_roles,
         )
 
-    presenter_gender = passage.get("presenter_gender")
+    presenter_gender = (passage.get("speaker_genders") or {}).get("Speaker1")
+    if presenter_gender not in {"female", "male"}:
+        presenter_gender = passage.get("presenter_gender")
     if presenter_gender not in {"female", "male"}:
         presenter_gender = "female"
+    speaker_role = (passage.get("speaker_roles") or {}).get("Speaker1", "narrator")
     return client.generate_dialogue_audio(
         [{"Speaker1": passage["content_nl"]}],
         str(output_path),
         level="A1A2",
         category="dialogue",
         speaker_genders={"Speaker1": presenter_gender, "Speaker2": "male" if presenter_gender == "female" else "female"},
-        speaker_roles={"Speaker1": "narrator", "Speaker2": "speaker"},
+        speaker_roles={"Speaker1": speaker_role, "Speaker2": "speaker"},
     )
 
 
 def _synthesize_text_audio(
-    text: str, output_path: Path, provider_name: str = "gemini", client: Any | None = None
+    text: str,
+    output_path: Path,
+    provider_name: str = "gemini",
+    client: Any | None = None,
+    category: str = "mock_exam_item",
+    speaker_gender: str = "female",
 ) -> bool:
     from pipeline.clients.tts_provider_factory import create_tts_client
 
@@ -699,89 +754,79 @@ def _synthesize_text_audio(
         return False
     output_path.parent.mkdir(parents=True, exist_ok=True)
     client = client or create_tts_client(provider_name)
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
     return client.generate_dialogue_audio(
-        [{"Speaker1": text.strip()}],
+        [{"Speaker1": line} for line in lines],
         str(output_path),
         level="A1A2",
-        category="mock_exam_item",
-        speaker_genders={"Speaker1": "female", "Speaker2": "male"},
+        category=category,
+        speaker_genders={"Speaker1": speaker_gender, "Speaker2": "male" if speaker_gender == "female" else "female"},
         speaker_roles={"Speaker1": "exam narrator", "Speaker2": "exam narrator"},
     )
 
 
-def knm_question_audio_path(exam_id: str, question_id: str, output_root: Path) -> Path:
-    return output_root / "mock_exams" / "audio" / exam_id / "questions" / f"{question_id}.wav"
-
-
-def generate_knm_question_audio(
-    exam_id: str, question: dict[str, Any], output_root: Path, overwrite: bool = False, client: Any | None = None
+def _generate_combined_question_audio(
+    exam_id: str,
+    question: dict[str, Any],
+    output_root: Path,
+    script: str,
+    provider_name: str,
+    overwrite: bool = False,
+    client: Any | None = None,
 ) -> bool:
-    """Voice one KNM item with Gemini. Every item uses the same female exam narrator."""
-    script = (question.get("audio_script") or "").strip()
+    """Shared question-audio path for every section: one TTS call for the question plus
+    all its options (when present), mapped only to question_options_audio_url."""
     if not script:
         return False
 
-    audio_path = knm_question_audio_path(exam_id, question["id"], output_root)
-    if audio_path.exists() and not overwrite:
-        question["question_audio_url"] = _media_url_from_path(audio_path)
-        return True
+    options = [str(option).strip() for option in question.get("options") or []]
+    combined_path = output_root / "mock_exams" / "audio" / exam_id / "questions_fast" / f"{question['id']}-with-options.wav"
+    source_text = "\n".join([script, *options]).strip()
+
     try:
-        if not _synthesize_text_audio(script, audio_path, "gemini", client):
-            LOGGER.warning("mock_exam media: no audio generated for %s", question["id"])
-            return False
+        source_ready = (combined_path.exists() and not overwrite) or _synthesize_text_audio(
+            source_text, combined_path, provider_name, client, category="mock_exam_item"
+        )
+    except AllKeysRateLimitedError:
+        raise
     except Exception:
-        LOGGER.exception("mock_exam media: question audio failed for %s", question["id"])
+        LOGGER.exception("mock_exam media: combined question audio failed for %s", question["id"])
+        return False
+    if not source_ready:
         return False
 
-    question["question_audio_url"] = _media_url_from_path(audio_path)
+    for cache_path in combined_path.parent.glob(f"{combined_path.stem}_chunk_*.wav"):
+        cache_path.unlink(missing_ok=True)
+    combined_path.with_name(f"{combined_path.stem}_chunk_hash.txt").unlink(missing_ok=True)
+
+    question["question_audio_url"] = None
+    question["option_audio_urls"] = None
+    question["option_audio_cues"] = None
+    question["question_options_audio_url"] = str(combined_path)
     return True
+
+
+def generate_knm_question_audio(
+    exam_id: str, question: dict[str, Any], output_root: Path, overwrite: bool = False,
+    client: Any | None = None, provider_name: str = "gemini",
+) -> bool:
+    """Voice one KNM item, including its options when present."""
+    script = (question.get("audio_script") or "").strip()
+    return _generate_combined_question_audio(
+        exam_id, question, output_root, script, provider_name, overwrite, client,
+    )
 
 
 def generate_listening_question_audio(
     exam_id: str, question: dict[str, Any], output_root: Path, overwrite: bool = False
-) -> None:
-    """Generate Gemini TTS clips for the question and each answer option."""
+) -> bool:
+    """Voice one listening question and its answer options."""
     if question.get("question_type") != "multiple_choice":
-        return
-    media_dir = output_root / "mock_exams" / "audio" / exam_id
-    question_id = question["id"]
-    question_audio_path = media_dir / "questions_fast" / f"{question_id}.wav"
-    try:
-        question_ready = (question_audio_path.exists() and not overwrite) or _synthesize_text_audio(
-            question.get("question_text", ""), question_audio_path
-        )
-    except Exception:
-        LOGGER.exception("mock_exam media: question audio failed for %s", question_id)
-        question_ready = False
-    if question_ready:
-        question["question_audio_url"] = str(question_audio_path)
-
-    option_audio_urls: list[str | None] = []
-    for index, option in enumerate(question.get("options") or [], start=1):
-        option_audio_path = media_dir / "options_fast" / f"{question_id}-o{index}.wav"
-        try:
-            option_ready = (option_audio_path.exists() and not overwrite) or _synthesize_text_audio(option, option_audio_path)
-        except Exception:
-            LOGGER.exception("mock_exam media: option audio failed for %s option %d", question_id, index)
-            option_ready = False
-        if option_ready:
-            option_audio_urls.append(str(option_audio_path))
-        else:
-            option_audio_urls.append(None)
-    if option_audio_urls:
-        question["option_audio_urls"] = option_audio_urls
-    combined_path = question_audio_path.with_name(f"{question['id']}-with-options.wav")
-    if overwrite:
-        combined_path.unlink(missing_ok=True)
-    _combine_listening_question_audio(question, output_root)
-
-
-def _audio_path_from_url(url: str, output_root: Path) -> Path:
-    path = Path(url)
-    if path.is_absolute():
-        return path
-    root = output_root.parent if output_root.name == "output" else settings.ROOT
-    return root / path
+        return False
+    script = str(question.get("question_text", "")).strip()
+    return _generate_combined_question_audio(
+        exam_id, question, output_root, script, "gemini", overwrite,
+    )
 
 
 def _media_url_from_path(path: Path) -> str:
@@ -790,55 +835,6 @@ def _media_url_from_path(path: Path) -> str:
     except ValueError:
         return str(path)
 
-
-def _combine_listening_question_audio(question: dict[str, Any], output_root: Path) -> None:
-    import wave as _wave
-
-    question_audio_url = question.get("question_audio_url")
-    option_audio_urls = [url for url in (question.get("option_audio_urls") or []) if url]
-    if not question_audio_url or len(option_audio_urls) != len(question.get("options") or []):
-        return
-
-    source_urls = [question_audio_url, *option_audio_urls]
-    source_paths = [_audio_path_from_url(url, output_root) for url in source_urls]
-    if not all(path.exists() for path in source_paths):
-        return
-
-    output_path = source_paths[0].with_name(f"{question['id']}-with-options.wav")
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    cues: list[dict[str, float | int]] = []
-    current_time = 0.0
-    silence_seconds = 0.35
-
-    try:
-        with _wave.open(str(source_paths[0]), "rb") as first:
-            params = first.getparams()
-            frame_rate = first.getframerate()
-            silence_frames = b"\0" * int(frame_rate * silence_seconds) * first.getnchannels() * first.getsampwidth()
-
-        with _wave.open(str(output_path), "wb") as output:
-            output.setparams(params)
-            for index, path in enumerate(source_paths):
-                with _wave.open(str(path), "rb") as source:
-                    if source.getparams()[:3] != params[:3]:
-                        LOGGER.warning("mock_exam media: cannot combine mismatched audio params for %s", question["id"])
-                        return
-                    frames = source.readframes(source.getnframes())
-                    duration = source.getnframes() / source.getframerate()
-                if index > 0:
-                    cue_start = current_time
-                    cues.append({"option_index": index - 1, "start": round(cue_start, 3), "end": round(cue_start + duration, 3)})
-                output.writeframes(frames)
-                current_time += duration
-                if index < len(source_paths) - 1:
-                    output.writeframes(silence_frames)
-                    current_time += silence_seconds
-    except Exception:
-        LOGGER.exception("mock_exam media: combined question/options audio failed for %s", question["id"])
-        return
-
-    question["question_options_audio_url"] = _media_url_from_path(output_path)
-    question["option_audio_cues"] = cues
 
 
 def generate_passage_media(exam_id: str, passage: dict[str, Any], output_root: Path) -> None:
@@ -935,7 +931,12 @@ def generate_mock_exam_media(artifact: dict[str, Any], output_root: Path | None 
         if artifact.get("section") == "listening" and not passage.get("image_prompt"):
             image_source = passage.get("scene_description") or passage.get("content_nl") or passage.get("title")
             if image_source:
-                passage["image_prompt"] = [_build_exam_image_prompt(image_source, passage.get("presenter_gender"))]
+                passage["image_prompt"] = [_build_exam_image_prompt(
+                    image_source,
+                    passage.get("presenter_gender"),
+                    passage.get("speaker_genders"),
+                    passage.get("speaker_roles"),
+                )]
         if passage["passage_type"] != "text":
             generate_passage_media(artifact["id"], passage, output_root)
         elif passage.get("scene_description"):
@@ -950,20 +951,59 @@ def generate_mock_exam_media(artifact: dict[str, Any], output_root: Path | None 
 
 
 def generate_mock_exam_question_audio(
-    artifact: dict[str, Any], output_root: Path | None = None, overwrite: bool = False
+    artifact: dict[str, Any], output_root: Path | None = None, overwrite: bool = False,
+    on_question_saved: Callable[[dict[str, Any]], None] | None = None,
 ) -> int:
-    """Voice every question of a listening/knm exam, skipping items that already have audio."""
+    """Voice every question of a listening/knm exam, skipping items that already have audio.
+
+    Questions are voiced concurrently (one Gemini TTS key reserved per in-flight
+    question) so the whole GEMINI_TTS_API_KEYS pool is used in parallel instead of
+    one request at a time.
+    """
     output_root = output_root or (settings.ROOT / "output")
     section = artifact.get("section")
+    if section not in ("knm", "listening"):
+        return 0
+
+    import threading
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
     from pipeline.clients.tts_provider_factory import create_tts_client
 
     client = create_tts_client("gemini")
+    questions = artifact.get("questions", [])
+    max_workers = max(1, min(len(questions), len(settings.GEMINI_TTS_API_KEYS) or 1))
     done = 0
-    for question in artifact.get("questions", []):
+    done_lock = threading.Lock()
+    save_lock = threading.Lock()
+
+    def _voice_one(question: dict[str, Any]) -> bool:
         if section == "knm":
-            if generate_knm_question_audio(artifact["id"], question, output_root, overwrite, client):
-                done += 1
-        elif section == "listening":
-            generate_listening_question_audio(artifact["id"], question, output_root)
-            done += 1
+            return generate_knm_question_audio(artifact["id"], question, output_root, overwrite, client)
+        return generate_listening_question_audio(artifact["id"], question, output_root, overwrite)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_question = {executor.submit(_voice_one, question): question for question in questions}
+        for future in as_completed(future_to_question):
+            question = future_to_question[future]
+            try:
+                saved = future.result()
+            except AllKeysRateLimitedError:
+                LOGGER.error(
+                    "mock_exam media: all Gemini TTS keys are rate-limited (429) — stopping "
+                    "question_audio generation for %s (%d/%d question(s) voiced so far)",
+                    artifact.get("id"), done, len(questions),
+                )
+                for pending in future_to_question:
+                    pending.cancel()
+                raise
+            except Exception:
+                LOGGER.exception("mock_exam media: question audio failed for %s", question.get("id"))
+                continue
+            if saved:
+                with done_lock:
+                    done += 1
+                if on_question_saved:
+                    with save_lock:
+                        on_question_saved(question)
     return done

@@ -33,6 +33,16 @@
           "content_en": {"type": "string"},
           "scene_description": {"type": "string", "description": "Visual scene description, used to build the image/video prompt."},
           "presenter_gender": {"type": "string", "enum": ["female", "male"], "description": "Speaking video presenter gender, used for the image prompt and voice selection."},
+          "speaker_genders": {
+            "type": ["object", "null"],
+            "description": "Listening audio source of truth for TTS speaker voices.",
+            "additionalProperties": {"type": "string", "enum": ["female", "male"]}
+          },
+          "speaker_roles": {
+            "type": ["object", "null"],
+            "description": "Listening audio speaker roles matching speaker_genders.",
+            "additionalProperties": {"type": "string"}
+          },
           "image_prompt": {"type": "array", "items": {"type": "string"}}
         }
       }

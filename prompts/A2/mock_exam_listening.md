@@ -12,6 +12,7 @@ You are writing **mock exam #{exam_number} of 5** for the **Luisteren (Listening
 - Produce **exactly 25 questions** total, distributed across 6-10 short fragments.
 - Mark each fragment's `passage_type` as `"audio"` or `"video"` — use a roughly even mix, with at least 2 video fragments.
 - For every fragment, `content_nl` MUST be the full spoken Dutch transcript (this is fed directly to text-to-speech, so it must be exactly what is spoken, no stage directions).
+- For every audio or video fragment, include `speaker_genders` and `speaker_roles` maps for every speaker in the transcript. Use stable keys `Speaker1` and `Speaker2` in dialogue, and `Speaker1` for a single narrator. Choose exactly `female` or `male` in `speaker_genders`; these values are the source of truth for TTS voice selection and must match the people speaking in the script.
 - For `video` fragments only, also include a `scene_description` (English, 1-2 sentences) describing what the two speakers are doing/where they are, for image generation — no camera directions, just the everyday situation (e.g. "A woman asks a pharmacist about medication at a counter.").
 - Exactly 4 options per multiple-choice question, exactly one correct. `answer` must exactly match one option.
 - **Distribute the correct answer evenly across option positions 1-4.** Across the 25 questions, the correct answer should land roughly 6-7 times in each of positions 1, 2, 3 and 4 — never cluster it mostly in one position. Deliberately plan the correct-answer position before writing distractors for each question.
@@ -42,7 +43,9 @@ Return **strict JSON only** — no markdown, no commentary — matching this sha
       "order_index": 1,
       "passage_type": "audio",
       "title": "Afspraak bij de tandarts",
-      "content_nl": "full Dutch spoken transcript here"
+      "content_nl": "full Dutch spoken transcript here",
+      "speaker_genders": {"Speaker1": "female"},
+      "speaker_roles": {"Speaker1": "narrator"}
     },
     {
       "id": "p2",
@@ -50,7 +53,9 @@ Return **strict JSON only** — no markdown, no commentary — matching this sha
       "passage_type": "video",
       "title": "Bij de apotheek",
       "content_nl": "full Dutch spoken transcript here",
-      "scene_description": "A woman asks a pharmacist about medication at a counter."
+      "scene_description": "A woman asks a pharmacist about medication at a counter.",
+      "speaker_genders": {"Speaker1": "female", "Speaker2": "male"},
+      "speaker_roles": {"Speaker1": "customer", "Speaker2": "pharmacist"}
     }
   ],
   "questions": [

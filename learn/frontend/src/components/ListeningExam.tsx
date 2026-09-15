@@ -55,7 +55,6 @@ export function ListeningExam({
   const [volume, setVolume] = useState(1);
   const [mediaPlaying, setMediaPlaying] = useState(false);
   const [mediaPlaybackTime, setMediaPlaybackTime] = useState({ current: 0, duration: 0 });
-  const [spokenItemKey, setSpokenItemKey] = useState<string | null>(null);
   const [questionPlaybackPlaying, setQuestionPlaybackPlaying] = useState(false);
   const [questionPlaybackProgress, setQuestionPlaybackProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -122,7 +121,6 @@ export function ListeningExam({
     questionPlaybackCancelRef.current = true;
     spokenAudioRef.current?.pause();
     spokenAudioRef.current = null;
-    setSpokenItemKey(null);
     setQuestionPlaybackPlaying(false);
     setQuestionPlaybackProgress(0);
   }
@@ -138,7 +136,6 @@ export function ListeningExam({
       const audio = new Audio(mediaProxyUrl("audio", audioUrl));
       audio.playbackRate = QUESTION_AUDIO_PLAYBACK_RATE;
       spokenAudioRef.current = audio;
-      setSpokenItemKey(key);
       const syncProgress = () => {
         if (Number.isFinite(audio.duration) && audio.duration > 0) {
           const ratio = Math.min(1, audio.currentTime / audio.duration);
@@ -154,22 +151,15 @@ export function ListeningExam({
     });
   }
 
-  function updateCombinedOptionHighlight(audio: HTMLAudioElement) {
-    const cue = question.option_audio_cues?.find((item) => audio.currentTime >= item.start && audio.currentTime <= item.end);
-    setSpokenItemKey(cue ? `${question.id}:option:${cue.option_index}` : `${question.id}:question`);
-  }
-
   async function playCombinedQuestionAndOptions(audioUrl: string) {
     return new Promise<void>((resolve) => {
       const audio = new Audio(mediaProxyUrl("audio", audioUrl));
       audio.playbackRate = QUESTION_AUDIO_PLAYBACK_RATE;
       spokenAudioRef.current = audio;
-      setSpokenItemKey(`${question.id}:question`);
       const syncProgress = () => {
         if (Number.isFinite(audio.duration) && audio.duration > 0) {
           setQuestionPlaybackProgress(Math.min(100, (audio.currentTime / audio.duration) * 100));
         }
-        updateCombinedOptionHighlight(audio);
       };
       audio.ontimeupdate = syncProgress;
       audio.onloadedmetadata = syncProgress;
@@ -194,7 +184,6 @@ export function ListeningExam({
       await playCombinedQuestionAndOptions(question.question_options_audio_url);
       if (!questionPlaybackCancelRef.current) {
         spokenAudioRef.current = null;
-        setSpokenItemKey(null);
         setQuestionPlaybackPlaying(false);
         setQuestionPlaybackProgress(100);
       }
@@ -217,7 +206,6 @@ export function ListeningExam({
     }
     if (!questionPlaybackCancelRef.current) {
       spokenAudioRef.current = null;
-      setSpokenItemKey(null);
       setQuestionPlaybackPlaying(false);
       setQuestionPlaybackProgress(100);
     }
@@ -330,12 +318,10 @@ export function ListeningExam({
                   {question.options.map((option, index) => {
                     const selected = answers[question.id] === option;
                     const optionImageUrl = question.option_media_urls?.[index];
-                    const optionAudioKey = `${question.id}:option:${index}`;
-                    const optionPlaying = spokenItemKey === optionAudioKey;
                     return (
-                      <div key={`${question.id}-${option}`} role="button" tabIndex={0} onClick={() => onAnswerChange(question.id, option)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") onAnswerChange(question.id, option); }} className={clsx("flex w-full cursor-pointer items-center gap-5 rounded-[0.2rem] border-2 px-5 py-4 text-left text-lg leading-7 transition", optionPlaying ? "border-[#ff9944] bg-[#fff7ed] text-slate-950" : selected ? "border-[#2f5b96] bg-[#2f5b96] text-white" : "border-[#d7dce0] bg-white text-slate-950 hover:border-[#9aa8b4]")}>
+                      <div key={`${question.id}-${option}`} role="button" tabIndex={0} onClick={() => onAnswerChange(question.id, option)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") onAnswerChange(question.id, option); }} className={clsx("flex w-full cursor-pointer items-center gap-5 rounded-[0.2rem] border-2 px-5 py-4 text-left text-lg leading-7 transition", selected ? "border-[#2f5b96] bg-[#2f5b96] text-white" : "border-[#d7dce0] bg-white text-slate-950 hover:border-[#9aa8b4]")}>
                         <span className={clsx("h-7 w-7 shrink-0 rounded-full border-2", selected ? "border-white bg-white ring-[6px] ring-inset ring-[#ff9944]" : "border-[#9aa8b4] bg-white")} aria-hidden="true" />
-                        <span className={clsx("shrink-0 text-xl font-medium", selected && !optionPlaying ? "text-white" : "text-slate-900")}>{String.fromCharCode(65 + index)}</span>
+                        <span className={clsx("shrink-0 text-xl font-medium", selected ? "text-white" : "text-slate-900")}>{String.fromCharCode(65 + index)}</span>
                         <span className="min-w-0 flex-1">
                           {!optionImageUrl && option}
                           {optionImageUrl && <img src={mediaProxyUrl("image", optionImageUrl)} alt={option} className="block aspect-[4/3] max-h-44 w-full object-cover" />}

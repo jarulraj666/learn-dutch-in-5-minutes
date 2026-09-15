@@ -20,6 +20,12 @@
           "order_index": 1,
           "passage_type": "audio",
           "title": "Afspraak bij de tandarts",
+          "speaker_genders": {
+            "Speaker1": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "dental assistant"
+          },
           "content_nl": "Goedemorgen, u spreekt met de assistent van tandartspraktijk De Glimlach. Dit is een herinnering voor meneer Bakker. U heeft morgen, woensdag 12 oktober, een afspraak om kwart over tien in de ochtend. Vergeet niet uw verzekeringspasje mee te nemen. Als u de afspraak wilt afzeggen, bel ons dan voor vier uur vanmiddag. Tot morgen!",
           "content_en": null,
           "scene_description": "",
@@ -43,6 +49,14 @@
           "order_index": 2,
           "passage_type": "audio",
           "title": "Bij de apotheek",
+          "speaker_genders": {
+            "Speaker1": "male",
+            "Speaker2": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "customer",
+            "Speaker2": "pharmacist"
+          },
           "content_nl": "Goedendag. Ik kom deze oogdruppels ophalen voor mijn dochter. - Goedemiddag. Heeft u een recept van de dokter? - Ja, hier is het recept. Hoe vaak moet ze de druppels gebruiken? - Ze moet drie keer per dag twee druppels in elk oog doen: 's morgens, 's middags en 's avonds. En bewaar de fles in de koelkast. - Dank u wel. Kan ik ook meteen pinnen? - Ja hoor, dat kan bij het apparaat rechts.",
           "content_en": null,
           "scene_description": "A man speaks with a female pharmacist behind the counter in a modern pharmacy.",
@@ -58,7 +72,7 @@
           ],
           "display_prompt_nl": "U hoort een gesprek: Bij de apotheek.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
           "image_prompt": [
-            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: A man speaks with a female pharmacist behind the counter in a modern pharmacy.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult male customer, one adult female pharmacist. Keep their appearance consistent with these genders and roles.\nScene: A man speaks with a female pharmacist behind the counter in a modern pharmacy.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
           ]
         },
         {
@@ -66,6 +80,12 @@
           "order_index": 3,
           "passage_type": "audio",
           "title": "Omroepbericht op het station",
+          "speaker_genders": {
+            "Speaker1": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "announcer"
+          },
           "content_nl": "Beste reizigers, attentie alstublieft. De intercity naar Utrecht Centraal van twaalf uur dertien rijdt vandaag niet vanaf spoor vier, maar vanaf spoor zeven. Deze trein heeft een vertraging van ongeveer vijftien minuten vanwege een storing aan de bovenleiding. Reizigers naar Amsterdam Centraal kunnen overstappen op de stoptrein van twaalf uur twintig op spoor twee. Onze excuses voor het ongemak.",
           "content_en": null,
           "scene_description": "",
@@ -85,6 +105,14 @@
           "order_index": 4,
           "passage_type": "audio",
           "title": "In de kledingwinkel",
+          "speaker_genders": {
+            "Speaker1": "female",
+            "Speaker2": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "shop assistant",
+            "Speaker2": "customer"
+          },
           "content_nl": "Hallo, kan ik u ergens mee helpen? - Ja, graag. Ik zoek deze blauwe jas, maar ik zie alleen maat S en M in het rek hangen. Heeft u deze ook in maat L? - Ik ga even in het magazijn achter kijken. Een ogenblikje alstublieft... Ja, we hebben er nog één in maat L! - Wat fijn. Mag ik hem even passen? - Natuurlijk, de paskamers zijn daar achterin bij de spiegels. Als de jas niet past, hebben we hem ook nog in het groen.",
           "content_en": null,
           "scene_description": "A male customer in a clothing shop asks a female shop assistant for help finding a jacket in another size.",
@@ -96,7 +124,7 @@
           ],
           "display_prompt_nl": "U hoort een gesprek: In de kledingwinkel.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
           "image_prompt": [
-            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: A male customer in a clothing shop asks a female shop assistant for help finding a jacket in another size.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult female shop assistant, one adult male customer. Keep their appearance consistent with these genders and roles.\nScene: A male customer in a clothing shop asks a female shop assistant for help finding a jacket in another size.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
           ]
         },
         {
@@ -104,6 +132,12 @@
           "order_index": 5,
           "passage_type": "audio",
           "title": "Bericht van de basisschool",
+          "speaker_genders": {
+            "Speaker1": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "school announcer"
+          },
           "content_nl": "Beste ouders en verzorgers, dit is een bericht van basisschool De Bron. Aanstaande vrijdag 24 mei vieren we ons jaarlijkse zomerfeest op het schoolplein. Het feest begint om twee uur 's middags en eindigt om vijf uur. Alle kinderen mogen verkleed naar school komen. Vergeet niet om iets te eten of te drinken mee te nemen voor de grote picknick. Bij slecht weer gaat het feest door in de sporthal. Tot vrijdag!",
           "content_en": null,
           "scene_description": "",
@@ -123,6 +157,14 @@
           "order_index": 6,
           "passage_type": "audio",
           "title": "Lunchpauze op het werk",
+          "speaker_genders": {
+            "Speaker1": "female",
+            "Speaker2": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "colleague",
+            "Speaker2": "colleague"
+          },
           "content_nl": "Hoi Sanne, ga je mee lunchen? - Ja, gezellig! Ik neem vandaag een soepje en een broodje kaas. Wat neem jij? - Ik heb mijn eigen salade meegebracht van huis. Zeg, weet jij wanneer de vergadering van vanmiddag begint? Op de kalender staat twee uur, maar ik hoorde dat het veranderd is. - Klopt, de manager is wat later. De vergadering begint nu pas om half drie in kamer 104.",
           "content_en": null,
           "scene_description": "Two office colleagues, a man and a woman, are sitting together at a lunch table in an office cafeteria.",
@@ -134,7 +176,7 @@
           ],
           "display_prompt_nl": "U hoort een gesprek: Lunchpauze op het werk.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
           "image_prompt": [
-            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Two office colleagues, a man and a woman, are sitting together at a lunch table in an office cafeteria.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult female colleague, one adult male colleague. Keep their appearance consistent with these genders and roles.\nScene: Two office colleagues, a man and a woman, are sitting together at a lunch table in an office cafeteria.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
           ]
         },
         {
@@ -142,6 +184,12 @@
           "order_index": 7,
           "passage_type": "audio",
           "title": "Voicemail van een vriendin",
+          "speaker_genders": {
+            "Speaker1": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "friend Karin"
+          },
           "content_nl": "Hoi Lisa, met Karin! Ik bel over onze afspraak om te fitnessen. Je vroeg of we woensdagavond konden gaan, maar dan moet ik overwerken. Kunnen we in plaats daarvan op donderdagavond gaan om zeven uur? We kunnen daarna samen een kop thee drinken bij mij thuis. Laat me even weten of dat schikt. Doeg!",
           "content_en": null,
           "scene_description": "",
@@ -161,6 +209,14 @@
           "order_index": 8,
           "passage_type": "audio",
           "title": "Aan de balie van het OV-loket",
+          "speaker_genders": {
+            "Speaker1": "female",
+            "Speaker2": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "customer",
+            "Speaker2": "transit employee"
+          },
           "content_nl": "Goedemiddag, ik wil graag een abonnement kopen voor de bus. Ik reis elke dag van Utrecht naar Zeist voor mijn werk. - Goedemiddag. Reist u in het weekend of alleen op werkdagen? - Alleen van maandag tot en met vrijdag. - Dan is het Dal Vrij abonnement voor de werkdagen het goedkoopst. Dat kost vijfenveertig euro per maand. Neem wel een pasfoto en uw identiteitskaart mee als u het online aanvraagt. - Prima, bedankt voor het advies!",
           "content_en": null,
           "scene_description": "A young woman stands at a public transport customer service desk talking to an employee behind the counter.",
@@ -172,7 +228,7 @@
           ],
           "display_prompt_nl": "U hoort een gesprek: Aan de balie van het OV-loket.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
           "image_prompt": [
-            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: A young woman stands at a public transport customer service desk talking to an employee behind the counter.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult female customer, one adult male transit employee. Keep their appearance consistent with these genders and roles.\nScene: A young woman stands at a public transport customer service desk talking to an employee behind the counter.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
           ]
         }
       ],
@@ -825,6 +881,12 @@
           "content_nl": "Goedemiddag mevrouw De Jong, u spreekt met Peter van Garage De Ster. Ik bel u over uw auto. De APK-keuring is klaar. De auto is goedgekeurd, maar we hebben wel twee nieuwe voorbanden moeten plaatsen. De totale kosten zijn honderdnegentig euro. U kunt de auto vandaag ophalen tot vijf uur, of morgen vanaf half negen. Vergeet niet uw kentekenbewijs mee te nemen als u de sleutel komt halen. Fijne dag nog!",
           "content_en": null,
           "scene_description": "",
+          "speaker_genders": {
+            "Speaker1": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "garage employee"
+          },
           "media_urls": [
             {
               "type": "audio",
@@ -841,6 +903,14 @@
           "order_index": 2,
           "passage_type": "audio",
           "title": "Bij de klantenservice van de winkel",
+          "speaker_genders": {
+            "Speaker1": "female",
+            "Speaker2": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "customer",
+            "Speaker2": "shop assistant"
+          },
           "content_nl": "Goedemiddag, kan ik deze boormachine nog terugbrengen? - Goedemiddag. Ja hoor, dat kan. Is het apparaat kapot? - Nee, het werkt prima, maar mijn man blijkt al precies dezelfde boormachine te hebben. - Ah, ik begrijp het. Heeft u de kassabon nog bij u? - Ja, hier is de bon. Ik heb de boormachine vorige week dinsdag gekocht. - Heel goed. Omdat het binnen veertien dagen is, krijgt u gewoon uw geld terug. Mocht u liever een cadeaubon willen, dan kan dat ook. - Nee hoor, ik wil graag het geld terug op mijn bankrekening. - Prima, als u uw pinpas even op het apparaat wilt leggen, dan storten we het bedrag direct terug.",
           "content_en": null,
           "scene_description": "A customer stands at a hardware store service desk talking to an employee about returning an electric drill.",
@@ -852,7 +922,7 @@
           ],
           "display_prompt_nl": "U hoort een gesprek: Bij de klantenservice van de winkel.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
           "image_prompt": [
-            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: A customer stands at a hardware store service desk talking to an employee about returning an electric drill.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult female customer, one adult male shop assistant. Keep their appearance consistent with these genders and roles.\nScene: A customer stands at a hardware store service desk talking to an employee about returning an electric drill.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
           ]
         },
         {
@@ -860,6 +930,12 @@
           "order_index": 3,
           "passage_type": "audio",
           "title": "Aankondiging van de bibliotheek",
+          "speaker_genders": {
+            "Speaker1": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "library announcer"
+          },
           "content_nl": "Beste bezoekers van bibliotheek Centrum. Wij willen u graag herinneren aan onze speciale boekenmarkt aanstaande zaterdag 15 juni. Vanaf tien uur 's morgens tot vier uur 's middags verkopen wij tweedehands boeken voor slechts één euro per stuk. Er zijn kinderboeken, romans en kookboeken. De opbrengst van deze markt gebruiken we voor het kopen van nieuwe spelletjes voor de jeugdafdeling. Let op: u kunt zaterdag alleen met pin betalen, er is geen contant geld aanwezig. Graag tot zaterdag!",
           "content_en": null,
           "scene_description": "",
@@ -879,6 +955,14 @@
           "order_index": 4,
           "passage_type": "audio",
           "title": "Gesprek over een verjaardagscadeau",
+          "speaker_genders": {
+            "Speaker1": "male",
+            "Speaker2": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "colleague Mark",
+            "Speaker2": "colleague"
+          },
           "content_nl": "Hoi Mark, weet jij dat Sarah volgende week donderdag vijftig jaar wordt? - Zo, vijftig alweer! Gaan we met het team een cadeau voor haar kopen? - Ja, dat is het plan. Ik dacht aan een cadeaubon voor een diner voor twee personen, want ze houdt erg van lekker eten. - Dat is een erg leuk idee! Hoeveel geld verzamelen we per persoon? - Vijf euro per collega. Als iedereen meedoet, hebben we precies genoeg voor een mooi diner. - Is goed. Tot wanneer verzamel jij het geld? - Tot aanstaande dinsdag, want op woensdag ga ik de bon kopen in de winkel.",
           "content_en": null,
           "scene_description": "Two colleagues sit at a breakroom table with coffee cups, discussing a gift collection for a colleague.",
@@ -890,7 +974,7 @@
           ],
           "display_prompt_nl": "U hoort een gesprek: Gesprek over een verjaardagscadeau.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
           "image_prompt": [
-            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Two colleagues sit at a breakroom table with coffee cups, discussing a gift collection for a colleague.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult male colleague Mark, one adult female colleague. Keep their appearance consistent with these genders and roles.\nScene: Two colleagues sit at a breakroom table with coffee cups, discussing a gift collection for a colleague.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
           ]
         },
         {
@@ -898,6 +982,12 @@
           "order_index": 5,
           "passage_type": "audio",
           "title": "Telefoonbericht van de zwemschool",
+          "speaker_genders": {
+            "Speaker1": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "swimming-school employee Karin"
+          },
           "content_nl": "Goedemiddag meneer Yilmaz, u spreekt met Karin van zwemschool De Plons. Ik bel u over de zwemles voor uw zoon Lucas. Er is een plekje vrijgekomen in de groep op zaterdagochtend om negen uur. De lessen beginnen volgende week zaterdag, op 8 september. Een les duurt vierenveertig minuten. Wilt u mij vóór donderdag vijf uur terugbellen om te laten weten of Lucas wil meedoen? Als ik niks hoor, geven we de plek aan iemand anders op de wachtlijst. Alvast bedankt en fijne dag!",
           "content_en": null,
           "scene_description": "",
@@ -917,6 +1007,14 @@
           "order_index": 6,
           "passage_type": "audio",
           "title": "Aan de balie bij de gemeente",
+          "speaker_genders": {
+            "Speaker1": "male",
+            "Speaker2": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "customer Thomas",
+            "Speaker2": "municipal employee"
+          },
           "content_nl": "Goedemorgen, ik kom mijn nieuwe rijbewijs ophalen. Mijn naam is Thomas Berg. - Goedemorgen meneer Berg. Laat me even kijken in het systeem. Ja, het rijbewijs ligt klaar. Mag ik uw oude rijbewijs zien? - Jazeker, alstublieft. - Dank u wel. U moet nog wel even de kosten betalen. Dat is vierenveertig euro en vijftig cent. - Kan ik hier met contant geld betalen? - Nee, helaas. Bij onze balies kunt u alleen nog pinnen. - Oh, geen probleem, ik heb mijn pinpas bij me. - Heel goed. Als u hier uw handtekening zet op het scherm, geef ik u direct uw nieuwe rijbewijs mee.",
           "content_en": null,
           "scene_description": "A citizen talks to a staff member at a municipal service counter regarding picking up a driving license.",
@@ -928,7 +1026,7 @@
           ],
           "display_prompt_nl": "U hoort een gesprek: Aan de balie bij de gemeente.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
           "image_prompt": [
-            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: A citizen talks to a staff member at a municipal service counter regarding picking up a driving license.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult male customer Thomas, one adult female municipal employee. Keep their appearance consistent with these genders and roles.\nScene: A citizen talks to a staff member at a municipal service counter regarding picking up a driving license.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
           ]
         },
         {
@@ -936,6 +1034,12 @@
           "order_index": 7,
           "passage_type": "audio",
           "title": "Omroepbericht in het winkelcentrum",
+          "speaker_genders": {
+            "Speaker1": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "announcer"
+          },
           "content_nl": "Attentie, beste bezoekers van winkelcentrum De Passage. Wij willen u erop attenderen dat het winkelcentrum vandaag om zes uur 's avonds sluit in plaats van acht uur, vanwege onderhoudswerkzaamheden aan het elektriciteitsnet. De supermarkt blijft wel open tot zeven uur. Vanaf morgenochtend negen uur zijn alle winkels weer volgens de normale openingstijden geopend. Wij danken u voor uw begrip en wensen u nog een prettige middag.",
           "content_en": null,
           "scene_description": "",
@@ -955,6 +1059,14 @@
           "order_index": 8,
           "passage_type": "audio",
           "title": "Een uitstapje plannen",
+          "speaker_genders": {
+            "Speaker1": "female",
+            "Speaker2": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "friend Sophie",
+            "Speaker2": "friend"
+          },
           "content_nl": "Hey Sophie, zullen we dit weekend naar het Spoorwegmuseum in Utrecht gaan? - Leuk idee! Ik heb gehoord dat er een nieuwe tentoonstelling is over oude stoomtreinen. Gaan we zaterdag of zondag? - Zaterdag voorspellen ze veel regen, dus zondag lijkt me beter. - Goed plan. Als we via de website van het museum kaartjes kopen, krijgen we twee euro korting per kaartje. Normaal kost een kaartje vijftien euro, dus dan betalen we dertien euro. - Oh, dat scheelt weer! Hoe gaan we er naartoe? Met de auto of met de trein? - Utrecht Centraal is erg dichtbij het museum, maar vanaf het station kun je ook met een speciale pendeltrein rechtstreeks naar het museum rijden. Dat is echt super leuk! - Geweldig, laten we de trein nemen. Dan vertrekken we zondag om tien uur vanaf het station.",
           "content_en": null,
           "scene_description": "Two friends sit together on a sofa looking at a tablet, planning a day trip.",
@@ -966,7 +1078,7 @@
           ],
           "display_prompt_nl": "U hoort een gesprek: Een uitstapje plannen.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
           "image_prompt": [
-            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Two friends sit together on a sofa looking at a tablet, planning a day trip.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult female friend Sophie, one adult female friend. Keep their appearance consistent with these genders and roles.\nScene: Two friends sit together on a sofa looking at a tablet, planning a day trip.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
           ]
         }
       ],
@@ -1615,6 +1727,12 @@
           "order_index": 1,
           "passage_type": "audio",
           "title": "Dierenartspraktijk De Molen",
+          "speaker_genders": {
+            "Speaker1": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "veterinary assistant"
+          },
           "content_nl": "Goedemiddag mevrouw Visser, u spreekt met de assistent van dierenartspraktijk De Molen. Ik bel u over uw hond Max. Hij moet zijn jaarlijkse prik tegen hondenziekte hebben. De afspraak staat gepland voor aanstaande dinsdag 18 november om kwart over drie in de middag. Wilt u het inentingsboekje van Max niet vergeten mee te nemen? Als de datum u niet schikt, kunt u ons tot maandag twaalf uur bellen om af te zeggen. Tot dinsdag!",
           "content_en": null,
           "scene_description": "",
@@ -1634,6 +1752,14 @@
           "order_index": 2,
           "passage_type": "audio",
           "title": "In de sportschool",
+          "speaker_genders": {
+            "Speaker1": "female",
+            "Speaker2": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "customer",
+            "Speaker2": "fitness employee"
+          },
           "content_nl": "Goedemorgen! Ik wil graag weer beginnen met sporten. Bieden jullie ook groepslessen aan? - Zeker! We hebben spinning, yoga en zumba. - Ik wil graag meedoen met zumba. Op welke dagen is die les? - Zumba is elke donderdagavond om zeven uur. Een les duurt een uur. - En wat kost een maandabonnement bij jullie? - Een maandabonnement voor alle lessen kost vijfendertig euro. U kunt vandaag gratis een proefles meedoen als u wilt. - Dat klinkt goed, ik doe vanavond meteen mee!",
           "content_en": null,
           "scene_description": "A man asks a female fitness trainer about group exercise classes at a gym reception desk.",
@@ -1645,7 +1771,7 @@
           ],
           "display_prompt_nl": "U hoort een gesprek: In de sportschool.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
           "image_prompt": [
-            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: A man asks a female fitness trainer about group exercise classes at a gym reception desk.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult female customer, one adult male fitness employee. Keep their appearance consistent with these genders and roles.\nScene: A man asks a female fitness trainer about group exercise classes at a gym reception desk.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
           ]
         },
         {
@@ -1653,6 +1779,12 @@
           "order_index": 3,
           "passage_type": "audio",
           "title": "Bericht van Kapsalon Stijl",
+          "speaker_genders": {
+            "Speaker1": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "hairdresser Sander"
+          },
           "content_nl": "Hallo meneer Jansen, met Sander van Kapsalon Stijl. Ik bel u over uw afspraak voor morgenochtend om negen uur. Helaas is onze kapster ziek geworden. Zou u in plaats daarvan morgenmiddag om twee uur kunnen komen? Dan helpt mijn collega u. Omdat we de afspraak moeten verzetten, krijgt u van ons tien procent korting op de knipbeurt. Bel ons alstublieft even terug om te laten weten of twee uur schikt. Dank u wel!",
           "content_en": null,
           "scene_description": "",
@@ -1672,6 +1804,14 @@
           "order_index": 4,
           "passage_type": "audio",
           "title": "Bij de bakker",
+          "speaker_genders": {
+            "Speaker1": "female",
+            "Speaker2": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "bakery employee",
+            "Speaker2": "customer"
+          },
           "content_nl": "Goedemorgen! Wat kan ik voor u inpakken? - Goedemorgen. Ik wil graag een volkorenbrood en vier krentenbollen. - Komt voor elkaar. Zoekt u verder nog iets? - Ja, mijn zoon is morgen jarig. Welke taarten heeft u vandaag? - We hebben appelgebak en slagroomtaart. - Doe dan maar een slagroomtaart voor acht personen. - Prima. Dat wordt samen achttien euro en vijftig cent. - Kan ik pinnen? - Ja hoor, graag zelfs!",
           "content_en": null,
           "scene_description": "A customer orders bread and pastries from a baker standing behind a bakery display counter.",
@@ -1683,7 +1823,7 @@
           ],
           "display_prompt_nl": "U hoort een gesprek: Bij de bakker.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
           "image_prompt": [
-            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: A customer orders bread and pastries from a baker standing behind a bakery display counter.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult female bakery employee, one adult male customer. Keep their appearance consistent with these genders and roles.\nScene: A customer orders bread and pastries from a baker standing behind a bakery display counter.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
           ]
         },
         {
@@ -1691,6 +1831,12 @@
           "order_index": 5,
           "passage_type": "audio",
           "title": "Omroepbericht op het busstation",
+          "speaker_genders": {
+            "Speaker1": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "bus-station announcer"
+          },
           "content_nl": "Beste reizigers, attentie alstublieft. Dit is een bericht voor de passagiers van bus 80 richting Arnhem. Vanwege werkzaamheden aan de weg rijdt bus 80 vandaag een andere route. Halte Centrum en halte Parkstraat komen te vervallen. Reizigers voor het centrum kunnen opstappen bij tijdelijke halte Station-Zuid. Bus 80 vertrekt elke twintig minuten vanaf perron B. Onze excuses voor het ongemak.",
           "content_en": null,
           "scene_description": "",
@@ -1710,6 +1856,14 @@
           "order_index": 6,
           "passage_type": "audio",
           "title": "In het tuincentrum",
+          "speaker_genders": {
+            "Speaker1": "male",
+            "Speaker2": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "garden-centre employee",
+            "Speaker2": "customer"
+          },
           "content_nl": "Goedemiddag! Kan ik u ergens mee helpen? - Ja, graag! Ik zoek een mooie plant voor in mijn woonkamer. Maar er is niet heel veel zonlicht in die kamer. - Dan adviseer ik u deze groene schaduwplant. Die heeft weinig licht nodig. - Dat is fijn! En hoe vaak moet ik deze plant water geven? - Eén keer per week is genoeg. Zorg wel dat de grond niet te nat blijft. - Mooi. Ik neem deze plant mee. En hebt u ook nog zakken potgrond? - Ja hoor, die liggen bij de uitgang aan de linkerkant.",
           "content_en": null,
           "scene_description": "A customer consults a staff member among green house plants in a garden center.",
@@ -1721,7 +1875,7 @@
           ],
           "display_prompt_nl": "U hoort een gesprek: In het tuincentrum.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
           "image_prompt": [
-            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: A customer consults a staff member among green house plants in a garden center.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult male garden-centre employee, one adult female customer. Keep their appearance consistent with these genders and roles.\nScene: A customer consults a staff member among green house plants in a garden center.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
           ]
         },
         {
@@ -1729,6 +1883,12 @@
           "order_index": 7,
           "passage_type": "audio",
           "title": "Vrijwilligersmarkt op de radio",
+          "speaker_genders": {
+            "Speaker1": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "radio announcer"
+          },
           "content_nl": "Zoekt u leuk en zinvol werk in uw vrije tijd? Kom dan aanstaande zaterdag 10 mei naar de jaarlijkse Vrijwilligersmarkt in wijkcentrum Het Anker! Tussen elf uur 's morgens en drie uur 's middags presenteren meer dan twintig organisaties zich. Denk aan werk in het buurthuis, de bibliotheek of de dierenopvang. De toegang is helemaal gratis en alle bezoekers krijgen een kopje koffie of thee aangeboden. Tot zaterdag!",
           "content_en": null,
           "scene_description": "",
@@ -1748,6 +1908,14 @@
           "order_index": 8,
           "passage_type": "audio",
           "title": "Samen koken",
+          "speaker_genders": {
+            "Speaker1": "male",
+            "Speaker2": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "friend Tim",
+            "Speaker2": "friend"
+          },
           "content_nl": "Hoi Tim! Zullen we afspreken wat we vanavond gaan koken voor het eten? - Prima idee! Wat dacht je van verse pasta met tomatensaus en groenten? - Lekker! Laat me even kijken wat we al in huis hebben. We hebben al pasta en uien in de kast liggen. - Oké, dan moeten we nog tomaten, paprika en kaas kopen. - Klopt! Wie gaat de boodschappen doen? - Ik ga wel even naar de supermarkt om de hoek. Dan kun jij alvast de tafel dekken. - Is goed. Onze vrienden komen om zeven uur eten, dus we hebben genoeg tijd.",
           "content_en": null,
           "scene_description": "Two friends stand in a brightly lit kitchen looking at a recipe book and making a shopping list.",
@@ -1759,7 +1927,7 @@
           ],
           "display_prompt_nl": "U hoort een gesprek: Samen koken.\n\nLees eerst de vraag.\nLuister daarna naar het gesprek.",
           "image_prompt": [
-            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nScene: Two friends stand in a brightly lit kitchen looking at a recipe book and making a shopping list.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult male friend Tim, one adult female friend. Keep their appearance consistent with these genders and roles.\nScene: Two friends stand in a brightly lit kitchen looking at a recipe book and making a shopping list.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
           ]
         }
       ],
@@ -2379,6 +2547,1610 @@
           ],
           "answer": "Om 19.00 uur",
           "explanation": "The speaker mentions their friends arrive to eat at 19:00 (zeven uur).",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "4": {
+      "section": "listening",
+      "exam_number": 4,
+      "level": "A2",
+      "title": "Luisteren - Oefenexamen 4",
+      "instructions": "Luister naar de fragmenten en beantwoord de vragen.",
+      "time_limit_minutes": 45,
+      "total_questions": 25,
+      "parts_count": 1,
+      "pass_threshold": 18,
+      "max_score": 25,
+      "passages": [
+        {
+          "id": "p1",
+          "order_index": 1,
+          "passage_type": "audio",
+          "title": "Bij de winkel voor tablethoesjes",
+          "speaker_genders": {
+            "Speaker1": "male",
+            "Speaker2": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "customer",
+            "Speaker2": "shop assistant"
+          },
+          "content_nl": "Goedemiddag. Ik zoek een beschermhoesje voor deze tablet. Hebben jullie die in het rood? - Goedemiddag! Laat me even kijken. Rode hoesjes voor dit model zijn helaas uitverkocht. We hebben ze wel nog in het zwart, donkerblauw en groen. - Aha, jammer. Dan neem ik liever de donkerblauwe. Wat kost die? - Die kost achttien euro. Maar als u er ook een glazen beschermfolie bij koopt voor het scherm, krijgt u vijf euro korting op het totaal. - Dat is een goeie deal! Doe de beschermfolie er dan maar bij. - Prima. Dat wordt dan samen vijfentwintig euro.",
+          "content_en": null,
+          "scene_description": "A male customer in an electronics shop asks a female shop assistant about a protective case for his tablet.",
+          "media_urls": [],
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult male customer, one adult female shop assistant. Keep their appearance consistent with these genders and roles.\nScene: A male customer in an electronics shop asks a female shop assistant about a protective case for his tablet.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p2",
+          "order_index": 2,
+          "passage_type": "audio",
+          "title": "Bij de fietsenmaker",
+          "speaker_genders": {
+            "Speaker1": "female",
+            "Speaker2": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "customer",
+            "Speaker2": "bicycle mechanic"
+          },
+          "content_nl": "Goedemiddag, mijn achterband is helemaal lek. Kunt u die vandaag nog repareren? - Goedemiddag! Laat me even kijken... Het ventiel is beschadigd, dus ik moet de binnenband vervangen. Dat kan ik binnen een half uur doen. - Fijn, wat gaat dat ongeveer kosten? - De nieuwe binnenband kost twaalf euro, en het arbeidsloon is acht euro. Samen twintig euro. - Dat is prima. Kan ik hier wachten? - Natuurlijk, er staan stoelen bij de ingang. Ik roep u zodra de fiets klaar is.",
+          "content_en": null,
+          "scene_description": "A female customer talks to a male mechanic at a bicycle repair shop about fixing a flat tire.",
+          "media_urls": [],
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult female customer, one adult male bicycle mechanic. Keep their appearance consistent with these genders and roles.\nScene: A female customer talks to a male mechanic at a bicycle repair shop about fixing a flat tire.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p3",
+          "order_index": 3,
+          "passage_type": "audio",
+          "title": "Omroepbericht op het vliegveld",
+          "speaker_genders": {
+            "Speaker1": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "airport announcer"
+          },
+          "content_nl": "Geachte passagiers, uw aandacht alstublieft. De vlucht naar Barcelona vanaf gate C12 vertrekt vandaag helaas met een vertraging van veertig minuten vanwege het drukke luchtverkeer. Het instappen begint nu om kwart voor drie in plaats van om twee uur. Passagiers met kleine kinderen en mindervaliden mogen als eerste instappen. Wij vragen u om op tijd bij de gate aanwezig te zijn. Onze excuses voor het ongemak.",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [],
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult male airport announcer. Keep their appearance consistent with these genders and roles.\nScene: Geachte passagiers, uw aandacht alstublieft. De vlucht naar Barcelona vanaf gate C12 vertrekt vandaag helaas met een vertraging van veertig minuten vanwege het drukke luchtverkeer. Het instappen begint nu om kwart voor drie in plaats van om twee uur. Passagiers met kleine kinderen en mindervaliden mogen als eerste instappen. Wij vragen u om op tijd bij de gate aanwezig te zijn. Onze excuses voor het ongemak.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p4",
+          "order_index": 4,
+          "passage_type": "audio",
+          "title": "In de boekwinkel",
+          "speaker_genders": {
+            "Speaker1": "male",
+            "Speaker2": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "customer",
+            "Speaker2": "bookshop employee"
+          },
+          "content_nl": "Goedemiddag, ik ben op zoek naar het nieuwste boek van Esther Verhoef. Hebben jullie dat op voorraad? - Goedemiddag! Helaas is dat boek op dit moment uitverkocht, maar we verwachten volgende week een nieuwe levering. - Kan ik het dan voor u laten reserveren? - Ja, graag. Moet ik daarvoor iets betalen? - Nee, reserveren is gratis. Ik heb alleen uw naam en telefoonnummer nodig. - Prima, ik heet Peter de Groot en mijn nummer is zes twee drie vier vijf zes zeven acht. - Bedankt, meneer De Groot. Zodra het boek binnen is, bellen wij u op.",
+          "content_en": null,
+          "scene_description": "A male customer asks a female employee at a bookstore about a book that is currently out of stock.",
+          "media_urls": [],
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult male customer, one adult female bookshop employee. Keep their appearance consistent with these genders and roles.\nScene: A male customer asks a female employee at a bookstore about a book that is currently out of stock.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p5",
+          "order_index": 5,
+          "passage_type": "audio",
+          "title": "Bericht van de fysiotherapeut",
+          "speaker_genders": {
+            "Speaker1": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "physiotherapy practice assistant"
+          },
+          "content_nl": "Goedemorgen meneer Aksoy, u spreekt met de praktijkassistente van fysiotherapiepraktijk BeweegGoed. Ik bel u over uw afspraak van aanstaande donderdag om elf uur. Helaas is onze fysiotherapeut die dag ziek, dus wij willen de afspraak graag verzetten naar vrijdag om half twaalf. Kunt u ons laten weten of dat schikt? Als het niet uitkomt, kunt u ook een andere dag kiezen. Belt u ons gerust terug op het bekende nummer. Fijne dag verder!",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [],
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult female physiotherapy practice assistant. Keep their appearance consistent with these genders and roles.\nScene: Goedemorgen meneer Aksoy, u spreekt met de praktijkassistente van fysiotherapiepraktijk BeweegGoed. Ik bel u over uw afspraak van aanstaande donderdag om elf uur. Helaas is onze fysiotherapeut die dag ziek, dus wij willen de afspraak graag verzetten naar vrijdag om half twaalf. Kunt u ons laten weten of dat schikt? Als het niet uitkomt, kunt u ook een andere dag kiezen. Belt u ons gerust terug op het bekende nummer. Fijne dag verder!\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p6",
+          "order_index": 6,
+          "passage_type": "audio",
+          "title": "Bij het postkantoor",
+          "speaker_genders": {
+            "Speaker1": "female",
+            "Speaker2": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "customer",
+            "Speaker2": "post office employee"
+          },
+          "content_nl": "Goedemiddag, ik wil dit pakket versturen naar Duitsland. Wat zijn de mogelijkheden? - Goedemiddag! U kunt kiezen voor standaardverzending, dat duurt ongeveer vijf werkdagen en kost negen euro, of voor expresverzending, dat komt binnen twee dagen aan en kost zeventien euro. - Dan neem ik toch de standaardverzending, dat hoeft niet zo snel. Kan ik het pakket ook laten volgen? - Ja, tegen een meerprijs van twee euro krijgt u een track- en tracecode per sms. - Doe dat er dan maar bij. Wat wordt de totaalprijs? - Dat wordt dan elf euro in totaal.",
+          "content_en": null,
+          "scene_description": "A female customer sends a package to Germany at a post office counter, helped by a male employee.",
+          "media_urls": [],
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult female customer, one adult male post office employee. Keep their appearance consistent with these genders and roles.\nScene: A female customer sends a package to Germany at a post office counter, helped by a male employee.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p7",
+          "order_index": 7,
+          "passage_type": "audio",
+          "title": "Bericht over een gevonden voorwerp",
+          "speaker_genders": {
+            "Speaker1": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "station lost-and-found employee"
+          },
+          "content_nl": "Goedemiddag mevrouw Dekker, u spreekt met de afdeling gevonden voorwerpen van station Centraal. Wij hebben een blauwe paraplu gevonden die volgens de naam op het label van u is. U kunt de paraplu ophalen bij de balie op perron één, elke dag geopend van negen tot vijf uur. Neemt u wel een identiteitsbewijs mee ter controle. Als u de paraplu niet binnen twee weken ophaalt, wordt hij naar een goed doel gebracht. Tot ziens!",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [],
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult male station lost-and-found employee. Keep their appearance consistent with these genders and roles.\nScene: Goedemiddag mevrouw Dekker, u spreekt met de afdeling gevonden voorwerpen van station Centraal. Wij hebben een blauwe paraplu gevonden die volgens de naam op het label van u is. U kunt de paraplu ophalen bij de balie op perron één, elke dag geopend van negen tot vijf uur. Neemt u wel een identiteitsbewijs mee ter controle. Als u de paraplu niet binnen twee weken ophaalt, wordt hij naar een goed doel gebracht. Tot ziens!\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p8",
+          "order_index": 8,
+          "passage_type": "audio",
+          "title": "Aan de kassa van de supermarkt",
+          "speaker_genders": {
+            "Speaker1": "female",
+            "Speaker2": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "customer",
+            "Speaker2": "cashier"
+          },
+          "content_nl": "Goedemiddag, heeft u ook een bonuskaart bij ons? - Nee, sorry, die ben ik vergeten mee te nemen. Kan ik hem ook op mijn telefoon laten zien? - Ja, dat kan ook, via de app van de supermarkt. Heeft u die app al geïnstalleerd? - Nee, nog niet, ik heb hier geen tijd meer voor. - Geen probleem, dan reken ik deze keer zonder korting af, maar u kunt de bonnetjes bewaren en de punten later alsnog laten bijschrijven via de klantenservice. - Oké, dat doe ik. Kan ik ook contactloos betalen? - Ja, hier bij de pinautomaat, houdt u uw kaart of telefoon er maar tegenaan. - Bedankt, fijne dag verder!",
+          "content_en": null,
+          "scene_description": "A female customer talks to a male cashier at a supermarket checkout about a discount card.",
+          "media_urls": [],
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult female customer, one adult male cashier. Keep their appearance consistent with these genders and roles.\nScene: A female customer talks to a male cashier at a supermarket checkout about a discount card.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "passage_id": "p1",
+          "part_number": null,
+          "order_index": 1,
+          "question_text": "Welke kleur hoesje wil de klant eerst?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Rood",
+            "Zwart",
+            "Donkerblauw",
+            "Groen"
+          ],
+          "answer": "Rood",
+          "explanation": "The customer first asks for a red case ('in het rood').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q2",
+          "passage_id": "p1",
+          "part_number": null,
+          "order_index": 2,
+          "question_text": "Voor welke kleur hoesje kiest de klant uiteindelijk?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Donkerblauw",
+            "Zwart",
+            "Groen",
+            "Rood"
+          ],
+          "answer": "Donkerblauw",
+          "explanation": "Since red is sold out, the customer picks the dark blue ('donkerblauwe') case.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q3",
+          "passage_id": "p1",
+          "part_number": null,
+          "order_index": 3,
+          "question_text": "Hoeveel betaalt de klant in totaal?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Vijfentwintig euro",
+            "Achttien euro",
+            "Dertien euro",
+            "Twintig euro"
+          ],
+          "answer": "Vijfentwintig euro",
+          "explanation": "With the case and screen protector together, the total comes to twenty-five euros ('vijfentwintig euro').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q4",
+          "passage_id": "p2",
+          "part_number": null,
+          "order_index": 4,
+          "question_text": "Wat is er kapot aan de fiets?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Het ventiel van de achterband is beschadigd",
+            "De ketting is los",
+            "De rem werkt niet",
+            "Het licht is stuk"
+          ],
+          "answer": "Het ventiel van de achterband is beschadigd",
+          "explanation": "The mechanic finds the valve ('ventiel') of the rear tire is damaged.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q5",
+          "passage_id": "p2",
+          "part_number": null,
+          "order_index": 5,
+          "question_text": "Hoeveel kost de reparatie in totaal?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Twintig euro",
+            "Twaalf euro",
+            "Acht euro",
+            "Vijfentwintig euro"
+          ],
+          "answer": "Twintig euro",
+          "explanation": "Twelve euros for the tube plus eight euros labor makes twenty euros total.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q6",
+          "passage_id": "p2",
+          "part_number": null,
+          "order_index": 6,
+          "question_text": "Waar kan de klant wachten?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Op de stoelen bij de ingang",
+            "Buiten op straat",
+            "In een wachtkamer boven",
+            "Bij de kassa"
+          ],
+          "answer": "Op de stoelen bij de ingang",
+          "explanation": "The mechanic points out chairs by the entrance ('stoelen bij de ingang').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q7",
+          "passage_id": "p3",
+          "part_number": null,
+          "order_index": 7,
+          "question_text": "Waarom heeft de vlucht vertraging?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Vanwege druk luchtverkeer",
+            "Vanwege het weer",
+            "Vanwege een technisch probleem",
+            "Vanwege personeelstekort"
+          ],
+          "answer": "Vanwege druk luchtverkeer",
+          "explanation": "The announcement blames the delay on busy air traffic ('druk luchtverkeer').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q8",
+          "passage_id": "p3",
+          "part_number": null,
+          "order_index": 8,
+          "question_text": "Hoe laat begint het instappen nu?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Kwart voor drie",
+            "Twee uur",
+            "Drie uur",
+            "Half drie"
+          ],
+          "answer": "Kwart voor drie",
+          "explanation": "Boarding now starts at quarter to three ('kwart voor drie') instead of two o'clock.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q9",
+          "passage_id": "p3",
+          "part_number": null,
+          "order_index": 9,
+          "question_text": "Wie mag als eerste instappen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Passagiers met kleine kinderen en mindervaliden",
+            "Passagiers in de businessclass",
+            "Passagiers zonder bagage",
+            "Iedereen tegelijk"
+          ],
+          "answer": "Passagiers met kleine kinderen en mindervaliden",
+          "explanation": "Passengers with young children and disabled passengers board first.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q10",
+          "passage_id": "p4",
+          "part_number": null,
+          "order_index": 10,
+          "question_text": "Waarom kan de klant het boek nu niet meenemen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Het boek is uitverkocht",
+            "Het boek is te duur",
+            "De winkel verkoopt dat boek niet",
+            "De klant heeft niet genoeg geld"
+          ],
+          "answer": "Het boek is uitverkocht",
+          "explanation": "The employee says the book is currently sold out ('uitverkocht').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q11",
+          "passage_id": "p4",
+          "part_number": null,
+          "order_index": 11,
+          "question_text": "Wat moet de klant geven om het boek te reserveren?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Zijn naam en telefoonnummer",
+            "Een aanbetaling",
+            "Zijn adres",
+            "Zijn e-mailadres"
+          ],
+          "answer": "Zijn naam en telefoonnummer",
+          "explanation": "The employee only needs his name and phone number to reserve the book.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q12",
+          "passage_id": "p4",
+          "part_number": null,
+          "order_index": 12,
+          "question_text": "Wanneer wordt de nieuwe levering verwacht?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Volgende week",
+            "Morgen",
+            "Over een maand",
+            "Vandaag nog"
+          ],
+          "answer": "Volgende week",
+          "explanation": "The employee expects a new delivery next week ('volgende week').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q13",
+          "passage_id": "p5",
+          "part_number": null,
+          "order_index": 13,
+          "question_text": "Waarom belt de assistente meneer Aksoy?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De afspraak moet worden verzet",
+            "De afspraak is geannuleerd",
+            "Meneer Aksoy moet meer betalen",
+            "De praktijk is verhuisd"
+          ],
+          "answer": "De afspraak moet worden verzet",
+          "explanation": "The assistant calls to reschedule the appointment because the physiotherapist is sick.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q14",
+          "passage_id": "p5",
+          "part_number": null,
+          "order_index": 14,
+          "question_text": "Naar welke dag wil de praktijk de afspraak verzetten?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Vrijdag",
+            "Zaterdag",
+            "Maandag",
+            "Woensdag"
+          ],
+          "answer": "Vrijdag",
+          "explanation": "The practice proposes moving the appointment to Friday ('vrijdag').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q15",
+          "passage_id": "p5",
+          "part_number": null,
+          "order_index": 15,
+          "question_text": "Wat moet meneer Aksoy doen als vrijdag niet uitkomt?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Terugbellen om een andere dag te kiezen",
+            "Naar de praktijk toe komen",
+            "Een e-mail sturen",
+            "Niets, de afspraak vervalt dan"
+          ],
+          "answer": "Terugbellen om een andere dag te kiezen",
+          "explanation": "He is asked to call back to pick another day if Friday doesn't work.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q16",
+          "passage_id": "p6",
+          "part_number": null,
+          "order_index": 16,
+          "question_text": "Waarom kiest de klant voor standaardverzending?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Het pakket hoeft niet snel aan te komen",
+            "Standaardverzending is veiliger",
+            "Expresverzending is niet mogelijk naar Duitsland",
+            "De klant wil geen track- en tracecode"
+          ],
+          "answer": "Het pakket hoeft niet snel aan te komen",
+          "explanation": "The customer says it doesn't need to arrive quickly, so she picks standard shipping.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q17",
+          "passage_id": "p6",
+          "part_number": null,
+          "order_index": 17,
+          "question_text": "Wat kost het extra om het pakket te kunnen volgen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Twee euro",
+            "Negen euro",
+            "Zeventien euro",
+            "Vijf euro"
+          ],
+          "answer": "Twee euro",
+          "explanation": "Adding a track-and-trace code costs an extra two euros.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q18",
+          "passage_id": "p6",
+          "part_number": null,
+          "order_index": 18,
+          "question_text": "Wat is de totale prijs die de klant betaalt?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Elf euro",
+            "Negen euro",
+            "Zeventien euro",
+            "Negentien euro"
+          ],
+          "answer": "Elf euro",
+          "explanation": "Nine euros for shipping plus two euros for tracking makes eleven euros total.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q19",
+          "passage_id": "p7",
+          "part_number": null,
+          "order_index": 19,
+          "question_text": "Wat heeft het station gevonden?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een blauwe paraplu",
+            "Een zwarte tas",
+            "Een telefoon",
+            "Een sleutelbos"
+          ],
+          "answer": "Een blauwe paraplu",
+          "explanation": "The message says a blue umbrella ('blauwe paraplu') was found.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q20",
+          "passage_id": "p7",
+          "part_number": null,
+          "order_index": 20,
+          "question_text": "Wat moet mevrouw Dekker meenemen om de paraplu op te halen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een identiteitsbewijs",
+            "Het aankoopbonnetje",
+            "Een treinkaartje",
+            "Een foto van de paraplu"
+          ],
+          "answer": "Een identiteitsbewijs",
+          "explanation": "She needs to bring an ID ('identiteitsbewijs') for verification.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q21",
+          "passage_id": "p7",
+          "part_number": null,
+          "order_index": 21,
+          "question_text": "Wat gebeurt er als de paraplu niet binnen twee weken wordt opgehaald?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Hij wordt naar een goed doel gebracht",
+            "Hij wordt weggegooid",
+            "Hij wordt naar haar huis gestuurd",
+            "Hij blijft voor altijd bij de balie"
+          ],
+          "answer": "Hij wordt naar een goed doel gebracht",
+          "explanation": "Unclaimed items after two weeks are donated to charity ('een goed doel').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q22",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 22,
+          "question_text": "Waarom krijgt de klant geen korting?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Ze heeft haar bonuskaart niet bij zich en de app niet geïnstalleerd",
+            "De korting is vandaag niet geldig",
+            "Ze heeft niet genoeg gekocht",
+            "De kassa doet het niet"
+          ],
+          "answer": "Ze heeft haar bonuskaart niet bij zich en de app niet geïnstalleerd",
+          "explanation": "She forgot her loyalty card and hasn't installed the store app either.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q23",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 23,
+          "question_text": "Wat kan de klant later doen met haar bonnetjes?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De punten laten bijschrijven via de klantenservice",
+            "Ze inwisselen voor geld",
+            "Ze weggooien, ze zijn niet meer nodig",
+            "Ze omruilen voor een cadeau"
+          ],
+          "answer": "De punten laten bijschrijven via de klantenservice",
+          "explanation": "The cashier says she can have the points added later via customer service.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q24",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 24,
+          "question_text": "Hoe wil de klant betalen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Contactloos",
+            "Contant",
+            "Met een cheque",
+            "Op rekening"
+          ],
+          "answer": "Contactloos",
+          "explanation": "She asks to pay contactless ('contactloos betalen').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q25",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 25,
+          "question_text": "Waar moet de klant haar kaart tegenaan houden?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De pinautomaat",
+            "De weegschaal",
+            "De scanner bij de deur",
+            "Het kassascherm"
+          ],
+          "answer": "De pinautomaat",
+          "explanation": "The cashier tells her to hold her card or phone against the payment terminal ('pinautomaat').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "5": {
+      "section": "listening",
+      "exam_number": 5,
+      "level": "A2",
+      "title": "Luisteren - Oefenexamen 5",
+      "instructions": "Luister naar de fragmenten en beantwoord de vragen.",
+      "time_limit_minutes": 45,
+      "total_questions": 25,
+      "parts_count": 1,
+      "pass_threshold": 18,
+      "max_score": 25,
+      "passages": [
+        {
+          "id": "p1",
+          "order_index": 1,
+          "passage_type": "audio",
+          "title": "Bericht van de stomerij",
+          "speaker_genders": {
+            "Speaker1": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "dry cleaner employee"
+          },
+          "content_nl": "Goedemiddag, u spreekt met de stomerij Schoon & Net. Ik bel u over uw jas en pak, die u vorige week heeft binnengebracht. Beide kledingstukken zijn klaar en kunnen worden opgehaald. Wij zijn geopend van negen tot zes uur, van dinsdag tot en met zaterdag. De kosten voor het stomen zijn samen twintig euro. Let op: kledingstukken die niet binnen dertig dagen worden opgehaald, brengen wij naar de kringloopwinkel. Tot ziens bij de stomerij!",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [],
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult female dry cleaner employee. Keep their appearance consistent with these genders and roles.\nScene: Goedemiddag, u spreekt met de stomerij Schoon & Net. Ik bel u over uw jas en pak, die u vorige week heeft binnengebracht. Beide kledingstukken zijn klaar en kunnen worden opgehaald. Wij zijn geopend van negen tot zes uur, van dinsdag tot en met zaterdag. De kosten voor het stomen zijn samen twintig euro. Let op: kledingstukken die niet binnen dertig dagen worden opgehaald, brengen wij naar de kringloopwinkel. Tot ziens bij de stomerij!\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p2",
+          "order_index": 2,
+          "passage_type": "audio",
+          "title": "Bij de opticien",
+          "speaker_genders": {
+            "Speaker1": "male",
+            "Speaker2": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "customer",
+            "Speaker2": "optician"
+          },
+          "content_nl": "Goedemiddag. Ik zie de laatste tijd wat wazig als ik lees. Kan ik een afspraak maken voor een oogtest? - Natuurlijk. Ik kijk even in de agenda... Ik heb woensdagochtend om elf uur nog een plek vrij, of donderdagmiddag om half drie. - Dan neem ik woensdagochtend. Hoelang duurt de test ongeveer? - Reken op een half uur. Heeft u nu een montuur, of wilt u ook nieuwe brillenglazen laten zetten in uw eigen montuur? - Ik wil het liefst een nieuw montuur erbij. - Prima, dan plannen we daar ook tijd voor. Tot woensdag!",
+          "content_en": null,
+          "scene_description": "A male customer talks to a female optician at the counter of an optician's shop about booking an eye test.",
+          "media_urls": [],
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult male customer, one adult female optician. Keep their appearance consistent with these genders and roles.\nScene: A male customer talks to a female optician at the counter of an optician's shop about booking an eye test.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p3",
+          "order_index": 3,
+          "passage_type": "audio",
+          "title": "Omroepbericht in het zwembad",
+          "speaker_genders": {
+            "Speaker1": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "pool staff announcer"
+          },
+          "content_nl": "Beste zwemmers, uw aandacht alstublieft. Vanwege een technische storing aan de filterinstallatie sluit het zwembad vandaag een uur eerder, om vier uur in plaats van vijf uur. Wij vragen u om over tien minuten het water te verlaten en zich om te kleden. De kluisjes blijven tot half vijf beschikbaar. Voor vragen over een terugbetaling van uw zwemkaart kunt u terecht bij de balie. Onze excuses voor het ongemak.",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [],
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult male pool staff announcer. Keep their appearance consistent with these genders and roles.\nScene: Beste zwemmers, uw aandacht alstublieft. Vanwege een technische storing aan de filterinstallatie sluit het zwembad vandaag een uur eerder, om vier uur in plaats van vijf uur. Wij vragen u om over tien minuten het water te verlaten en zich om te kleden. De kluisjes blijven tot half vijf beschikbaar. Voor vragen over een terugbetaling van uw zwemkaart kunt u terecht bij de balie. Onze excuses voor het ongemak.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p4",
+          "order_index": 4,
+          "passage_type": "audio",
+          "title": "In de meubelwinkel",
+          "speaker_genders": {
+            "Speaker1": "female",
+            "Speaker2": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "customer",
+            "Speaker2": "shop assistant"
+          },
+          "content_nl": "Goedemiddag, ik heb interesse in deze grijze bank die hier staat. Is die op voorraad? - Goedemiddag! Deze bank moet ik voor u bestellen, de levertijd is ongeveer vier weken. - Dat is wat lang, ik verhuis over twee weken. Hebben jullie misschien een vergelijkbaar model dat sneller geleverd kan worden? - Zeker, we hebben een blauwe bank van hetzelfde merk die binnen één week geleverd kan worden. Die kost wel vijftig euro meer. - Dat is prima, dan neem ik de blauwe bank. Kunnen jullie hem ook bezorgen? - Ja, bezorgen kost vijfentwintig euro extra, maar dan zetten we hem ook meteen op de juiste plek neer.",
+          "content_en": null,
+          "scene_description": "A female customer in a furniture shop asks a male shop assistant about a sofa's delivery time.",
+          "media_urls": [],
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult female customer, one adult male shop assistant. Keep their appearance consistent with these genders and roles.\nScene: A female customer in a furniture shop asks a male shop assistant about a sofa's delivery time.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p5",
+          "order_index": 5,
+          "passage_type": "audio",
+          "title": "Bericht van het dierenpension",
+          "speaker_genders": {
+            "Speaker1": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "pet boarding employee"
+          },
+          "content_nl": "Goedemorgen mevrouw Hendriks, u spreekt met dierenpension De Vrolijke Poot. Ik bel over uw kat Milo, die bij ons logeert. Milo maakt het uitstekend en heeft goed gegeten. U kunt hem morgenmiddag vanaf twee uur weer ophalen. Wilt u wel zijn kattenmand meenemen, want de onze is momenteel in gebruik voor een ander dier? De totale kosten voor de vijf overnachtingen zijn vijfenzestig euro, te betalen bij het ophalen. Tot morgen!",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [],
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult female pet boarding employee. Keep their appearance consistent with these genders and roles.\nScene: Goedemorgen mevrouw Hendriks, u spreekt met dierenpension De Vrolijke Poot. Ik bel over uw kat Milo, die bij ons logeert. Milo maakt het uitstekend en heeft goed gegeten. U kunt hem morgenmiddag vanaf twee uur weer ophalen. Wilt u wel zijn kattenmand meenemen, want de onze is momenteel in gebruik voor een ander dier? De totale kosten voor de vijf overnachtingen zijn vijfenzestig euro, te betalen bij het ophalen. Tot morgen!\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p6",
+          "order_index": 6,
+          "passage_type": "audio",
+          "title": "Een buurtfeest organiseren",
+          "speaker_genders": {
+            "Speaker1": "male",
+            "Speaker2": "female"
+          },
+          "speaker_roles": {
+            "Speaker1": "neighbor",
+            "Speaker2": "neighbor"
+          },
+          "content_nl": "Hoi Anna, heb je al nagedacht over het buurtfeest van volgende maand? - Ja, ik dacht aan zaterdag de vijftiende. Dan hebben de meeste mensen vrij. - Goed idee. Zullen we de straat afsluiten vanaf twaalf uur? - Dat lijkt me handig, dan kunnen de kinderen ook veilig spelen. Wie regelt de tafels en stoelen? - Ik vraag het aan de buurtvereniging, die hebben meestal wel spullen die we kunnen lenen. - Fijn. Zal ik dan de flyers maken om iedereen uit te nodigen? - Ja, graag! Doe er ook in dat iedereen zelf iets lekkers meeneemt voor de gezamenlijke maaltijd.",
+          "content_en": null,
+          "scene_description": "Two neighbors, a man and a woman, are standing in the street planning a neighborhood street party.",
+          "media_urls": [],
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult male neighbor, one adult female neighbor. Keep their appearance consistent with these genders and roles.\nScene: Two neighbors, a man and a woman, are standing in the street planning a neighborhood street party.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p7",
+          "order_index": 7,
+          "passage_type": "audio",
+          "title": "Bericht van de verzekeringsmaatschappij",
+          "speaker_genders": {
+            "Speaker1": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "insurance agent"
+          },
+          "content_nl": "Goedemiddag meneer De Wit, u spreekt met Robert van verzekeringsmaatschappij Zeker Zo. Ik bel u over de schade aan uw fiets die u vorige week heeft gemeld. We hebben uw formulier en de foto's ontvangen en de schade is goedgekeurd. U ontvangt honderdtwintig euro, dit bedrag wordt binnen vijf werkdagen overgemaakt op uw rekening. Heeft u nog vragen, dan kunt u ons bereiken via het telefoonnummer op onze website. Fijne dag verder!",
+          "content_en": null,
+          "scene_description": "",
+          "media_urls": [],
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult male insurance agent. Keep their appearance consistent with these genders and roles.\nScene: Goedemiddag meneer De Wit, u spreekt met Robert van verzekeringsmaatschappij Zeker Zo. Ik bel u over de schade aan uw fiets die u vorige week heeft gemeld. We hebben uw formulier en de foto's ontvangen en de schade is goedgekeurd. U ontvangt honderdtwintig euro, dit bedrag wordt binnen vijf werkdagen overgemaakt op uw rekening. Heeft u nog vragen, dan kunt u ons bereiken via het telefoonnummer op onze website. Fijne dag verder!\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        },
+        {
+          "id": "p8",
+          "order_index": 8,
+          "passage_type": "audio",
+          "title": "Aan de kassa van het theater",
+          "speaker_genders": {
+            "Speaker1": "female",
+            "Speaker2": "male"
+          },
+          "speaker_roles": {
+            "Speaker1": "customer",
+            "Speaker2": "theater employee"
+          },
+          "content_nl": "Goedenavond, ik wil graag twee kaartjes voor de voorstelling van vrijdag. Zijn er nog plaatsen op het balkon? - Goedenavond! Op het balkon zijn nog een paar plaatsen vrij, maar die kosten twee euro meer per kaartje dan beneden. - Dat is prima. Hebben jullie ook korting voor studenten? - Ja, met een geldige studentenkaart krijgt u twee euro korting per kaartje. - Mijn dochter studeert, dus dat scheelt. Wat kost het dan in totaal? - Zonder korting is het achtentwintig euro voor twee kaartjes op het balkon. Met de studentenkorting voor één kaartje wordt het samen zesentwintig euro. - Perfect, dan neem ik die twee kaartjes. Hoe laat begint de voorstelling? - De voorstelling begint om kwart voor acht, de zaal gaat open om half acht.",
+          "content_en": null,
+          "scene_description": "A female customer buys two theater tickets from a male employee at a theater box office.",
+          "media_urls": [],
+          "image_prompt": [
+            "Create one high-quality naturalistic 16:9 assessment photograph depicting this everyday Dutch scene, suitable for a language-exam picture-description task.\nShow the people who speak in the audio as one adult female customer, one adult male theater employee. Keep their appearance consistent with these genders and roles.\nScene: A female customer buys two theater tickets from a male employee at a theater box office.\nRules: no text, captions, watermarks or speech bubbles anywhere in the image. People and objects should be clear and unambiguous, since a learner must describe what they see."
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "id": "q1",
+          "passage_id": "p1",
+          "part_number": null,
+          "order_index": 1,
+          "question_text": "Welke kledingstukken kan de klant ophalen bij de stomerij?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een jas en een pak",
+            "Een jas en een jurk",
+            "Een pak en een overhemd",
+            "Een jurk en een rok"
+          ],
+          "answer": "Een jas en een pak",
+          "explanation": "The employee says the coat ('jas') and suit ('pak') brought in last week are both ready.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q2",
+          "passage_id": "p1",
+          "part_number": null,
+          "order_index": 2,
+          "question_text": "Op welke dag is de stomerij gesloten?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Maandag",
+            "Zaterdag",
+            "Woensdag",
+            "Vrijdag"
+          ],
+          "answer": "Maandag",
+          "explanation": "The dry cleaner is open Tuesday through Saturday ('dinsdag tot en met zaterdag'), so it is closed on Monday.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q3",
+          "passage_id": "p1",
+          "part_number": null,
+          "order_index": 3,
+          "question_text": "Wat gebeurt er als de klant de kleding niet binnen dertig dagen ophaalt?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De stomerij brengt de kleding naar de kringloopwinkel",
+            "De stomerij stuurt de kleding per post",
+            "De klant moet extra betalen",
+            "De stomerij bewaart de kleding een jaar"
+          ],
+          "answer": "De stomerij brengt de kleding naar de kringloopwinkel",
+          "explanation": "The message warns that clothing not picked up within 30 days is taken to the thrift shop ('kringloopwinkel').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q4",
+          "passage_id": "p2",
+          "part_number": null,
+          "order_index": 4,
+          "question_text": "Waarom wil de klant een afspraak maken?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Hij ziet wazig bij het lezen",
+            "Zijn bril is kapot",
+            "Hij wil een zonnebril kopen",
+            "Hij heeft hoofdpijn"
+          ],
+          "answer": "Hij ziet wazig bij het lezen",
+          "explanation": "The customer says he has been seeing blurry ('wazig') recently when reading.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q5",
+          "passage_id": "p2",
+          "part_number": null,
+          "order_index": 5,
+          "question_text": "Voor welke dag kiest de klant de afspraak?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Woensdagochtend",
+            "Donderdagmiddag",
+            "Vrijdagochtend",
+            "Maandagmiddag"
+          ],
+          "answer": "Woensdagochtend",
+          "explanation": "The customer picks the Wednesday morning ('woensdagochtend') slot over Thursday afternoon.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q6",
+          "passage_id": "p2",
+          "part_number": null,
+          "order_index": 6,
+          "question_text": "Wat wil de klant erbij laten doen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een nieuw montuur",
+            "Een oogoperatie",
+            "Contactlenzen",
+            "Een zonnebril"
+          ],
+          "answer": "Een nieuw montuur",
+          "explanation": "The customer says he would prefer a new frame ('montuur') as well.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q7",
+          "passage_id": "p3",
+          "part_number": null,
+          "order_index": 7,
+          "question_text": "Waarom sluit het zwembad eerder?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Er is een technische storing",
+            "Er is te weinig personeel",
+            "Het water is te koud",
+            "Er is een zwemwedstrijd"
+          ],
+          "answer": "Er is een technische storing",
+          "explanation": "The announcement mentions a technical malfunction ('technische storing') with the filter system.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q8",
+          "passage_id": "p3",
+          "part_number": null,
+          "order_index": 8,
+          "question_text": "Hoe laat sluit het zwembad vandaag?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Om vier uur",
+            "Om vijf uur",
+            "Om half vijf",
+            "Om drie uur"
+          ],
+          "answer": "Om vier uur",
+          "explanation": "The pool closes an hour earlier than usual, at four o'clock instead of five.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q9",
+          "passage_id": "p3",
+          "part_number": null,
+          "order_index": 9,
+          "question_text": "Tot hoe laat blijven de kluisjes beschikbaar?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Half vijf",
+            "Vier uur",
+            "Vijf uur",
+            "Half zes"
+          ],
+          "answer": "Half vijf",
+          "explanation": "The lockers ('kluisjes') remain available until half past four ('half vijf').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q10",
+          "passage_id": "p4",
+          "part_number": null,
+          "order_index": 10,
+          "question_text": "Waarom kiest de klant niet voor de grijze bank?",
+          "question_type": "multiple_choice",
+          "options": [
+            "De levertijd is te lang",
+            "De bank is te duur",
+            "De bank is niet mooi",
+            "De bank past niet in de kamer"
+          ],
+          "answer": "De levertijd is te lang",
+          "explanation": "The grey sofa needs a four-week delivery time, which is too long since the customer is moving in two weeks.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q11",
+          "passage_id": "p4",
+          "part_number": null,
+          "order_index": 11,
+          "question_text": "Hoeveel duurder is de blauwe bank?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Vijftig euro",
+            "Vijfentwintig euro",
+            "Honderd euro",
+            "Tien euro"
+          ],
+          "answer": "Vijftig euro",
+          "explanation": "The assistant says the blue sofa costs fifty euros ('vijftig euro') more.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q12",
+          "passage_id": "p4",
+          "part_number": null,
+          "order_index": 12,
+          "question_text": "Wat kost het bezorgen van de bank?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Vijfentwintig euro",
+            "Vijftig euro",
+            "Niets, het is gratis",
+            "Tien euro"
+          ],
+          "answer": "Vijfentwintig euro",
+          "explanation": "Delivery costs an extra twenty-five euros ('vijfentwintig euro extra').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q13",
+          "passage_id": "p5",
+          "part_number": null,
+          "order_index": 13,
+          "question_text": "Waarom belt het dierenpension mevrouw Hendriks?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Om te zeggen dat Milo weer opgehaald kan worden",
+            "Om te zeggen dat Milo ziek is",
+            "Om een nieuwe afspraak te maken",
+            "Om te vragen naar het voer van Milo"
+          ],
+          "answer": "Om te zeggen dat Milo weer opgehaald kan worden",
+          "explanation": "The message says Milo can be picked up again tomorrow afternoon.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q14",
+          "passage_id": "p5",
+          "part_number": null,
+          "order_index": 14,
+          "question_text": "Wat moet mevrouw Hendriks meenemen als ze Milo ophaalt?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een kattenmand",
+            "Het inentingsboekje",
+            "Extra voer",
+            "Een deken"
+          ],
+          "answer": "Een kattenmand",
+          "explanation": "She is asked to bring a cat carrier ('kattenmand') because theirs is in use for another animal.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q15",
+          "passage_id": "p5",
+          "part_number": null,
+          "order_index": 15,
+          "question_text": "Hoeveel moet mevrouw Hendriks betalen?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Vijfenzestig euro",
+            "Vijftig euro",
+            "Vijfenveertig euro",
+            "Zeventig euro"
+          ],
+          "answer": "Vijfenzestig euro",
+          "explanation": "The total cost for five nights of boarding is sixty-five euros ('vijfenzestig euro').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q16",
+          "passage_id": "p6",
+          "part_number": null,
+          "order_index": 16,
+          "question_text": "Op welke dag is het buurtfeest gepland?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Zaterdag de vijftiende",
+            "Zondag de vijftiende",
+            "Zaterdag de eerste",
+            "Vrijdag de vijftiende"
+          ],
+          "answer": "Zaterdag de vijftiende",
+          "explanation": "Anna suggests Saturday the fifteenth ('zaterdag de vijftiende') because most people are free that day.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q17",
+          "passage_id": "p6",
+          "part_number": null,
+          "order_index": 17,
+          "question_text": "Vanaf hoe laat wordt de straat afgesloten?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Twaalf uur",
+            "Tien uur",
+            "Twee uur",
+            "Elf uur"
+          ],
+          "answer": "Twaalf uur",
+          "explanation": "They agree to close the street from twelve o'clock ('vanaf twaalf uur').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q18",
+          "passage_id": "p6",
+          "part_number": null,
+          "order_index": 18,
+          "question_text": "Wat moet iedereen meenemen naar het buurtfeest?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Iets lekkers voor de gezamenlijke maaltijd",
+            "Eigen stoelen",
+            "Drinken voor de kinderen",
+            "Muziek"
+          ],
+          "answer": "Iets lekkers voor de gezamenlijke maaltijd",
+          "explanation": "The flyer will ask everyone to bring something tasty for the shared meal.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q19",
+          "passage_id": "p7",
+          "part_number": null,
+          "order_index": 19,
+          "question_text": "Waarover gaat het telefoontje?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Een schademelding van een fiets",
+            "Een nieuwe verzekering",
+            "Een betalingsherinnering",
+            "Een afspraak bij de garage"
+          ],
+          "answer": "Een schademelding van een fiets",
+          "explanation": "Robert calls about the reported bicycle damage claim ('schade aan uw fiets die u heeft gemeld').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q20",
+          "passage_id": "p7",
+          "part_number": null,
+          "order_index": 20,
+          "question_text": "Hoeveel geld krijgt meneer De Wit terug?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Honderdtwintig euro",
+            "Honderd euro",
+            "Tachtig euro",
+            "Honderdvijftig euro"
+          ],
+          "answer": "Honderdtwintig euro",
+          "explanation": "The claim was approved for one hundred twenty euros ('honderdtwintig euro').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q21",
+          "passage_id": "p7",
+          "part_number": null,
+          "order_index": 21,
+          "question_text": "Binnen hoeveel werkdagen wordt het geld overgemaakt?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Vijf werkdagen",
+            "Twee werkdagen",
+            "Tien werkdagen",
+            "Eén werkdag"
+          ],
+          "answer": "Vijf werkdagen",
+          "explanation": "The amount will be transferred within five working days ('binnen vijf werkdagen').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q22",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 22,
+          "question_text": "Voor welke dag wil de klant kaartjes?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Vrijdag",
+            "Zaterdag",
+            "Donderdag",
+            "Zondag"
+          ],
+          "answer": "Vrijdag",
+          "explanation": "The customer asks for tickets for Friday's ('vrijdag') performance.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q23",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 23,
+          "question_text": "Waarom betaalt de klant meer voor plaatsen op het balkon?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Plaatsen op het balkon kosten twee euro meer per kaartje",
+            "Het balkon is beter bereikbaar",
+            "Er is een aparte bar op het balkon",
+            "Het balkon heeft meer beensruimte"
+          ],
+          "answer": "Plaatsen op het balkon kosten twee euro meer per kaartje",
+          "explanation": "The employee explains balcony seats cost two euros more per ticket than seats downstairs.",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q24",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 24,
+          "question_text": "Wat is het totale bedrag dat de klant betaalt?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Zesentwintig euro",
+            "Achtentwintig euro",
+            "Dertig euro",
+            "Vierentwintig euro"
+          ],
+          "answer": "Zesentwintig euro",
+          "explanation": "With the student discount on one ticket, the total comes to twenty-six euros ('zesentwintig euro').",
+          "year_asked": null,
+          "option_image_prompts": null,
+          "option_media_urls": null,
+          "option_audio_urls": [
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "q25",
+          "passage_id": "p8",
+          "part_number": null,
+          "order_index": 25,
+          "question_text": "Hoe laat gaat de zaal open?",
+          "question_type": "multiple_choice",
+          "options": [
+            "Half acht",
+            "Kwart voor acht",
+            "Acht uur",
+            "Zeven uur"
+          ],
+          "answer": "Half acht",
+          "explanation": "The employee says the hall ('zaal') opens at half past seven ('half acht'), before the show starts at 'kwart voor acht'.",
           "year_asked": null,
           "option_image_prompts": null,
           "option_media_urls": null,
