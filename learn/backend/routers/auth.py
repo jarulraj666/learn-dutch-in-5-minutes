@@ -4,20 +4,198 @@ import base64
 import hashlib
 import hmac
 import json
+import re
 import secrets
 import time
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 
 import httpx
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, status
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel, Field
 
 import db
 import settings
 from auth import _bearer, delete_session, is_admin
+from services.auth_email import send_auth_email
 
 router = APIRouter(prefix="/auth")
+
+_PASSWORD_SCRYPT_N = 2**14
+_PASSWORD_SCRYPT_R = 8
+_PASSWORD_SCRYPT_P = 1
+
+
+class PasswordSignupRequest(BaseModel):
+    password: str = Field(min_length=8, max_length=128)
+    name: str = Field(min_length=1, max_length=100)
+    email: str = Field(min_length=3, max_length=254)
+
+
+class PasswordLoginRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=254)
+    password: str = Field(min_length=1, max_length=128)
+
+
+class PasswordResetRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=254)
+
+
+class PasswordResetConfirmRequest(BaseModel):
+    token: str = Field(min_length=20, max_length=200)
+    password: str = Field(min_length=8, max_length=128)
+
+
+_EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+
+
+def _normalize_email(email: str) -> str:
+    normalized = email.strip().lower()
+    if not _EMAIL_PATTERN.fullmatch(normalized):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Enter a valid email address")
+    return normalized
+
+
+def _hash_password(password: str) -> str:
+    salt = secrets.token_bytes(16)
+    digest = hashlib.scrypt(password.encode(), salt=salt, n=_PASSWORD_SCRYPT_N, r=_PASSWORD_SCRYPT_R, p=_PASSWORD_SCRYPT_P)
+    return "$".join(("scrypt", str(_PASSWORD_SCRYPT_N), str(_PASSWORD_SCRYPT_R), str(_PASSWORD_SCRYPT_P), salt.hex(), digest.hex()))
+
+
+def _verify_password(password: str, encoded: str | None) -> bool:
+    try:
+        algorithm, n, r, p, salt_hex, digest_hex = (encoded or "").split("$", 5)
+        if algorithm != "scrypt":
+            return False
+        candidate = hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt_hex), n=int(n), r=int(r), p=int(p))
+        return hmac.compare_digest(candidate, bytes.fromhex(digest_hex))
+    except (ValueError, TypeError):
+        return False
+
+
+async def _create_session(user: dict) -> dict:
+    session_token = secrets.token_urlsafe(32)
+    await db.execute(
+        "INSERT INTO sessions (\"userId\", expires, \"sessionToken\") VALUES (%s, %s, %s)",
+        (user["id"], datetime.now(timezone.utc) + timedelta(days=30), session_token),
+    )
+    return {"token": session_token, "user": user}
+
+
+def _token_hash(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+async def _issue_email_token(identifier: str, expires: datetime) -> str:
+    token = secrets.token_urlsafe(48)
+    await db.execute("DELETE FROM verification_token WHERE identifier = %s", (identifier,))
+    await db.execute(
+        "INSERT INTO verification_token (identifier, token, expires) VALUES (%s, %s, %s)",
+        (identifier, _token_hash(token), expires),
+    )
+    return token
+
+
+async def _send_verification_email(email: str, name: str | None, token: str) -> None:
+    link = f"{settings.FRONTEND_URL}/verify-email?token={token}"
+    await send_auth_email(
+        email,
+        "Verify your Learn Dutch account",
+        f"Hi {name or 'there'},\n\nVerify your email address to activate your account:\n{link}\n\nThis link expires in 24 hours.",
+    )
+
+
+async def _send_reset_email(email: str, name: str | None, token: str) -> None:
+    link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
+    await send_auth_email(
+        email,
+        "Reset your Learn Dutch password",
+        f"Hi {name or 'there'},\n\nReset your password here:\n{link}\n\nThis link expires in 1 hour. If you did not request this, you can ignore this email.",
+    )
+
+
+@router.post("/password/signup")
+async def password_signup(payload: PasswordSignupRequest) -> dict:
+    email = _normalize_email(payload.email)
+    try:
+        user = await db.fetch_one(
+            """
+            INSERT INTO users (password_hash, name, email, "emailVerified", role)
+            VALUES (%s, %s, %s, now(), 'learner')
+            RETURNING id, email, name, image, plan, role
+            """,
+            (_hash_password(payload.password), payload.name.strip(), email),
+        )
+    except Exception as exc:
+        if "duplicate key" in str(exc).lower():
+            raise HTTPException(status.HTTP_409_CONFLICT, "An account with this email already exists") from None
+        raise
+    return {"signup_completed": True}
+
+
+@router.post("/password/login")
+async def password_login(payload: PasswordLoginRequest) -> dict:
+    email = _normalize_email(payload.email)
+    user = await db.fetch_one(
+        "SELECT id, email, name, image, plan, role, password_hash, \"emailVerified\" "
+        "FROM users WHERE lower(email) = %s",
+        (email,),
+    )
+    if not user or not _verify_password(payload.password, user.get("password_hash")):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
+    return await _create_session({key: user[key] for key in ("id", "email", "name", "image", "plan", "role")})
+
+
+@router.post("/password/verify-email")
+async def verify_email(token: str = Query(min_length=20, max_length=200)) -> dict[str, bool]:
+    row = await db.fetch_one(
+        """
+        SELECT u.id FROM verification_token vt
+        JOIN users u ON u.id::text = replace(vt.identifier, 'verify:', '')
+        WHERE vt.identifier LIKE 'verify:%' AND vt.token = %s AND vt.expires > now()
+        """,
+        (_token_hash(token),),
+    )
+    if not row:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Verification link is invalid or expired")
+    await db.execute('UPDATE users SET "emailVerified" = now() WHERE id = %s', (row["id"],))
+    await db.execute("DELETE FROM verification_token WHERE identifier = %s", (f"verify:{row['id']}",))
+    return {"verified": True}
+
+
+@router.post("/password/request-reset")
+async def request_password_reset(payload: PasswordResetRequest) -> dict[str, str]:
+    email = _normalize_email(payload.email)
+    user = await db.fetch_one(
+        'SELECT id, email, name FROM users WHERE lower(email) = %s AND password_hash IS NOT NULL',
+        (email,),
+    )
+    if user:
+        token = await _issue_email_token(f"reset:{user['id']}", datetime.now(timezone.utc) + timedelta(hours=1))
+        try:
+            await _send_reset_email(email, user["name"], token)
+        except Exception:
+            pass
+    return {"message": "If an account exists for that email, recovery instructions have been sent."}
+
+
+@router.post("/password/reset")
+async def reset_password(payload: PasswordResetConfirmRequest) -> dict[str, bool]:
+    row = await db.fetch_one(
+        """
+        SELECT u.id FROM verification_token vt
+        JOIN users u ON u.id::text = replace(vt.identifier, 'reset:', '')
+        WHERE vt.identifier LIKE 'reset:%' AND vt.token = %s AND vt.expires > now()
+        """,
+        (_token_hash(payload.token),),
+    )
+    if not row:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Reset link is invalid or expired")
+    await db.execute("UPDATE users SET password_hash = %s WHERE id = %s", (_hash_password(payload.password), row["id"]))
+    await db.execute('DELETE FROM sessions WHERE "userId" = %s', (row["id"],))
+    await db.execute("DELETE FROM verification_token WHERE identifier = %s", (f"reset:{row['id']}",))
+    return {"reset": True}
 
 
 def _state_payload(return_to: str) -> str:

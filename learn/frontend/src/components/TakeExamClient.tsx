@@ -104,16 +104,16 @@ function ResultView({
         <div className="card mx-auto max-w-md p-8 text-center">
           <h2 className="text-xl font-semibold">You&apos;ve completed the exam!</h2>
           <p className="mt-2 text-sm text-slate-600">
-            Sign in with Google to view your score and detailed feedback — it&apos;s free.
+            Sign in with email/password or Google to view your score and detailed feedback — it&apos;s free.
           </p>
           <button
             type="button"
             onClick={() => {
-              window.location.href = `/api/auth/google/start?return_to=${encodeURIComponent(window.location.pathname)}`;
+              window.location.href = `/signin?callbackUrl=${encodeURIComponent(window.location.pathname)}`;
             }}
             className="btn-primary mt-6 px-5 py-2 text-sm"
           >
-            Continue with Google
+            Continue to sign in
           </button>
         </div>
       </div>
@@ -361,16 +361,16 @@ export function ExamPageClient({ examId, viewAttemptNo }: { examId: string; view
       <div className="card mx-auto max-w-md p-8 text-center">
         <h2 className="text-xl font-semibold">Sign in to start this exam</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Sign in with Google to take practice exams and track your results — it&apos;s free.
+          Sign in with email/password or Google to take practice exams and track your results — it&apos;s free.
         </p>
         <button
           type="button"
           onClick={() => {
-            window.location.href = `/api/auth/google/start?return_to=${encodeURIComponent(window.location.pathname)}`;
+            window.location.href = `/signin?callbackUrl=${encodeURIComponent(window.location.pathname)}`;
           }}
           className="btn-primary mt-6 px-5 py-2 text-sm"
         >
-          Continue with Google
+          Continue to sign in
         </button>
       </div>
     );

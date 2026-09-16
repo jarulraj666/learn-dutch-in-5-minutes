@@ -141,8 +141,8 @@ export function SiteHeader({ user }: Props) {
               </button>
             </div>
           ) : (
-            <button onClick={() => { window.location.href = "/api/auth/google/start?return_to=/dashboard"; }} className="btn-primary px-5 py-2 text-sm">
-              Sign in with Google
+            <button onClick={() => { window.location.href = "/signin?callbackUrl=%2Fdashboard"; }} className="btn-primary px-5 py-2 text-sm">
+              Sign in
             </button>
           )}
 

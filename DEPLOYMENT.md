@@ -29,7 +29,17 @@ LEARN_ALLOWED_ORIGINS=https://your-domain.com,https://www.your-domain.com
 ADMIN_EMAILS=you@example.com
 LEARN_COMPLETION_PERCENT=90
 LEARN_CERTIFICATE_PASS_PERCENT=70
+AUTH_EMAIL_MODE=smtp
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USERNAME=...
+SMTP_PASSWORD=...
+SMTP_USE_TLS=true
+EMAIL_FROM=Learn Dutch <no-reply@example.com>
 ```
+
+The local default `AUTH_EMAIL_MODE=log` writes verification and recovery links to
+the API log. Production must use `AUTH_EMAIL_MODE=smtp` with a verified sender.
 
 After deployment, verify:
 

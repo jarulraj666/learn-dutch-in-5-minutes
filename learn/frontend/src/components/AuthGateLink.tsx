@@ -44,16 +44,16 @@ export function AuthGateLink({ href, loggedIn, className, children }: Props) {
             </button>
             <h2 className="text-lg font-semibold">Sign in to start this exam</h2>
             <p className="mt-2 text-sm text-slate-600">
-              Sign in with Google to take practice exams and track your results — it&apos;s free.
+              Sign in with email/password or Google to take practice exams and track your results — it&apos;s free.
             </p>
             <button
               type="button"
               onClick={() => {
-                window.location.href = `/api/auth/google/start?return_to=${encodeURIComponent(href)}`;
+                window.location.href = `/signin?callbackUrl=${encodeURIComponent(href)}`;
               }}
               className="btn-primary mt-6 w-full px-5 py-2 text-sm"
             >
-              Continue with Google
+              Continue to sign in
             </button>
           </div>
         </div>

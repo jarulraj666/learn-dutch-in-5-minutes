@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Layers } from "lucide-react";
+import { ClipboardCheck, Layers } from "lucide-react";
 import { learnerSession } from "@/lib/learner-session";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/format";
-import type { Dashboard } from "@/lib/types";
+import type { Dashboard, MockExamAttemptSummary, MockExamSummary } from "@/lib/types";
 
 export const metadata = { title: "My learning · Learn Dutch in 5 Minutes" };
 
@@ -13,6 +13,30 @@ export default async function DashboardPage() {
   if (!session?.user) redirect("/signin");
 
   const data = await api<Dashboard>("/api/me/dashboard");
+  let mockExams: MockExamSummary[] = [];
+  try {
+    mockExams = await api<MockExamSummary[]>("/api/mock-exams");
+  } catch {
+    // Keep the dashboard usable if mock-exam data is temporarily unavailable.
+  }
+  const latestMockAttempt = (
+    await Promise.all(
+      mockExams.map(async (exam) => {
+        try {
+          const attempts = await api<MockExamAttemptSummary[]>(`/api/mock-exams/${exam.id}/attempts`);
+          const latest = attempts.reduce<MockExamAttemptSummary | null>(
+            (current, attempt) => (!current || attempt.created_at > current.created_at ? attempt : current),
+            null,
+          );
+          return latest ? { exam, attempt: latest } : null;
+        } catch {
+          return null;
+        }
+      }),
+    )
+  )
+    .filter((item): item is { exam: MockExamSummary; attempt: MockExamAttemptSummary } => item !== null)
+    .sort((a, b) => b.attempt.created_at.localeCompare(a.attempt.created_at))[0] ?? null;
 
   return (
     <div className="space-y-8">
@@ -65,6 +89,27 @@ export default async function DashboardPage() {
           </article>
         ))}
       </div>
+
+      <section className="card flex flex-wrap items-center justify-between gap-5 p-6">
+        <div className="flex items-start gap-4">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700">
+            <ClipboardCheck size={21} />
+          </span>
+          <div>
+            <h2 className="text-lg font-semibold">Mock exam practice</h2>
+            {latestMockAttempt ? (
+              <p className="mt-1 text-sm text-slate-600">
+                Continue {latestMockAttempt.exam.title} · last result {latestMockAttempt.attempt.score}/{latestMockAttempt.attempt.total} ({latestMockAttempt.attempt.percent}%) · {formatDate(latestMockAttempt.attempt.created_at)}
+              </p>
+            ) : (
+              <p className="mt-1 text-sm text-slate-600">Start a practice exam and track your results here.</p>
+            )}
+          </div>
+        </div>
+        <Link href={latestMockAttempt ? `/mock-exams/${latestMockAttempt.exam.section}` : "/#mock-exams"} className="btn-primary px-5 py-2 text-sm">
+          {latestMockAttempt ? "Continue exam practice" : "Browse mock exams"}
+        </Link>
+      </section>
 
       {data.recent.length > 0 && (
         <section className="card overflow-hidden">

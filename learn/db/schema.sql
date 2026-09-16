@@ -199,6 +199,8 @@ CREATE INDEX IF NOT EXISTS idx_mock_questions_exam ON mock_exam_questions(exam_i
 
 CREATE TABLE IF NOT EXISTS users (
     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username       TEXT UNIQUE,
+    password_hash  TEXT,
     name           TEXT,
     email          TEXT UNIQUE,
     "emailVerified" TIMESTAMPTZ,
@@ -207,6 +209,10 @@ CREATE TABLE IF NOT EXISTS users (
     role           TEXT        NOT NULL DEFAULT 'learner' CHECK (role IN ('learner', 'admin')),
     created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_lower ON users (lower(username)) WHERE username IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS accounts (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),

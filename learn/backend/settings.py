@@ -61,3 +61,12 @@ STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 
 # Which provider /billing/checkout uses: "mollie" or "stripe".
 PAYMENT_PROVIDER = os.environ.get("PAYMENT_PROVIDER", "stripe")
+
+# Account email delivery. Use AUTH_EMAIL_MODE=log locally; production should use smtp.
+AUTH_EMAIL_MODE = os.environ.get("AUTH_EMAIL_MODE", "log").lower()
+SMTP_HOST = os.environ.get("SMTP_HOST", "")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USERNAME = os.environ.get("SMTP_USERNAME", "")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+SMTP_USE_TLS = os.environ.get("SMTP_USE_TLS", "true").lower() not in {"0", "false", "no"}
+EMAIL_FROM = os.environ.get("EMAIL_FROM", "")

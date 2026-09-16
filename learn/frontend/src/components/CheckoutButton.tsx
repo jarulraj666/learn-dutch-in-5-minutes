@@ -29,7 +29,7 @@ export function CheckoutButton({ product, section, label, className }: Props) {
     } catch (e) {
       if (e instanceof Error && e.message.includes("Sign in required")) {
         window.sessionStorage.setItem("pending-checkout", JSON.stringify({ product, section }));
-        window.location.href = "/api/auth/google/start?return_to=%2Fpricing%3Fresume_checkout%3D1";
+        window.location.href = "/signin?callbackUrl=%2Fpricing%3Fresume_checkout%3D1";
         return;
       }
       setError("Could not start checkout. Please try again.");
