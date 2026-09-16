@@ -25,6 +25,7 @@ const ALLOWED: RegExp[] = [
   /^mock-exams\/media\/audio$/,
   /^mock-exams\/media\/video$/,
   /^billing\/checkout$/,
+  /^billing\/checkout\/confirm$/,
   /^billing\/me$/,
 ];
 

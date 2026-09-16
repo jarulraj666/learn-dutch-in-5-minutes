@@ -10,10 +10,11 @@ import {
   Subtitles,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { learnerSession } from "@/lib/learner-session";
 import { TestimonialCarousel } from "@/components/TestimonialCarousel";
 import { MockExamsSection } from "@/components/MockExamsSection";
 import { HeroCarousel, type HeroSlide } from "@/components/HeroCarousel";
-import type { CourseSummary, FeedbackPublic, MockExamSummary, PublicStats } from "@/lib/types";
+import type { CourseSummary, Entitlement, FeedbackPublic, MockExamSection, MockExamSummary, PublicStats } from "@/lib/types";
 
 const FEATURES = [
   { icon: Clock, title: "Five-minute lessons", body: "Short enough to actually finish, structured enough to build real skill." },
@@ -87,6 +88,20 @@ export default async function HomePage() {
   const lessonCount = published.reduce((n, c) => n + c.lesson_count, 0);
   const unitCount = published.reduce((n, c) => n + c.module_count, 0);
   const examCount = mockExams.length;
+  const session = await learnerSession();
+  let entitlements: Entitlement[] = [];
+  if (session?.user) {
+    try {
+      entitlements = await api<Entitlement[]>("/api/billing/me");
+    } catch {
+      // The homepage remains available when billing data cannot be loaded.
+    }
+  }
+  const fullExpiry = entitlements.find((entitlement) => entitlement.product === "full")?.expires_at ?? null;
+  const sectionExpiry = entitlements.reduce<Partial<Record<MockExamSection, string>>>((access, entitlement) => {
+    if (entitlement.product === "section" && entitlement.section) access[entitlement.section] = entitlement.expires_at;
+    return access;
+  }, {});
 
   const heroSlides: HeroSlide[] = [
     {
@@ -161,7 +176,7 @@ export default async function HomePage() {
       </section>
 
       <div id="mock-exams">
-        <MockExamsSection mockExams={mockExams} />
+        <MockExamsSection mockExams={mockExams} fullExpiry={fullExpiry} sectionExpiry={sectionExpiry} />
       </div>
 
       <section>

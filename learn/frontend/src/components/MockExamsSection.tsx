@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import type { MockExamSummary } from "@/lib/types";
+import { formatDate } from "@/lib/format";
+import type { MockExamSection, MockExamSummary } from "@/lib/types";
 import { PremiumBadge } from "@/components/PremiumBadge";
 
 const LEVEL_TABS = ["A2", "B1", "B2", "C1", "C2"] as const;
@@ -34,7 +35,15 @@ const SECTIONS: { key: MockExamSummary["section"]; label: string }[] = [
   { key: "knm", label: "KNM (Dutch Society)" },
 ];
 
-export function MockExamsSection({ mockExams }: { mockExams: MockExamSummary[] }) {
+export function MockExamsSection({
+  mockExams,
+  fullExpiry,
+  sectionExpiry,
+}: {
+  mockExams: MockExamSummary[];
+  fullExpiry: string | null;
+  sectionExpiry: Partial<Record<MockExamSection, string>>;
+}) {
   const [level, setLevel] = useState<(typeof LEVEL_TABS)[number]>("A2");
   const info = LEVEL_INFO[level];
 
@@ -77,6 +86,7 @@ export function MockExamsSection({ mockExams }: { mockExams: MockExamSummary[] }
             const exams = mockExams.filter((e) => e.section === key);
             const freeCount = exams.filter((e) => e.is_free_preview).length;
             const premiumCount = exams.length - freeCount;
+            const expiry = fullExpiry ?? sectionExpiry[key];
             const cardBody = (
               <>
                 <div className="flex flex-wrap items-center gap-2">
@@ -91,6 +101,7 @@ export function MockExamsSection({ mockExams }: { mockExams: MockExamSummary[] }
                   {premiumCount > 0 && <PremiumBadge label={`+${premiumCount} more`} linkToPricing={false} />}
                 </div>
                 <h4 className="mt-3 font-semibold">{label}</h4>
+                {expiry && <p className="mt-2 text-xs font-semibold text-emerald-700">Expires {formatDate(expiry)}</p>}
                 {exams.length > 0 ? (
                   <p className="mt-2 text-sm text-slate-600">
                     {exams.length} practice exam{exams.length > 1 ? "s" : ""} available — click to start

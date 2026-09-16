@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BookOpenText, Headphones, Landmark, Mic, PenLine } from "lucide-react";
 import { CheckoutButton } from "@/components/CheckoutButton";
+import { formatDate } from "@/lib/format";
 import type { MockExamSection } from "@/lib/types";
 
 const LEVEL_TABS = ["A2", "B1", "B2", "C1", "C2"] as const;
@@ -59,9 +60,13 @@ const SECTION_CARDS = [
 export function SectionPricingTabs({
   examCountBySection,
   hasFullAccess,
+  fullExpiry,
+  sectionExpiry,
 }: {
   examCountBySection: Record<string, number>;
   hasFullAccess: boolean;
+  fullExpiry: string | null;
+  sectionExpiry: Partial<Record<MockExamSection, string>>;
 }) {
   const [level, setLevel] = useState<(typeof LEVEL_TABS)[number]>("A2");
 
@@ -93,6 +98,8 @@ export function SectionPricingTabs({
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {SECTION_CARDS.map(({ key, label, sub, icon: Icon, questions, minutes, format }) => {
             const examCount = examCountBySection[key] ?? 0;
+            const expiry = hasFullAccess ? fullExpiry : sectionExpiry[key as MockExamSection] ?? null;
+            const hasSectionAccess = Boolean(expiry);
             return (
               <article key={key} className="card p-6 text-center">
                 <span className="mx-auto grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-700">
@@ -109,11 +116,14 @@ export function SectionPricingTabs({
                   {questions} · {minutes}
                 </p>
                 <p className="mt-2 text-xs text-slate-500">{format}</p>
-                {hasFullAccess ? (
+                {hasSectionAccess ? (
                   <>
-                    <p className="mt-4 text-sm font-bold text-emerald-700">Included in your package</p>
-                    <a href={`/mock-exams/${key}`} className="mt-4 inline-block text-sm font-semibold text-brand-700 hover:underline">
-                      Practice this section
+                    <p className="mt-4 text-sm font-bold text-emerald-700">
+                      {hasFullAccess ? "Included in your package" : "Unlocked for 3 months"}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">Expires {formatDate(expiry)}</p>
+                    <a href={`/mock-exams/${key}`} className="btn-primary mt-4 inline-block w-full px-5 py-2 text-sm">
+                      Start Exam
                     </a>
                   </>
                 ) : (

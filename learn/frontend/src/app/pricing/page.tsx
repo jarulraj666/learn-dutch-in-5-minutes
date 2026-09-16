@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { Check, Clock, Lock, MonitorCheck, RefreshCw } from "lucide-react";
 import { CheckoutButton } from "@/components/CheckoutButton";
+import { PaymentStatusSync } from "@/components/PaymentStatusSync";
 import { SectionPricingTabs } from "@/components/SectionPricingTabs";
 import { api } from "@/lib/api";
+import { formatDate } from "@/lib/format";
 import { learnerSession } from "@/lib/learner-session";
-import type { Entitlement, MockExamSummary } from "@/lib/types";
+import type { Entitlement, MockExamSection, MockExamSummary } from "@/lib/types";
 
 export const metadata = { title: "Pricing · Learn Dutch in 5 Minutes" };
 
@@ -66,7 +68,12 @@ export default async function PricingPage({ searchParams }: { searchParams: { ch
       // Treat missing billing data as no active entitlement.
     }
   }
-  const hasFullAccess = entitlements.some((entitlement) => entitlement.product === "full");
+  const fullExpiry = entitlements.find((entitlement) => entitlement.product === "full")?.expires_at ?? null;
+  const hasFullAccess = fullExpiry !== null;
+  const sectionExpiry = entitlements.reduce<Partial<Record<MockExamSection, string>>>((access, entitlement) => {
+    if (entitlement.product === "section" && entitlement.section) access[entitlement.section] = entitlement.expires_at;
+    return access;
+  }, {});
   const examCountBySection = mockExams.reduce<Record<string, number>>((counts, exam) => {
     counts[exam.section] = (counts[exam.section] ?? 0) + 1;
     return counts;
@@ -74,6 +81,7 @@ export default async function PricingPage({ searchParams }: { searchParams: { ch
 
   return (
     <div className="space-y-10">
+      <PaymentStatusSync />
       {searchParams.checkout === "pending" && (
         <div className="mx-auto max-w-2xl rounded-xl bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-700">
           Thanks! We&apos;re confirming your payment. A2 practice exams are available now.
@@ -158,9 +166,12 @@ export default async function PricingPage({ searchParams }: { searchParams: { ch
           </div>
           {hasFullAccess ? (
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              <span className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
-                Unlocked for 3 months
-              </span>
+              <div>
+                <span className="block rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
+                  Unlocked for 3 months
+                </span>
+                <span className="mt-1 block text-xs text-slate-500">Expires {formatDate(fullExpiry)}</span>
+              </div>
               <Link href="/mock-exams/reading" className="text-sm font-semibold text-brand-700 hover:underline">
                 Go to practice exams
               </Link>
@@ -171,7 +182,12 @@ export default async function PricingPage({ searchParams }: { searchParams: { ch
         </article>
       </section>
 
-      <SectionPricingTabs examCountBySection={examCountBySection} hasFullAccess={hasFullAccess} />
+      <SectionPricingTabs
+        examCountBySection={examCountBySection}
+        hasFullAccess={hasFullAccess}
+        fullExpiry={fullExpiry}
+        sectionExpiry={sectionExpiry}
+      />
     </div>
   );
 }

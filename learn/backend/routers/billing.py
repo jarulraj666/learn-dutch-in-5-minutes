@@ -41,7 +41,7 @@ async def create_checkout(payload: CheckoutRequest, user: CurrentUser) -> Checko
                 amount_cents=amount_cents,
                 currency="EUR",
                 description=description,
-                success_url=f"{settings.FRONTEND_URL}/pricing?checkout=pending",
+                success_url=f"{settings.FRONTEND_URL}/pricing?checkout=pending&checkout_session_id={{CHECKOUT_SESSION_ID}}",
                 cancel_url=f"{settings.FRONTEND_URL}/pricing?checkout=canceled",
                 metadata={"purchase_id": str(purchase_id)},
             )
@@ -78,6 +78,28 @@ async def create_checkout(payload: CheckoutRequest, user: CurrentUser) -> Checko
     )
 
     return CheckoutResponse(checkout_url=checkout_url)
+
+
+@router.post("/billing/checkout/confirm")
+async def confirm_checkout(session_id: str, user: CurrentUser) -> dict[str, str]:
+    """Confirm a Stripe checkout after redirect when the webhook is delayed or unreachable."""
+    if settings.PAYMENT_PROVIDER != "stripe":
+        return {"status": "pending"}
+    try:
+        session = await stripe_client.retrieve_checkout_session(session_id)
+    except stripe_client.StripeError as exc:
+        LOGGER.warning("Stripe checkout confirmation failed for %s: %s", session_id, exc)
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Could not confirm payment") from exc
+    if session.get("payment_status") != "paid":
+        return {"status": "pending"}
+    purchase = await db.fetch_one(
+        "SELECT id FROM premium_purchases WHERE user_id = %s AND provider = 'stripe' AND provider_payment_id = %s",
+        (user["id"], session_id),
+    )
+    if not purchase:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Checkout not found")
+    await _apply_status("stripe", session_id, "paid")
+    return {"status": "paid"}
 
 
 @router.post("/billing/webhook/mollie")
@@ -135,8 +157,42 @@ async def _apply_status(provider: str, provider_payment_id: str, new_status: str
         )
 
 
+async def _reconcile_open_purchases(user_id: str) -> None:
+    """Recover payments whose provider webhook was delayed or missed."""
+    purchases = await db.fetch_all(
+        "SELECT provider, provider_payment_id FROM premium_purchases "
+        "WHERE user_id = %s AND status = 'open'",
+        (user_id,),
+    )
+    for purchase in purchases:
+        provider = purchase["provider"]
+        payment_id = purchase["provider_payment_id"]
+        try:
+            if provider == "stripe":
+                payment = await stripe_client.retrieve_checkout_session(payment_id)
+                provider_status = payment.get("payment_status")
+                if provider_status == "paid":
+                    await _apply_status(provider, payment_id, "paid")
+                elif payment.get("status") == "expired":
+                    await _apply_status(provider, payment_id, "expired")
+            elif provider == "mollie":
+                payment = await mollie_client.get_payment(payment_id)
+                provider_status = payment.get("status")
+                new_status = {
+                    "paid": "paid",
+                    "failed": "failed",
+                    "expired": "expired",
+                    "canceled": "canceled",
+                }.get(provider_status)
+                if new_status:
+                    await _apply_status(provider, payment_id, new_status)
+        except (mollie_client.MollieError, stripe_client.StripeError) as exc:
+            LOGGER.warning("Could not reconcile %s purchase %s: %s", provider, payment_id, exc)
+
+
 @router.get("/billing/me", response_model=list[Entitlement])
 async def my_entitlements(user: CurrentUser) -> list[Entitlement]:
+    await _reconcile_open_purchases(user["id"])
     rows = await list_active_entitlements(user["id"])
     return [Entitlement(**row) for row in rows]
 
