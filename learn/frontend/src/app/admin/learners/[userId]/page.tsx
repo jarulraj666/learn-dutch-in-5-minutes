@@ -21,6 +21,19 @@ type LearnerDetail = {
     total: number;
     created_at: string;
   }>;
+  mock_exam_attempts: Array<{
+    exam_id: string;
+    section: string;
+    title: string;
+    exam_number: number;
+    attempt_no: number;
+    score: number;
+    total: number;
+    percent: number;
+    label: string;
+    status: string;
+    created_at: string;
+  }>;
   certificates: Array<{ serial: string; course_id: string; issued_at: string }>;
 };
 
@@ -66,6 +79,46 @@ export default async function LearnerDetailPage({ params }: { params: { userId: 
             ))}
           </tbody>
         </table>
+      </section>
+
+      <section className="card overflow-hidden">
+        <h2 className="border-b border-slate-200 px-5 py-3 font-semibold">Mock exam practice</h2>
+        {data.mock_exam_attempts.length === 0 ? (
+          <p className="px-5 py-4 text-sm text-slate-500">No mock practice exams attended yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[40rem] text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wide text-slate-400">
+                  <th className="px-5 py-2">Exam</th>
+                  <th className="px-5 py-2">Attempt</th>
+                  <th className="px-5 py-2">Result</th>
+                  <th className="px-5 py-2">Status</th>
+                  <th className="px-5 py-2">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.mock_exam_attempts.map((row) => (
+                  <tr key={`${row.exam_id}-${row.attempt_no}`} className="border-t border-slate-100">
+                    <td className="px-5 py-2">
+                      <p className="font-medium">{row.title}</p>
+                      <p className="text-xs text-slate-500">
+                        {row.section} · Exam {row.exam_number}
+                      </p>
+                    </td>
+                    <td className="px-5 py-2 text-slate-500">#{row.attempt_no}</td>
+                    <td className="px-5 py-2 tabular-nums">
+                      {row.score}/{row.total} ({row.percent}%)
+                      <span className="ml-2 text-slate-500">{row.label}</span>
+                    </td>
+                    <td className="px-5 py-2 text-slate-500">{row.status}</td>
+                    <td className="px-5 py-2 text-slate-500">{formatDate(row.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <section className="card overflow-hidden">

@@ -63,6 +63,7 @@ export default async function AdminPage() {
               <th className="px-5 py-2">Email</th>
               <th className="px-5 py-2">Completed</th>
               <th className="px-5 py-2">Attempts</th>
+              <th className="px-5 py-2">Mock exams</th>
               <th className="px-5 py-2">Last active</th>
             </tr>
           </thead>
@@ -77,6 +78,7 @@ export default async function AdminPage() {
                 <td className="px-5 py-2 text-slate-600">{learner.email ?? "—"}</td>
                 <td className="px-5 py-2 tabular-nums">{learner.lessons_completed}</td>
                 <td className="px-5 py-2 tabular-nums">{learner.quiz_attempts}</td>
+                <td className="px-5 py-2 tabular-nums">{learner.mock_exam_attempts}</td>
                 <td className="px-5 py-2 text-slate-500">{formatDate(learner.last_active)}</td>
               </tr>
             ))}

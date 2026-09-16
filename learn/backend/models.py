@@ -222,6 +222,7 @@ class AdminLearner(BaseModel):
     created_at: datetime
     lessons_completed: int
     quiz_attempts: int
+    mock_exam_attempts: int
     last_active: datetime | None = None
 
 

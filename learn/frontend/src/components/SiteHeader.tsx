@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import clsx from "clsx";
-import { BookOpen, ClipboardCheck, LayoutDashboard, Layers, Mail, MessageSquareText, Menu, ShieldCheck, User, X, ChevronDown } from "lucide-react";
+import { BookOpen, ClipboardCheck, CreditCard, LayoutDashboard, Layers, Mail, MessageSquareText, Menu, ShieldCheck, User, X, ChevronDown } from "lucide-react";
 
 type NavItem = {
   href: string;
@@ -32,6 +32,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "More",
     items: [
+      { href: "/pricing", label: "Pricing", icon: CreditCard },
       { href: "/feedback", label: "Feedback", icon: MessageSquareText },
       { href: "/contact", label: "Contact", icon: Mail },
     ],

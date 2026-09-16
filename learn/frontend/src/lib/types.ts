@@ -281,6 +281,7 @@ export interface AdminLearner {
   created_at: string;
   lessons_completed: number;
   quiz_attempts: number;
+  mock_exam_attempts: number;
   last_active: string | null;
 }
 

@@ -37,10 +37,12 @@ async def learners(
         SELECT u.id, u.email, u.name, u.created_at,
                count(DISTINCT p.lesson_id) FILTER (WHERE p.completed_at IS NOT NULL) AS lessons_completed,
                count(DISTINCT a.id) AS quiz_attempts,
+             count(DISTINCT m.id) AS mock_exam_attempts,
                max(p.updated_at) AS last_active
         FROM users u
         LEFT JOIN lesson_progress p ON p.user_id = u.id
         LEFT JOIN quiz_attempts a ON a.user_id = u.id
+         LEFT JOIN mock_exam_attempts m ON m.user_id = u.id
         WHERE %s::text IS NULL
            OR u.email ILIKE '%%' || %s || '%%'
            OR u.name ILIKE '%%' || %s || '%%'
@@ -78,6 +80,18 @@ async def learner_detail(user_id: str, _: AdminUser) -> dict:
             """
             SELECT lesson_id, attempt_no, score, total, created_at
             FROM quiz_attempts WHERE user_id = %s ORDER BY created_at DESC LIMIT 100
+            """,
+            (user_id,),
+        ),
+        "mock_exam_attempts": await db.fetch_all(
+            """
+            SELECT a.exam_id, e.section, e.title, e.exam_number, a.attempt_no,
+                   a.score, a.total, a.percent, a.label, a.status, a.created_at
+            FROM mock_exam_attempts a
+            JOIN mock_exams e ON e.id = a.exam_id
+            WHERE a.user_id = %s
+            ORDER BY a.created_at DESC
+            LIMIT 200
             """,
             (user_id,),
         ),
