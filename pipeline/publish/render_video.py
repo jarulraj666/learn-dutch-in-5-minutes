@@ -297,7 +297,8 @@ def _build_video_with_multi_images(
             ]
             
             try:
-                result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=120)
+                timeout_duration = max(120, int(clip_duration * 2))
+                result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=timeout_duration)
                 clip_files.append(clip_output)
                 LOGGER.debug("multi_image.clip_created index=%d", i)
             except subprocess.CalledProcessError as e:
@@ -714,7 +715,8 @@ def _build_video_with_timed_images(
             ]
             
             try:
-                result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=120)
+                timeout_duration = max(120, int(clip_duration * 2))
+                result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=timeout_duration)
                 clip_files.append(clip_output)
                 LOGGER.debug("timed_image.clip_created index=%d", i)
             except subprocess.CalledProcessError as e:

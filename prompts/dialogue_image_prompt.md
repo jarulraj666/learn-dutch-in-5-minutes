@@ -46,7 +46,7 @@ Scene focus: {description}. Visual emphasis: {visual_focus}.
 
 Scenes are identified via LLM analysis of dialogue timing:
 - LLM receives dialogue lines with timestamps
-- LLM outputs 5-6 distinct visual moments with boundaries
+- LLM outputs a scene count scaled to the dialogue length (typically 5-10, rising to 8-10 for 200-220 turn conversations)
 - Each scene maps to actual ASS subtitle segments (Stage 3a)
 - Timing ensures image display aligns with dialogue
 

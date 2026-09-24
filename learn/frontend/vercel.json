@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/mock-exams",
+      "destination": "/#mock-exams",
+      "permanent": true
+    }
+  ]
+}

@@ -29,9 +29,7 @@ speech:
       paid:
         female:
           - "uq30epO48rrDeUhHgRfL" # paid plan (API: paid_plan_required on free)
-          - "wmWLdRPPbh5HMS43PMIi" # paid plan (API: paid_plan_required on free)
           - "qcswjObkrLS9hLQKGaib" # paid plan (API: paid_plan_required on free)
         male:
-          - "xdzjnRtJ19GiZY2bpv4i" # paid plan (API: paid_plan_required on free)
-          - "2GJZCZIWrWiGFDntCFaz" # paid plan (API: paid_plan_required on free)
           - "tRyB8BgRzpNUv3o2XWD4" # paid plan (API: paid_plan_required on free)
+          - "2GJZCZIWrWiGFDntCFaz" # paid plan (API: paid_plan_required on free)

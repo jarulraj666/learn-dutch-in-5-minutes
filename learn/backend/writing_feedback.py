@@ -64,7 +64,7 @@ TASK:
         for key in ordered_keys:
             try:
                 response = await client.post(
-                    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent",
+                    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
                     params={"key": key},
                     json=request_body,
                 )

@@ -56,7 +56,7 @@ All dialogue must be in Dutch. No English in any dialogue line.
 
 Use simple, everyday words that people actually say in real life. No complex vocabulary, no formal or literary language. Short sentences. Present tense. Words a beginner would hear on the street, in a shop, or at home.
 
-Aim for approximately **120–140 dialogue turns** total.
+Target length: **exactly 220 dialogue turns total**. This is the required target for A1A2 conversations. Keep the exchange natural and realistic while filling the full length without repetition or summary sections. Do not stop early at ~150 or ~180; aim for a full, complete conversation around 220 turns.
 
 ## Image Prompt
 

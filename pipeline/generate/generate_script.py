@@ -18,6 +18,26 @@ LOGGER = logging.getLogger(__name__)
 _GEMINI_REQUEST_TIMEOUT_SEC = int(os.getenv("GEMINI_REQUEST_TIMEOUT_SEC", "300"))
 
 
+def _target_scene_count(turn_count: int) -> int:
+    """Choose a scene count that scales with dialogue length.
+
+    Longer dialogues need more visual breaks to keep pacing natural and match the
+    200-220 turn target in the dialogue prompt without over-fragmenting short
+    conversations.
+    """
+    if turn_count <= 0:
+        return 1
+    if turn_count <= 40:
+        return 4
+    if turn_count <= 80:
+        return 5
+    if turn_count <= 120:
+        return 6
+    if turn_count <= 180:
+        return 7
+    return min(10, max(7, (turn_count + 24) // 25))
+
+
 def _extract_json(text: str) -> dict[str, Any]:
     # Try parsing the raw text directly first (handles both {} objects and [] arrays)
     try:
@@ -439,7 +459,7 @@ def _generate_script_gemini(prompt: str) -> dict[str, Any]:
     if not settings.GEMINI_API_KEYS:
         raise ValueError("No Gemini API keys configured. Set GEMINI_API_KEYS in .env")
 
-    models_to_try = ["gemini-3.6-flash", "gemini-3.5-flash"]
+    models_to_try = ["gemini-3.8-flash", "gemini-3.7-flash"]
     timeout_sec = _GEMINI_REQUEST_TIMEOUT_SEC
 
     def _generate_with_timeout(client: Any, model_name: str) -> Any:
@@ -600,8 +620,12 @@ def _generate_multiple_image_prompts(
     
     dialogue_text = "\n".join(dialogue_lines)
     
-    # Ask LLM to identify scenes by the exact Dutch sentence that starts each scene
-    scene_detection_prompt = f"""You are analyzing a Dutch dialogue to identify 5-6 distinct visual scenes for video illustration.
+    target_scene_count = _target_scene_count(len(dialogue))
+
+    # Ask LLM to identify scenes by the exact Dutch sentence that starts each scene.
+    # Longer dialogues need more scene changes to avoid a single static background for
+    # too much of the conversation.
+    scene_detection_prompt = f"""You are analyzing a Dutch dialogue to identify {target_scene_count} distinct visual scenes for video illustration.
 
 ## Dialogue
 {dialogue_text}
@@ -613,7 +637,7 @@ def _generate_multiple_image_prompts(
 - Title hint: {topic.title_hint}
 
 ## Task
-Identify 5-6 distinct visual moments in this dialogue where the scene naturally shifts.
+Identify {target_scene_count} distinct visual moments in this dialogue where the scene naturally shifts.
 For each scene, pick the EXACT Dutch sentence from the dialogue that marks the START of that scene.
 
 Rules:
@@ -621,6 +645,7 @@ Rules:
 - Each trigger_sentence must be a unique line from the dialogue
 - Scenes should cover the full dialogue from start to finish
 - First scene should start with the very first line
+- For long dialogues around 200-220 turns, target around 8-10 scene shifts; do not collapse the whole conversation into 5-6 scenes
 
 Output ONLY valid JSON with no text before or after:
 {{
@@ -650,7 +675,7 @@ Output ONLY valid JSON with no text before or after:
         try:
             client = genai.Client(api_key=api_key)
             response = client.models.generate_content(
-                model="gemini-3.6-flash",
+                model="gemini-3.8-flash",
                 contents=scene_detection_prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -672,9 +697,9 @@ Output ONLY valid JSON with no text before or after:
         return []
     
     scenes = scenes_data.get("scenes", [])
-    if len(scenes) > 6:
-        scenes = scenes[:6]
-    
+    if len(scenes) > target_scene_count:
+        scenes = scenes[:target_scene_count]
+
     # Load the level-specific dialogue_image_prompt.md template as the consistent
     # base for ALL scene prompts — ensures identical character style across all images.
     level = script.get("level", "A1A2")

@@ -1054,6 +1054,207 @@ topics:
     speaker2_role: "student"
     speaker1_gender: "female"
     speaker2_gender: "male"
+# --- EMERGENCY & URGENT SITUATIONS ---
 
+  - id: dialogue_emergency_112
+    level: A1A2
+    category: dialogue
+    order_index: 26
+    track: emergency
+    title_hint: "Calling emergency services: reporting an accident, giving location, requesting police/ambulance"
+    scenario: "emergency_call"
+    speaker1_role: "dispatcher"
+    speaker2_role: "caller"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_medical_emergency
+    level: A1A2
+    category: dialogue
+    order_index: 27
+    track: emergency
+    title_hint: "Calling out-of-hours doctor (Huisartsenpost): describing urgent pain, personal details"
+    scenario: "phone_call"
+    speaker1_role: "triage_nurse"
+    speaker2_role: "patient"
+    speaker1_gender: "female"
+    speaker2_gender: "female"
+
+  - id: dialogue_car_breakdown
+    level: A1A2
+    category: dialogue
+    order_index: 28
+    track: emergency
+    title_hint: "Roadside assistance: reporting a flat tire, breakdown location, towing help"
+    scenario: "phone_call"
+    speaker1_role: "roadside_operator"
+    speaker2_role: "driver"
+    speaker1_gender: "male"
+    speaker2_gender: "female"
+
+  - id: dialogue_water_leak
+    level: A1A2
+    category: dialogue
+    order_index: 29
+    track: emergency
+    title_hint: "Home emergency: calling a plumber for an urgent pipe leak, arranging quick arrival"
+    scenario: "phone_call"
+    speaker1_role: "plumber"
+    speaker2_role: "resident"
+    speaker1_gender: "male"
+    speaker2_gender: "male"
+
+  - id: dialogue_locked_out
+    level: A1A2
+    category: dialogue
+    order_index: 30
+    track: emergency
+    title_hint: "Calling a locksmith: explaining forgotten keys, asking for cost estimate and ETA"
+    scenario: "phone_call"
+    speaker1_role: "locksmith"
+    speaker2_role: "resident"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_stolen_bike
+    level: A1A2
+    category: dialogue
+    order_index: 31
+    track: daily_life
+    title_hint: "Reporting a stolen bicycle: describing bike features, color, frame number, last seen spot"
+    scenario: "police_desk"
+    speaker1_role: "officer"
+    speaker2_role: "citizen"
+    speaker1_gender: "male"
+    speaker2_gender: "female"
+
+
+  # --- DAY-TO-DAY LIVING & HOUSING ---
+
+  - id: dialogue_apartment_viewing
+    level: A1A2
+    category: dialogue
+    order_index: 32
+    track: housing
+    title_hint: "Viewing an apartment: asking about rent, utilities, move-in date, deposit"
+    scenario: "apartment_viewing"
+    speaker1_role: "landlord"
+    speaker2_role: "tenant"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_noise_complaint
+    level: A1A2
+    category: dialogue
+    order_index: 33
+    track: daily_life
+    title_hint: "Politely talking to a neighbor about loud music late at night"
+    scenario: "apartment_building"
+    speaker1_role: "resident"
+    speaker2_role: "neighbor"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_package_delivery
+    level: A1A2
+    category: dialogue
+    order_index: 34
+    track: daily_life
+    title_hint: "Delivery driver arriving: signing for a parcel, accepting parcel for a neighbor"
+    scenario: "front_door"
+    speaker1_role: "courier"
+    speaker2_role: "resident"
+    speaker1_gender: "male"
+    speaker2_gender: "female"
+
+  - id: dialogue_waste_sorting
+    level: A1A2
+    category: dialogue
+    order_index: 35
+    track: daily_life
+    title_hint: "Asking a neighbor about local waste collection days and sorting rules (plastic, paper, bio)"
+    scenario: "street"
+    speaker1_role: "neighbor1"
+    speaker2_role: "neighbor2"
+    speaker1_gender: "male"
+    speaker2_gender: "female"
+
+
+  # --- DAILY SERVICES & FITNESS ---
+
+  - id: dialogue_hair_salon
+    level: A1A2
+    category: dialogue
+    order_index: 36
+    track: daily_life
+    title_hint: "At the hairdresser: explaining how much to trim, styling preference, small talk"
+    scenario: "hair_salon"
+    speaker1_role: "hairdresser"
+    speaker2_role: "client"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_gym_membership
+    level: A1A2
+    category: dialogue
+    order_index: 37
+    track: daily_life
+    title_hint: "Enquiring at a gym: asking about subscription plans, opening hours, trial lesson"
+    scenario: "gym"
+    speaker1_role: "receptionist"
+    speaker2_role: "visitor"
+    speaker1_gender: "female"
+    speaker2_gender: "female"
+
+  - id: dialogue_vet_visit
+    level: A1A2
+    category: dialogue
+    order_index: 38
+    track: daily_life
+    title_hint: "At the veterinarian: describing a pet's illness, getting medication instructions"
+    scenario: "vet_clinic"
+    speaker1_role: "veterinarian"
+    speaker2_role: "pet_owner"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_shoe_repair
+    level: A1A2
+    category: dialogue
+    order_index: 39
+    track: shopping
+    title_hint: "At the shoe repair or dry cleaner: dropping off an item, asking for price and pickup day"
+    scenario: "service_shop"
+    speaker1_role: "shopkeeper"
+    speaker2_role: "customer"
+    speaker1_gender: "male"
+    speaker2_gender: "female"
+
+
+  # --- TRANSPORT & TRAVEL ISSUES ---
+
+  - id: dialogue_train_delay
+    level: A1A2
+    category: dialogue
+    order_index: 40
+    track: transport
+    title_hint: "Train canceled/delayed: asking station staff about alternative routes or replacement buses"
+    scenario: "station"
+    speaker1_role: "station_staff"
+    speaker2_role: "traveler"
+    speaker1_gender: "male"
+    speaker2_gender: "female"
+
+  - id: dialogue_taxi_ride
+    level: A1A2
+    category: dialogue
+    order_index: 41
+    track: transport
+    title_hint: "Taking a taxi: giving destination, requesting receipt, asking about payment method"
+    scenario: "taxi"
+    speaker1_role: "driver"
+    speaker2_role: "passenger"
+    speaker1_gender: "male"
+    speaker2_gender: "male"
 cooldown_last_topics: 4
 max_similarity_threshold: 0.75
