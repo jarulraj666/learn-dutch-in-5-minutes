@@ -2,48 +2,12 @@
 
 import { Children, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { formatDate, formatDuration } from "@/lib/format";
 
 type Learner = { user_id: string; name: string | null; email: string | null };
-type ExamActivity = Learner & {
-  id: number;
-  exam_id: string;
-  exam_title: string;
-  section: string;
-  exam_number: number;
-  attempt_no: number;
-  score: number;
-  total: number;
-  percent: number;
-  label: string;
-  status: string;
-  activity_at: string;
-};
-type QuizActivity = Learner & {
-  id: number;
-  lesson_id: string;
-  lesson_title: string;
-  course_id: string;
-  attempt_no: number;
-  score: number;
-  total: number;
-  activity_at: string;
-};
-type LessonActivity = Learner & {
-  lesson_id: string;
-  lesson_title: string;
-  course_id: string;
-  watched_sec: number;
-  last_position_sec: number;
-  percent: number;
-  completed_at: string | null;
-  activity_at: string;
-};
-
 export type AdminActivity = {
-  practice_exams: ExamActivity[];
-  quizzes: QuizActivity[];
-  video_lessons: LessonActivity[];
+  practice_exams: Learner[];
+  quizzes: Learner[];
+  video_lessons: Learner[];
 };
 
 type Tab = "practice_exams" | "quizzes" | "video_lessons";
@@ -100,16 +64,11 @@ export function AdminActivityTabs({ activity }: { activity: AdminActivity }) {
       {active === "practice_exams" && (
         <ActivityTable
           empty="No practice exam attempts yet."
-          headers={["Learner", "Exam", "Attempt", "Result", "Status", "Date"]}
+          headers={["Learners who took a practice exam"]}
         >
-          {activity.practice_exams.map((row) => (
-            <tr key={row.id} className="border-t border-slate-100 align-top">
-              <LearnerLink learner={row} />
-              <td className="px-5 py-3"><p className="font-medium">{row.exam_title}</p><p className="text-xs capitalize text-slate-500">{row.section} · Exam {row.exam_number}</p></td>
-              <td className="px-5 py-3 text-slate-500">#{row.attempt_no}</td>
-              <td className="px-5 py-3 tabular-nums">{row.score}/{row.total} ({row.percent}%) <span className="text-slate-500">{row.label}</span></td>
-              <td className="px-5 py-3 capitalize text-slate-500">{row.status}</td>
-              <td className="px-5 py-3 whitespace-nowrap text-slate-500">{formatDate(row.activity_at)}</td>
+          {activity.practice_exams.map((learner) => (
+            <tr key={learner.user_id} className="border-t border-slate-100">
+              <LearnerLink learner={learner} />
             </tr>
           ))}
         </ActivityTable>
@@ -118,16 +77,11 @@ export function AdminActivityTabs({ activity }: { activity: AdminActivity }) {
       {active === "quizzes" && (
         <ActivityTable
           empty="No quiz attempts yet."
-          headers={["Learner", "Lesson", "Course", "Attempt", "Score", "Date"]}
+          headers={["Learners who took a quiz"]}
         >
-          {activity.quizzes.map((row) => (
-            <tr key={row.id} className="border-t border-slate-100 align-top">
-              <LearnerLink learner={row} />
-              <td className="px-5 py-3">{row.lesson_title}</td>
-              <td className="px-5 py-3 text-slate-500">{row.course_id}</td>
-              <td className="px-5 py-3 text-slate-500">#{row.attempt_no}</td>
-              <td className="px-5 py-3 tabular-nums">{row.score}/{row.total}</td>
-              <td className="px-5 py-3 whitespace-nowrap text-slate-500">{formatDate(row.activity_at)}</td>
+          {activity.quizzes.map((learner) => (
+            <tr key={learner.user_id} className="border-t border-slate-100">
+              <LearnerLink learner={learner} />
             </tr>
           ))}
         </ActivityTable>
@@ -136,16 +90,11 @@ export function AdminActivityTabs({ activity }: { activity: AdminActivity }) {
       {active === "video_lessons" && (
         <ActivityTable
           empty="No video lessons have been started yet."
-          headers={["Learner", "Lesson", "Course", "Watched", "Progress", "Activity"]}
+          headers={["Learners who watched a video lesson"]}
         >
-          {activity.video_lessons.map((row) => (
-            <tr key={`${row.user_id}-${row.lesson_id}`} className="border-t border-slate-100 align-top">
-              <LearnerLink learner={row} />
-              <td className="px-5 py-3">{row.lesson_title}</td>
-              <td className="px-5 py-3 text-slate-500">{row.course_id}</td>
-              <td className="px-5 py-3 tabular-nums">{formatDuration(row.watched_sec)}</td>
-              <td className="px-5 py-3 tabular-nums">{row.percent}%{row.completed_at ? <span className="ml-2 text-xs text-emerald-700">Complete</span> : null}</td>
-              <td className="px-5 py-3 whitespace-nowrap text-slate-500">{formatDate(row.activity_at)}</td>
+          {activity.video_lessons.map((learner) => (
+            <tr key={learner.user_id} className="border-t border-slate-100">
+              <LearnerLink learner={learner} />
             </tr>
           ))}
         </ActivityTable>
