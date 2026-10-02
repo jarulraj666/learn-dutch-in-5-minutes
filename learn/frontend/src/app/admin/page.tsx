@@ -4,6 +4,7 @@ import { learnerSession } from "@/lib/learner-session";
 import { api, ApiError } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import type { AdminLearner } from "@/lib/types";
+import { AdminActivityTabs, type AdminActivity } from "@/components/AdminActivityTabs";
 
 export const metadata = { title: "Admin · Learn Dutch in 5 Minutes" };
 
@@ -22,10 +23,12 @@ export default async function AdminPage() {
 
   let stats: Stats;
   let learners: AdminLearner[];
+  let activity: AdminActivity;
   try {
-    [stats, learners] = await Promise.all([
+    [stats, learners, activity] = await Promise.all([
       api<Stats>("/api/admin/stats"),
       api<AdminLearner[]>("/api/admin/learners"),
+      api<AdminActivity>("/api/admin/activity"),
     ]);
   } catch (error) {
     if (error instanceof ApiError && error.status === 403) {
@@ -53,6 +56,8 @@ export default async function AdminPage() {
         <Stat label="Quiz attempts" value={stats.quiz_attempts} />
         <Stat label="Certificates" value={stats.certificates} />
       </div>
+
+      <AdminActivityTabs activity={activity} />
 
       <section className="card overflow-hidden">
         <h2 className="border-b border-slate-200 px-5 py-3 font-semibold">Learners</h2>

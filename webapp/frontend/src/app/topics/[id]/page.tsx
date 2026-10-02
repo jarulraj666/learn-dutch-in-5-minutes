@@ -4,7 +4,7 @@ import useSWR from "swr";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { formatNL, nlInputToUtcIso } from "@/lib/timezone";
-import type { TopicDetail } from "@/lib/types";
+import type { ElevenLabsVoice, TopicDetail } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
   ExternalLink, Play, RotateCcw, FileText, Music, Video,
@@ -381,6 +381,10 @@ function OverviewTab({ topic }: { topic: TopicDetail }) {
 function ScriptTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }) {
   const script = topic.script as any;
   if (!script) return <p className="text-gray-500">No script generated yet.</p>;
+  const { data: elevenLabsVoices } = useSWR<{ plan: string; voices: ElevenLabsVoice[] }>(
+    "/api/tts/elevenlabs-voices",
+    (url: string) => apiFetch<{ plan: string; voices: ElevenLabsVoice[] }>(url),
+  );
   const ttsDialogue = Array.isArray(topic.tts_dialogue) ? topic.tts_dialogue : [];
   const hasExpressiveTags = ttsDialogue.some((line: any) => {
     const speaker = line.speaker || Object.keys(line)[0];
@@ -392,6 +396,8 @@ function ScriptTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
+  const [voiceSelection, setVoiceSelection] = useState<Record<string, string>>({});
+  const [savingVoices, setSavingVoices] = useState(false);
   const [subTab, setSubTab] = useState<"dialogue" | "vocabulary" | "grammar" | "quiz">("dialogue");
 
   useEffect(() => {
@@ -399,6 +405,10 @@ function ScriptTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }
       setDraft(JSON.stringify(script, null, 2));
     }
   }, [script, editing]);
+
+  useEffect(() => {
+    setVoiceSelection(script.voice_selection && typeof script.voice_selection === "object" ? script.voice_selection : {});
+  }, [script]);
 
   const startEditing = () => {
     setDraft(JSON.stringify(script, null, 2));
@@ -431,8 +441,66 @@ function ScriptTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }
     }
   };
 
+  const saveVoiceSelection = async () => {
+    setSavingVoices(true);
+    try {
+      const validVoiceSelection = Object.fromEntries(
+        Object.entries(voiceSelection).filter(([speaker, voiceId]) => {
+          const gender = speakerGenderById[speaker];
+          return (elevenLabsVoices?.voices || []).some(
+            (voice) => voice.id === voiceId && (!gender || voice.gender === gender),
+          );
+        }),
+      );
+      await apiFetch(`/api/topics/${topic.id}/script`, {
+        method: "PUT",
+        body: JSON.stringify({ script: { ...script, voice_selection: validVoiceSelection } }),
+      });
+      await mutate();
+      setSaveMsg("Voice selection saved");
+    } catch (err) {
+      setSaveMsg(String(err));
+    } finally {
+      setSavingVoices(false);
+    }
+  };
+
   const dialogue: Array<{ Speaker1?: string; Speaker2?: string } | { speaker: string; line: string }> =
     script.dialogue || script.script || [];
+  const speakerGenderById: Record<string, "female" | "male" | undefined> = Object.fromEntries(
+    (Array.isArray(script.speakers) ? script.speakers : []).map((speaker: any) => [
+      speaker.id,
+      speaker.gender === "female" || speaker.gender === "male" ? speaker.gender : undefined,
+    ]),
+  );
+  const renderVoiceSelector = (speaker: string) => {
+    const gender = speakerGenderById[speaker];
+    const allowedVoices = (elevenLabsVoices?.voices || []).filter(
+      (voice) => !gender || voice.gender === gender,
+    );
+    const selectedVoice = allowedVoices.some((voice) => voice.id === voiceSelection[speaker])
+      ? voiceSelection[speaker]
+      : "";
+
+    return (
+      <label key={speaker} className="text-xs text-gray-400">
+        <span className="block mb-1">{speaker} {gender ? `(${gender})` : ""} ElevenLabs voice</span>
+        <select
+          value={selectedVoice}
+          onChange={(e) => setVoiceSelection((current) => ({ ...current, [speaker]: e.target.value }))}
+          className="bg-gray-800 border border-gray-700 text-gray-200 rounded-lg px-2 py-1.5 text-xs min-w-52"
+          disabled={!elevenLabsVoices}
+        >
+          <option value="">Automatic by gender</option>
+          {allowedVoices.map((voice) => (
+            <option key={`${speaker}-${voice.id}`} value={voice.id}>
+              {voice.description ? `${voice.description} (${voice.id})` : voice.id}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -503,7 +571,22 @@ function ScriptTab({ topic, mutate }: { topic: TopicDetail; mutate: () => void }
       {/* Dialogue */}
       {subTab === "dialogue" && (
       <section>
-        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Dialogue</h3>
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-3">
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">Dialogue</h3>
+          <div className="flex flex-wrap items-end gap-2">
+            {["Speaker1", "Speaker2"].map(renderVoiceSelector)}
+            <button
+              onClick={saveVoiceSelection}
+              disabled={savingVoices || !elevenLabsVoices}
+              className="text-xs bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg disabled:opacity-50"
+            >
+              {savingVoices ? "Saving..." : "Save voices"}
+            </button>
+          </div>
+        </div>
+        <p className="text-xs text-gray-500 mb-3">
+          Plan: {elevenLabsVoices?.plan || "loading"}. Leave a speaker automatic to keep the configured gender-based selection.
+        </p>
         <div className="space-y-2">
           {dialogue.map((line: any, i: number) => {
             const speaker = line.speaker || Object.keys(line)[0];

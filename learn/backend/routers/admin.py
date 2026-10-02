@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 from fastapi import APIRouter, HTTPException, Query, status
 
 import db
@@ -53,6 +55,53 @@ async def learners(
         (search, search, search, limit, offset),
     )
     return [AdminLearner(**dict(row, id=str(row["id"]))) for row in rows]
+
+
+@router.get("/admin/activity")
+async def learner_activity(_: AdminUser) -> dict:
+    """Return recent per-user exam, quiz, and lesson activity for admin views."""
+    exams, quizzes, lessons = await asyncio.gather(
+        db.fetch_all(
+            """
+            SELECT a.id, a.user_id::text AS user_id, u.name, u.email,
+                   a.exam_id, e.title AS exam_title, e.section, e.exam_number,
+                   a.attempt_no, a.score, a.total, a.percent, a.label, a.status,
+                   a.created_at AS activity_at
+            FROM mock_exam_attempts a
+            JOIN users u ON u.id = a.user_id
+            JOIN mock_exams e ON e.id = a.exam_id
+            ORDER BY a.created_at DESC
+            LIMIT 300
+            """
+        ),
+        db.fetch_all(
+            """
+            SELECT a.id, a.user_id::text AS user_id, u.name, u.email,
+                   a.lesson_id, l.title AS lesson_title, l.course_id,
+                   a.attempt_no, a.score, a.total, a.created_at AS activity_at
+            FROM quiz_attempts a
+            JOIN users u ON u.id = a.user_id
+            JOIN lessons l ON l.id = a.lesson_id
+            ORDER BY a.created_at DESC
+            LIMIT 300
+            """
+        ),
+        db.fetch_all(
+            """
+            SELECT p.user_id::text AS user_id, u.name, u.email,
+                   p.lesson_id, l.title AS lesson_title, l.course_id,
+                   p.watched_sec, p.last_position_sec, p.percent,
+                   p.completed_at, p.updated_at AS activity_at
+            FROM lesson_progress p
+            JOIN users u ON u.id = p.user_id
+            JOIN lessons l ON l.id = p.lesson_id
+            WHERE p.watched_sec > 0 OR p.percent > 0 OR p.completed_at IS NOT NULL
+            ORDER BY p.updated_at DESC
+            LIMIT 300
+            """
+        ),
+    )
+    return {"practice_exams": exams, "quizzes": quizzes, "video_lessons": lessons}
 
 
 @router.get("/admin/learners/{user_id}")

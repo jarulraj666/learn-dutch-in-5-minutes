@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import re
+import time
 from pathlib import Path
 from typing import Any
 
@@ -452,6 +453,12 @@ def _is_rate_limited(exc: Exception) -> bool:
     return "429" in msg or "RESOURCE_EXHAUSTED" in msg or "QUOTA" in msg
 
 
+def _is_unavailable(exc: Exception) -> bool:
+    """Return True for transient Gemini 503/unavailable responses."""
+    msg = str(exc).upper()
+    return "503" in msg or "UNAVAILABLE" in msg or "SERVICE UNAVAILABLE" in msg
+
+
 def _generate_script_gemini(prompt: str) -> dict[str, Any]:
     from google import genai
     from google.genai import types
@@ -459,7 +466,9 @@ def _generate_script_gemini(prompt: str) -> dict[str, Any]:
     if not settings.GEMINI_API_KEYS:
         raise ValueError("No Gemini API keys configured. Set GEMINI_API_KEYS in .env")
 
-    models_to_try = ["gemini-3.8-flash", "gemini-3.7-flash"]
+    models_to_try = settings.GEMINI_TEXT_MODELS
+    if not models_to_try:
+        raise ValueError("No Gemini text models configured. Set GEMINI_TEXT_MODELS in .env")
     timeout_sec = _GEMINI_REQUEST_TIMEOUT_SEC
 
     def _generate_with_timeout(client: Any, model_name: str) -> Any:
@@ -477,33 +486,47 @@ def _generate_script_gemini(prompt: str) -> dict[str, Any]:
     for api_key in settings.GEMINI_KEY_ROTATOR.available_keys():
         client = genai.Client(api_key=api_key)
         for model_name in models_to_try:
-            try:
-                response = _generate_with_timeout(client, model_name)
-                model_output = response.text
-                if not model_output:
-                    LOGGER.warning(
-                        "Empty response from %s, trying next model", model_name
+            unavailable_retries = settings.GEMINI_TEXT_UNAVAILABLE_RETRIES
+            for attempt in range(unavailable_retries + 1):
+                try:
+                    response = _generate_with_timeout(client, model_name)
+                    model_output = response.text
+                    if not model_output:
+                        LOGGER.warning(
+                            "Empty response from %s, trying next model", model_name
+                        )
+                        break
+                    LOGGER.info(
+                        "Script generated via Gemini model=%s chars=%d",
+                        model_name, len(model_output),
                     )
-                    continue
-                LOGGER.info(
-                    "Script generated via Gemini model=%s chars=%d",
-                    model_name, len(model_output),
-                )
-                return _extract_json(model_output)
-            except FuturesTimeoutError:
-                LOGGER.warning(
-                    "Gemini model %s timed out after %ds", model_name, timeout_sec,
-                )
-                continue
-            except Exception as e:
-                if _is_rate_limited(e):
+                    return _extract_json(model_output)
+                except FuturesTimeoutError:
                     LOGGER.warning(
-                        "Gemini 429 rate limit on %s — rotating to next key", model_name,
+                        "Gemini model %s timed out after %ds", model_name, timeout_sec,
                     )
-                    settings.GEMINI_KEY_ROTATOR.mark_rate_limited(api_key, exc=e)
-                    break  # skip remaining models for this key, try next key
-                LOGGER.warning("Gemini model %s failed: %s", model_name, str(e))
-                continue
+                    break
+                except Exception as e:
+                    if _is_unavailable(e) and attempt < unavailable_retries:
+                        delay = min(
+                            settings.GEMINI_TEXT_UNAVAILABLE_BACKOFF_SECONDS * (2 ** attempt),
+                            30.0,
+                        )
+                        LOGGER.warning(
+                            "Gemini model %s unavailable (503), retry %d/%d in %.1fs",
+                            model_name, attempt + 1, unavailable_retries, delay,
+                        )
+                        if delay:
+                            time.sleep(delay)
+                        continue
+                    if _is_rate_limited(e):
+                        LOGGER.warning(
+                            "Gemini 429 rate limit on %s — rotating to next key", model_name,
+                        )
+                        settings.GEMINI_KEY_ROTATOR.mark_rate_limited(api_key, exc=e)
+                        break  # skip remaining models for this key, try next key
+                    LOGGER.warning("Gemini model %s failed: %s", model_name, str(e))
+                    break
 
     raise RuntimeError("All Gemini API keys and models exhausted for script generation")
 
@@ -674,23 +697,44 @@ Output ONLY valid JSON with no text before or after:
     for api_key in settings.GEMINI_KEY_ROTATOR.available_keys():
         try:
             client = genai.Client(api_key=api_key)
-            response = client.models.generate_content(
-                model="gemini-3.8-flash",
-                contents=scene_detection_prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                ),
-            )
-            scenes_data = _extract_json(response.text)
-            LOGGER.info("Scene detection successful; found %d scenes", len(scenes_data.get("scenes", [])))
-            break
+            for model_name in settings.GEMINI_TEXT_MODELS:
+                for attempt in range(settings.GEMINI_TEXT_UNAVAILABLE_RETRIES + 1):
+                    try:
+                        response = client.models.generate_content(
+                            model=model_name,
+                            contents=scene_detection_prompt,
+                            config=types.GenerateContentConfig(
+                                response_mime_type="application/json",
+                            ),
+                        )
+                        scenes_data = _extract_json(response.text)
+                        LOGGER.info("Scene detection successful via %s; found %d scenes", model_name, len(scenes_data.get("scenes", [])))
+                        break
+                    except Exception as e:
+                        if _is_unavailable(e) and attempt < settings.GEMINI_TEXT_UNAVAILABLE_RETRIES:
+                            delay = min(
+                                settings.GEMINI_TEXT_UNAVAILABLE_BACKOFF_SECONDS * (2 ** attempt),
+                                30.0,
+                            )
+                            LOGGER.warning(
+                                "Gemini scene detection model %s unavailable (503), retry %d/%d in %.1fs",
+                                model_name, attempt + 1, settings.GEMINI_TEXT_UNAVAILABLE_RETRIES, delay,
+                            )
+                            if delay:
+                                time.sleep(delay)
+                            continue
+                        if _is_rate_limited(e):
+                            LOGGER.warning("Gemini 429 on scene detection model %s — rotating to next key", model_name)
+                            settings.GEMINI_KEY_ROTATOR.mark_rate_limited(api_key, exc=e)
+                            break
+                        LOGGER.warning("Scene detection model %s failed: %s", model_name, str(e))
+                        break
+                if scenes_data:
+                    break
+            if scenes_data:
+                break
         except Exception as e:
-            if _is_rate_limited(e):
-                LOGGER.warning("Gemini 429 on scene detection — rotating to next key")
-                settings.GEMINI_KEY_ROTATOR.mark_rate_limited(api_key, exc=e)
-                continue
-            LOGGER.warning("Scene detection failed: %s", str(e))
-            continue
+            LOGGER.warning("Scene detection client failed: %s", str(e))
     
     if not scenes_data or not scenes_data.get("scenes"):
         LOGGER.warning("Failed to detect scenes from dialogue")

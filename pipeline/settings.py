@@ -86,6 +86,20 @@ TTS_FALLBACK_PROVIDER = os.getenv("TTS_FALLBACK_PROVIDER", "gemini")  # Options:
 TTS_ENABLE_FALLBACK = get_env_bool("TTS_ENABLE_FALLBACK", True)
 # Comma-separated API key lists — set these in .env to enable round-robin rotation.
 GEMINI_API_KEYS: list[str] = [k.strip() for k in os.getenv("GEMINI_API_KEYS", "").split(",") if k.strip()]
+# Ordered fallback pool for Gemini text-generation calls. Override with a
+# comma-separated GEMINI_TEXT_MODELS value when a deployment has a different model set.
+GEMINI_TEXT_MODELS: list[str] = [
+    model.strip()
+    for model in os.getenv(
+        "GEMINI_TEXT_MODELS",
+        "gemini-3.5-flash,gemini-3.6-flash,gemini-3.7-flash,gemini-3.8-flash",
+    ).split(",")
+    if model.strip()
+]
+GEMINI_TEXT_UNAVAILABLE_RETRIES = max(0, int(os.getenv("GEMINI_TEXT_UNAVAILABLE_RETRIES", "5")))
+GEMINI_TEXT_UNAVAILABLE_BACKOFF_SECONDS = max(
+    0.0, get_env_float("GEMINI_TEXT_UNAVAILABLE_BACKOFF_SECONDS", 2.0)
+)
 GEMINI_IMAGE_CREATION_API_KEYS: list[str] = [k.strip() for k in os.getenv("GEMINI_IMAGE_CREATION_API_KEYS", "").split(",") if k.strip()]
 # TTS-specific key list. Falls back to GEMINI_API_KEYS if GEMINI_TTS_API_KEYS is not set.
 _raw_tts_keys = [k.strip() for k in os.getenv("GEMINI_TTS_API_KEYS", "").split(",") if k.strip()]

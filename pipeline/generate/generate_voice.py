@@ -81,6 +81,9 @@ def generate_voice_assets(
         if sid:
             speaker_genders[sid] = s.get("gender", "")
             speaker_roles[sid] = s.get("role", "")
+    speaker_voices = script.get("voice_selection")
+    if not isinstance(speaker_voices, dict):
+        speaker_voices = {}
 
     voice_dir = Path(output_root) / "audio" / f"episode_{topic_id}_{title_slug}"
     voice_dir.mkdir(parents=True, exist_ok=True)
@@ -121,6 +124,7 @@ def generate_voice_assets(
             category=category,
             speaker_genders=speaker_genders,
             speaker_roles=speaker_roles,
+            speaker_voices=speaker_voices,
         )
         if success:
             used_provider = getattr(client, "provider_name", provider_name)

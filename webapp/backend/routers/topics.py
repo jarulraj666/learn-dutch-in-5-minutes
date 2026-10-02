@@ -9,6 +9,33 @@ class ScriptUpdateRequest(BaseModel):
     script: dict
 
 
+@router.get("/tts/elevenlabs-voices")
+def list_elevenlabs_voices():
+    from pipeline import settings
+
+    voice_map = settings.PEDAGOGY_CONFIG.get("speech", {}).get("voice_map", {}).get("elevenlabs", {})
+    plan = settings.ELEVENLABS_VOICE_PLAN
+    selected = voice_map.get(plan, voice_map)
+    descriptions = voice_map.get("descriptions", {}) if isinstance(voice_map, dict) else {}
+    if not isinstance(descriptions, dict):
+        descriptions = {}
+    voices = []
+    for gender in ("female", "male"):
+        values = selected.get(gender, []) if isinstance(selected, dict) else []
+        if isinstance(values, str):
+            values = [values]
+        voices.extend(
+            {
+                "id": voice_id,
+                "gender": gender,
+                "description": str(descriptions.get(voice_id, "")).strip(),
+            }
+            for voice_id in values
+            if isinstance(voice_id, str) and voice_id.strip()
+        )
+    return {"plan": plan, "voices": voices}
+
+
 @router.get("/topics")
 def list_topics(
     level: str | None = None,

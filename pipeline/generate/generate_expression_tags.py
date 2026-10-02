@@ -14,7 +14,7 @@ from pipeline.utils import iter_dialogue_turns
 LOGGER = logging.getLogger(__name__)
 
 
-_ELEVENLABS_BREAK_TAG = '<break time="0.7s"/>'
+_ELEVENLABS_BREAK_TAG = '<break time="0.5s"/>'
 _ELEVENLABS_OLD_PAUSE_CUE_RE = re.compile(
     r"\s*(?:\.\.\.|\[short pause\]|\[pause\]|\[pause for 1 second\])\s*$",
     re.IGNORECASE,
@@ -26,7 +26,7 @@ def _spoken_elevenlabs_line(line: str) -> str:
 
 
 def _with_elevenlabs_break_tag(line: str) -> str:
-    """End a Flash v2.5 dialogue line with a 0.7-second SSML break."""
+    """End a Flash v2.5 dialogue line with a 0.5-second SSML break."""
     return f"{_spoken_elevenlabs_line(line)}{_ELEVENLABS_BREAK_TAG}"
 
 

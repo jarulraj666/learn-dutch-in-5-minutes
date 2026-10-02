@@ -271,6 +271,7 @@ class ElevenLabsTTSClient:
         category: str = "dialogue",
         speaker_genders: dict[str, str] | None = None,
         speaker_roles: dict[str, str] | None = None,
+        speaker_voices: dict[str, str] | None = None,
     ) -> bool:
         if not dialogue:
             LOGGER.error("Empty dialogue provided.")
@@ -300,6 +301,9 @@ class ElevenLabsTTSClient:
                 speakers,
                 speaker_genders=speaker_genders,
             )
+            for speaker, voice_id in (speaker_voices or {}).items():
+                if speaker in voice_assignments and isinstance(voice_id, str) and voice_id.strip():
+                    voice_assignments[speaker] = voice_id.strip()
             for speaker in sorted(voice_assignments.keys()):
                 LOGGER.info(
                     "elevenlabs.voice_assignment speaker=%s gender=%s voice_id=%s",
@@ -364,6 +368,7 @@ class ElevenLabsTTSClient:
         category: str = "dialogue",
         speaker_genders: dict[str, str] | None = None,
         speaker_roles: dict[str, str] | None = None,
+        speaker_voices: dict[str, str] | None = None,
     ) -> tuple[bool, list[settings.SpeakerTimestamp]]:
         success = self.generate_dialogue_audio(
             dialogue=dialogue,
@@ -372,6 +377,7 @@ class ElevenLabsTTSClient:
             category=category,
             speaker_genders=speaker_genders,
             speaker_roles=speaker_roles,
+            speaker_voices=speaker_voices,
         )
         if not success:
             return False, []

@@ -30,6 +30,12 @@ export interface TopicDetail extends Topic {
   media: MediaInfo;
 }
 
+export interface ElevenLabsVoice {
+  id: string;
+  gender: "female" | "male";
+  description?: string;
+}
+
 export type PlatformUploadStatus = "pending" | "partial" | "done";
 
 export interface MediaInfo {
