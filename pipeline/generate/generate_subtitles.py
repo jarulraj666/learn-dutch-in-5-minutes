@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import textwrap
 from pathlib import Path
 from typing import Any
 
@@ -363,6 +364,7 @@ def _write_ass_karaoke(
     ass_path: Path,
     rows: list[tuple[float, float, str, str | None]],
     category: str = "dialogue",
+    dialogue_en: list[dict] | None = None,
 ) -> None:
     """Write ASS karaoke file with category-aware styling.
     
@@ -379,6 +381,8 @@ def _write_ass_karaoke(
     margins = visual_config.get("render", {}).get("subtitle_margins", {})
     single = visual_config.get("render", {}).get("single_speaker_margins", {})
     dialogue_align = visual_config.get("render", {}).get("dialogue_alignment", {})
+    english_style = visual_config.get("render", {}).get("english_subtitle_style", {})
+    burn_english = bool(visual_config.get("render", {}).get("burn_english_subtitles", True))
 
     # Get margin values with fallbacks
     left_l = margins.get("left_speaker_margin_l", 20)
@@ -390,6 +394,25 @@ def _write_ass_karaoke(
     # Dialogue alignment (multi-speaker)
     left_align = dialogue_align.get("left_speaker", 1)
     right_align = dialogue_align.get("right_speaker", 3)
+    english_font_size = int(english_style.get("font_size", 38))
+    english_margin_v = int(english_style.get("margin_v", 105))
+    english_max_chars = max(20, int(english_style.get("max_chars_per_line", 38)))
+    english_background_colour = str(english_style.get("background_colour", "&H00FFFFFF"))
+    english_box_padding = max(0.0, float(english_style.get("outline", 8)))
+
+    english_lines: list[str] = []
+    if burn_english and category == "dialogue" and dialogue_en:
+        for turn in dialogue_en:
+            if isinstance(turn, dict):
+                english_lines.append(
+                    _strip_tts_tags(str(next(iter(turn.values()), "")).strip())
+                )
+    english_style_lines = ""
+    if any(english_lines):
+        english_style_lines = (
+            f"Style: EnglishL,Roboto,{english_font_size},&H00000000,&H00000000,{english_background_colour},{english_background_colour},0,1,0,0,100,100,0,0,3,{english_box_padding:g},0,{left_align},{left_l},{left_r},{english_margin_v},1\n"
+            f"Style: EnglishR,Roboto,{english_font_size},&H00000000,&H00000000,{english_background_colour},{english_background_colour},0,1,0,0,100,100,0,0,3,{english_box_padding:g},0,{right_align},{right_l},{right_r},{english_margin_v},1"
+        )
 
     # Single-speaker margin values with fallbacks
     ss_margin_l = single.get("margin_l", 650)
@@ -409,8 +432,9 @@ PlayResY: 1080
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: SpeakerL,Roboto,64,&H00FFFFFF,&H0000FFFF,&H00000000,&HC0000000,-1,0,0,0,100,100,0,0,3,5,0,{left_align},{left_l},{left_r},{margin_v},1
-Style: SpeakerR,Roboto,64,&H00FFFFFF,&H0000FFFF,&H00000000,&HC0000000,-1,0,0,0,100,100,0,0,3,5,0,{right_align},{right_l},{right_r},{margin_v},1
+Style: SpeakerL,Roboto,64,&H00FFFFFF,&H0000FFFF,&H80000000,&HC0000000,-1,0,0,0,100,100,0,0,3,5,0,{left_align},{left_l},{left_r},{margin_v},1
+Style: SpeakerR,Roboto,64,&H00FFFFFF,&H0000FFFF,&H80000000,&HC0000000,-1,0,0,0,100,100,0,0,3,5,0,{right_align},{right_l},{right_r},{margin_v},１
+{english_style_lines}
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
@@ -431,7 +455,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     
     lines = [header]
-    for start_t, end_t, text, speaker in rows:
+    for row_index, (start_t, end_t, text, speaker) in enumerate(rows):
         start_ts = _format_ass_timestamp(start_t)
         end_ts = _format_ass_timestamp(end_t)
         
@@ -441,6 +465,20 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         else:
             style = "Default"
         lines.append(f"Dialogue: 0,{start_ts},{end_ts},{style},,0,0,0,,{text}")
+
+        if row_index < len(english_lines) and english_lines[row_index]:
+            english_text = "\\N".join(
+                textwrap.wrap(
+                    english_lines[row_index],
+                    width=english_max_chars,
+                    break_long_words=False,
+                    break_on_hyphens=False,
+                )
+            )
+            english_style_name = "EnglishL" if speaker == "Speaker1" else "EnglishR"
+            lines.append(
+                f"Dialogue: 1,{start_ts},{end_ts},{english_style_name},,0,0,0,,{english_text}"
+            )
 
     ass_path.write_text("\n".join(lines), encoding="utf-8")
 
@@ -528,7 +566,7 @@ def generate_karaoke_from_segments(
     stitched_rows = rows
 
     ass_path = out_dir / f"episode_{topic_id}_{title_slug}.ass"
-    _write_ass_karaoke(ass_path, stitched_rows, category=category)
+    _write_ass_karaoke(ass_path, stitched_rows, category=category, dialogue_en=dialogue_en)
 
     result: dict[str, str] = {"ass_karaoke": str(ass_path)}
 

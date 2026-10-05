@@ -232,9 +232,15 @@ def upload_video(artifact: dict, video_file: Path) -> dict:
                     import logging
                     logging.getLogger(__name__).warning("Thumbnail upload failed: %s", exc)
 
-        # Upload English SRT caption track
+        # Dialogue captions are already burned into the video; don't attach a
+        # separate English caption track to those uploads.
         srt_en_raw = artifact.get("subtitles", {}).get("srt_en", "")
-        if srt_en_raw:
+        if artifact.get("category") == "dialogue":
+            LOGGER.info(
+                "youtube.captions.skipped reason=dialogue_captions_burned_in video_id=%s",
+                video_id,
+            )
+        elif srt_en_raw:
             srt_path = Path(srt_en_raw)
             if not srt_path.is_absolute():
                 srt_path = _settings.ROOT / srt_en_raw

@@ -285,6 +285,25 @@ export interface AdminLearner {
   last_active: string | null;
 }
 
+export interface AdminAnonymousMockExamAttempt {
+  id: number;
+  exam_id: string;
+  section: MockExamSection;
+  title: string;
+  exam_number: number;
+  score: number;
+  total: number;
+  percent: number;
+  label: string;
+  status: string;
+  created_at: string;
+}
+
+export interface AdminAnonymousMockExamAttemptList {
+  total_count: number;
+  attempts: AdminAnonymousMockExamAttempt[];
+}
+
 export interface PublicStats {
   active_learners: number;
 }

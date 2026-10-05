@@ -34,13 +34,18 @@ render:
   dialogue_alignment:
     left_speaker: 1                # Speaker1 (left) - alignment 1 = bottom-left
     right_speaker: 3               # Speaker2 (right) - alignment 3 = bottom-right
+  # English dialogue captions are placed below the Dutch karaoke line.
+  english_subtitle_style:
+    font_size: 48
+    margin_v: 180                  # Slightly higher while staying below Dutch (margin_v: 350)
+    max_chars_per_line: 38
+    background_colour: "&H00FFFFFF" # Opaque white subtitle box
+    outline: 8                     # Padding around text inside the box
   # Single-speaker subtitle positioning (grammar, vocabulary, etc.)
   single_speaker_margins:
     margin_l: 700                  # Left margin
     margin_r: 100                  # Right margin
     margin_v: 350                  # Vertical margin (bottom)
     alignment: 2                 # ASS alignment (8 = top-center, 2 = bottom-center)
-  # Burn English translation subtitles into the long video.
-  # false = English only available as a soft track in the webapp player.
-  # true  = English text is permanently baked into the video frames.
-  burn_english_subtitles: false
+  # Burn English translation subtitles into the long video below Dutch dialogue captions.
+  burn_english_subtitles: true

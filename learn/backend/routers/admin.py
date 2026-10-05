@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 import db
 from auth import AdminUser
-from models import AdminFeedback, AdminLearner
+from models import AdminAnonymousMockExamAttemptList, AdminFeedback, AdminLearner
 
 router = APIRouter()
 
@@ -94,6 +94,30 @@ async def learner_activity(_: AdminUser) -> dict:
         ),
     )
     return {"practice_exams": exams, "quizzes": quizzes, "video_lessons": lessons}
+
+
+@router.get("/admin/anonymous-mock-exams", response_model=AdminAnonymousMockExamAttemptList)
+async def anonymous_mock_exam_attempts(
+    _: AdminUser,
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+) -> AdminAnonymousMockExamAttemptList:
+    total = await db.fetch_one("SELECT count(*) AS total_count FROM anonymous_mock_exam_attempts")
+    rows = await db.fetch_all(
+        """
+        SELECT a.id, a.exam_id, e.section, e.title, e.exam_number,
+               a.score, a.total, a.percent, a.label, a.status, a.created_at
+        FROM anonymous_mock_exam_attempts a
+        JOIN mock_exams e ON e.id = a.exam_id
+        ORDER BY a.created_at DESC
+        LIMIT %s OFFSET %s
+        """,
+        (limit, offset),
+    )
+    return AdminAnonymousMockExamAttemptList(
+        total_count=total["total_count"] if total else 0,
+        attempts=rows,
+    )
 
 
 @router.get("/admin/learners/{user_id}")

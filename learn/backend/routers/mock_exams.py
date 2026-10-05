@@ -549,8 +549,8 @@ async def _process_speaking_attempt(attempt_id: int) -> None:
 @router.post("/mock-exams/{exam_id}/submit", response_model=MockExamAttemptResult)
 async def submit_mock_exam(exam_id: str, payload: MockExamSubmission, user: OptionalUser, background_tasks: BackgroundTasks) -> MockExamAttemptResult:
     """Grade server-side (so the answer key never reaches the browser before submission).
-    Signed-in learners get their attempt persisted for later review; anonymous visitors
-    (free-preview exams only) get an immediate result that isn't saved anywhere."""
+    Signed-in learners get their attempt and answers persisted for later review. Anonymous
+    free-preview submissions save only an unlinked score summary for admin reporting."""
     exam = await db.fetch_one(
         "SELECT section, pass_threshold, max_score, is_free_preview FROM mock_exams WHERE id = %s", (exam_id,)
     )
@@ -601,6 +601,7 @@ async def submit_mock_exam(exam_id: str, payload: MockExamSubmission, user: Opti
         }
 
     row = None
+    anonymous_row = None
     if user is not None:
         row = await db.fetch_one(
             """
@@ -612,6 +613,15 @@ async def submit_mock_exam(exam_id: str, payload: MockExamSubmission, user: Opti
             """,
              (user["id"], exam_id, score, gradable, percent, label, "processing" if exam_section == "speaking" else "completed", Jsonb(stored_answers),
              user["id"], exam_id),
+        )
+    else:
+        anonymous_row = await db.fetch_one(
+            """
+            INSERT INTO anonymous_mock_exam_attempts (exam_id, score, total, percent, label, status)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING created_at
+            """,
+            (exam_id, score, gradable, percent, label, "processing" if exam_section == "speaking" else "completed"),
         )
 
     if exam_section == "speaking" and row is not None:
@@ -638,7 +648,7 @@ async def submit_mock_exam(exam_id: str, payload: MockExamSubmission, user: Opti
         percent=percent,
         label=label,
         status="processing" if exam_section == "speaking" else "completed",
-        created_at=row["created_at"] if row is not None else datetime.now(timezone.utc),
+        created_at=(row or anonymous_row)["created_at"] if row is not None or anonymous_row is not None else datetime.now(timezone.utc),
         results=results,
     )
 

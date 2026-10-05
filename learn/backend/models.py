@@ -403,6 +403,25 @@ class MockExamAttemptSummary(BaseModel):
     created_at: datetime
 
 
+class AdminAnonymousMockExamAttempt(BaseModel):
+    id: int
+    exam_id: str
+    section: str
+    title: str
+    exam_number: int
+    score: int
+    total: int
+    percent: int
+    label: str
+    status: str
+    created_at: datetime
+
+
+class AdminAnonymousMockExamAttemptList(BaseModel):
+    total_count: int
+    attempts: list[AdminAnonymousMockExamAttempt]
+
+
 class CheckoutRequest(BaseModel):
     product: str  # 'section' | 'full'
     section: str | None = None  # required when product == 'section'

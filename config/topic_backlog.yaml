@@ -1256,5 +1256,126 @@ topics:
     speaker2_role: "passenger"
     speaker1_gender: "male"
     speaker2_gender: "male"
+
+  - id: dialogue_albert_heijn_groceries
+    level: A1A2
+    category: dialogue
+    order_index: 42
+    track: shopping
+    title_hint: "Shopping at Albert Heijn: asking where to find bread, using a Bonuskaart, and paying at self-checkout"
+    scenario: "albert_heijn_supermarket"
+    speaker1_role: "shop_assistant"
+    speaker2_role: "customer"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_kruidvat_product
+    level: A1A2
+    category: dialogue
+    order_index: 43
+    track: shopping
+    title_hint: "At Kruidvat: asking for shampoo, comparing two products, and checking the price"
+    scenario: "kruidvat_store"
+    speaker1_role: "shop_assistant"
+    speaker2_role: "customer"
+    speaker1_gender: "male"
+    speaker2_gender: "female"
+
+  - id: dialogue_hema_household
+    level: A1A2
+    category: dialogue
+    order_index: 44
+    track: shopping
+    title_hint: "At HEMA: finding towels and basic kitchen items, asking about sizes and returning an item"
+    scenario: "hema_store"
+    speaker1_role: "shop_assistant"
+    speaker2_role: "customer"
+    speaker1_gender: "female"
+    speaker2_gender: "female"
+
+  - id: dialogue_action_home_supplies
+    level: A1A2
+    category: dialogue
+    order_index: 45
+    track: housing
+    title_hint: "At Action: buying affordable household supplies for a new apartment and asking where to find them"
+    scenario: "action_store"
+    speaker1_role: "shop_assistant"
+    speaker2_role: "new_resident"
+    speaker1_gender: "male"
+    speaker2_gender: "female"
+
+  - id: dialogue_jumbo_loyalty_card
+    level: A1A2
+    category: dialogue
+    order_index: 46
+    track: shopping
+    title_hint: "At Jumbo: asking about a product, using a loyalty card, and requesting a receipt"
+    scenario: "jumbo_supermarket"
+    speaker1_role: "cashier"
+    speaker2_role: "customer"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_postnl_pickup_point
+    level: A1A2
+    category: dialogue
+    order_index: 47
+    track: daily_life
+    title_hint: "Collecting a missed parcel at a PostNL point in a local shop: showing a code and asking about opening hours"
+    scenario: "postnl_pickup_point"
+    speaker1_role: "shop_worker"
+    speaker2_role: "customer"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_gemeente_registration
+    level: A1A2
+    category: dialogue
+    order_index: 48
+    track: daily_life
+    title_hint: "At the gemeente: checking in for a registration appointment, giving an address, and asking which documents are needed"
+    scenario: "gemeente_service_desk"
+    speaker1_role: "municipal_employee"
+    speaker2_role: "new_resident"
+    speaker1_gender: "male"
+    speaker2_gender: "female"
+
+  - id: dialogue_vodafoneziggo_internet
+    level: A1A2
+    category: dialogue
+    order_index: 49
+    track: daily_life
+    title_hint: "At a VodafoneZiggo shop: asking about home internet, comparing a basic plan, and booking an installation"
+    scenario: "telecom_shop"
+    speaker1_role: "shop_advisor"
+    speaker2_role: "new_resident"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
+  - id: dialogue_ing_bank_account
+    level: A1A2
+    category: dialogue
+    order_index: 50
+    track: daily_life
+    title_hint: "At ING: asking how to open a bank account, explaining an appointment, and checking which ID to bring"
+    scenario: "ing_bank"
+    speaker1_role: "bank_employee"
+    speaker2_role: "new_resident"
+    speaker1_gender: "male"
+    speaker2_gender: "female"
+
+  - id: dialogue_albert_heijn_bottle_deposit
+    level: A1A2
+    category: dialogue
+    order_index: 51
+    track: shopping
+    title_hint: "At Albert Heijn: returning bottles at the deposit machine, asking for help, and using the receipt at checkout"
+    scenario: "albert_heijn_bottle_return"
+    speaker1_role: "shop_assistant"
+    speaker2_role: "customer"
+    speaker1_gender: "female"
+    speaker2_gender: "male"
+
 cooldown_last_topics: 4
 max_similarity_threshold: 0.75

@@ -21,6 +21,15 @@ import type {
 const NAVY = "bg-[#2b4a78]";
 const ORANGE = "bg-[#e8863c] hover:bg-[#dc7a30]";
 
+function pendingExamAnswersKey(examId: string): string {
+  return `pending-free-exam:${examId}`;
+}
+
+function signInToSaveExamResult(): void {
+  const returnTo = `${window.location.pathname}?resumeAnonymous=1`;
+  window.location.href = `/signin?callbackUrl=${encodeURIComponent(returnTo)}`;
+}
+
 
 function mediaProxyUrl(type: "image" | "audio" | "video", path: string): string {
   if (path.startsWith("https://") || path.startsWith("http://")) return path;
@@ -73,6 +82,7 @@ function ResultView({
   result: MockExamAttemptResult;
 }) {
   const [answerFilter, setAnswerFilter] = useState<"all" | "correct" | "incorrect">("all");
+  const [showGuestResult, setShowGuestResult] = useState(false);
   const scoreColor =
     result.percent >= 90
       ? "border-emerald-200 bg-emerald-50 text-emerald-800"
@@ -95,7 +105,7 @@ function ResultView({
     );
   }
 
-  if (result.attempt_no === 0) {
+  if (result.attempt_no === 0 && !showGuestResult) {
     return (
       <div className="space-y-6">
         <Link href={`/mock-exams/${exam.section}`} className="text-sm text-brand-700 hover:underline">
@@ -104,17 +114,25 @@ function ResultView({
         <div className="card mx-auto max-w-md p-8 text-center">
           <h2 className="text-xl font-semibold">You&apos;ve completed the exam!</h2>
           <p className="mt-2 text-sm text-slate-600">
-            Sign in with email/password or Google to view your score and detailed feedback — it&apos;s free.
+            Sign in for free to save your full result and track your progress. You can also view your result as a guest.
           </p>
           <button
             type="button"
-            onClick={() => {
-              window.location.href = `/signin?callbackUrl=${encodeURIComponent(window.location.pathname)}`;
-            }}
+            onClick={signInToSaveExamResult}
             className="btn-primary mt-6 px-5 py-2 text-sm"
           >
-            Continue to sign in
+            Sign in to save my result
           </button>
+          <button
+            type="button"
+            onClick={() => setShowGuestResult(true)}
+            className="mt-4 block w-full text-sm font-semibold text-brand-700 hover:underline"
+          >
+            Skip sign-in and view my result
+          </button>
+          <p className="mt-3 text-xs text-slate-500">
+            We retain only an anonymous score for reporting. Your answers and detailed feedback aren&apos;t saved and will be lost when you leave this page.
+          </p>
         </div>
       </div>
     );
@@ -125,6 +143,14 @@ function ResultView({
       <Link href={`/mock-exams/${exam.section}`} className="text-sm text-brand-700 hover:underline">
         ← Back to {exam.section} exams
       </Link>
+      {result.attempt_no === 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p>Your score is retained anonymously for reporting; answers and detailed feedback will be lost when you leave this page.</p>
+          <button type="button" onClick={signInToSaveExamResult} className="font-semibold underline">
+            Sign in to save it
+          </button>
+        </div>
+      )}
       <div className={clsx("rounded-xl border p-6 text-center", scoreColor)}>
         <p className="text-3xl font-bold">{result.label}</p>
         <p className="mt-2 text-lg">
@@ -270,6 +296,7 @@ export function ExamPageClient({ examId, viewAttemptNo }: { examId: string; view
   const [timerVisible, setTimerVisible] = useState(false);
   const [flagged, setFlagged] = useState<Set<string>>(new Set());
   const [showOverview, setShowOverview] = useState(false);
+  const resumeAttemptStarted = useRef(false);
 
   useEffect(() => {
     callApi<MockExamTakeDetail>(`mock-exams/${examId}/take`)
@@ -292,6 +319,42 @@ export function ExamPageClient({ examId, viewAttemptNo }: { examId: string; view
         .catch((e) => setLoadError(e instanceof Error ? e.message : "Could not load this attempt"));
     }
   }, [examId, viewAttemptNo]);
+
+  useEffect(() => {
+    if (!exam || viewAttemptNo || resumeAttemptStarted.current) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("resumeAnonymous") !== "1") return;
+
+    const storageKey = pendingExamAnswersKey(examId);
+    const savedAnswers = sessionStorage.getItem(storageKey);
+    window.history.replaceState({}, "", window.location.pathname);
+    if (!savedAnswers) return;
+
+    let restoredAnswers: Record<string, string>;
+    try {
+      restoredAnswers = JSON.parse(savedAnswers) as Record<string, string>;
+    } catch {
+      sessionStorage.removeItem(storageKey);
+      setSubmitError("We couldn't restore your answers. Please take the free exam again.");
+      return;
+    }
+
+    resumeAttemptStarted.current = true;
+    setAnswers(restoredAnswers);
+    setSubmitting(true);
+    callApi<MockExamAttemptResult>(`mock-exams/${examId}/submit`, {
+      method: "POST",
+      body: JSON.stringify({ answers: restoredAnswers }),
+    })
+      .then((restoredResult) => {
+        if (restoredResult.attempt_no > 0) sessionStorage.removeItem(storageKey);
+        setResult(restoredResult);
+      })
+      .catch((error) => {
+        setSubmitError(error instanceof Error ? error.message : "Could not restore your exam result");
+      })
+      .finally(() => setSubmitting(false));
+  }, [exam, examId, viewAttemptNo]);
 
   useEffect(() => {
     if (result?.status !== "processing") return;
@@ -318,12 +381,20 @@ export function ExamPageClient({ examId, viewAttemptNo }: { examId: string; view
           if (!response.ok) throw new Error((await response.text()) || "Could not upload a speaking answer");
         }));
       }
-      setResult(
-        await callApi<MockExamAttemptResult>(`mock-exams/${examId}/submit`, {
-          method: "POST",
-          body: JSON.stringify({ answers }),
-        }),
-      );
+      const submittedResult = await callApi<MockExamAttemptResult>(`mock-exams/${examId}/submit`, {
+        method: "POST",
+        body: JSON.stringify({ answers }),
+      });
+      if (submittedResult.attempt_no === 0) {
+        try {
+          sessionStorage.setItem(pendingExamAnswersKey(examId), JSON.stringify(answers));
+        } catch {
+          // Keep the immediate anonymous result usable if browser storage is unavailable.
+        }
+      } else {
+        sessionStorage.removeItem(pendingExamAnswersKey(examId));
+      }
+      setResult(submittedResult);
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "Could not submit the exam");
     } finally {

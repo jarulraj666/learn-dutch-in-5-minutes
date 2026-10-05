@@ -1150,6 +1150,9 @@ def run_upload(topic_id: str, video_path: Optional[str] = None) -> None:
 
 def run_captions(topic_id: str, video_id: Optional[str] = None) -> None:
     artifact = load_artifact(topic_id)
+    if artifact.get("category") == "dialogue":
+        print("⏭️  Skipping YouTube captions: dialogue subtitles are burned into the video.")
+        return
     video_id = video_id or artifact.get("youtube", {}).get("video_id", "")
     if not video_id:
         raise ValueError("No YouTube video_id found. Pass --video-id or upload first.")

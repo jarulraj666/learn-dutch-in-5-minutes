@@ -1143,8 +1143,18 @@ def render_from_artifact(artifact: dict) -> Path:
     configured_speed = _clamp_playback_speed(float(raw_speed))
     playback_speed = 1.0  # Speed is always applied as a final pass after rendering
 
-    # English SRT — burned into the video when burn_english_subtitles = true
-    if bool(render_cfg.get("burn_english_subtitles", False)) and _en_srt_raw:
+    # English dialogue is already included as lower-positioned events in the ASS
+    # file. Only layer the separate SRT for legacy/non-bilingual ASS files.
+    try:
+        ass_has_english_events = "Style: EnglishL," in ass_path.read_text(encoding="utf-8")
+    except OSError:
+        ass_has_english_events = False
+
+    if (
+        bool(render_cfg.get("burn_english_subtitles", False))
+        and _en_srt_raw
+        and not ass_has_english_events
+    ):
         _p = Path(_en_srt_raw).resolve()
         if not _p.exists():
             _p = (settings.ROOT / _en_srt_raw).resolve()

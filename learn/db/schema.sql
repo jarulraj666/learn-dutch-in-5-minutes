@@ -308,6 +308,21 @@ CREATE INDEX IF NOT EXISTS idx_mock_attempts_user_exam ON mock_exam_attempts(use
 
 ALTER TABLE mock_exam_attempts ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'completed';
 
+-- Store only anonymous exam outcome metrics for admin reporting; never store guest answers or identifiers.
+CREATE TABLE IF NOT EXISTS anonymous_mock_exam_attempts (
+    id          BIGSERIAL PRIMARY KEY,
+    exam_id     TEXT        NOT NULL REFERENCES mock_exams(id) ON DELETE CASCADE,
+    score       SMALLINT    NOT NULL,
+    total       SMALLINT    NOT NULL,
+    percent     SMALLINT    NOT NULL,
+    label       TEXT        NOT NULL,
+    status      TEXT        NOT NULL DEFAULT 'completed',
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_anonymous_mock_attempts_created
+    ON anonymous_mock_exam_attempts(created_at DESC);
+
 CREATE TABLE IF NOT EXISTS mock_exam_speaking_recordings (
     id          UUID        PRIMARY KEY,
     user_id     UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,

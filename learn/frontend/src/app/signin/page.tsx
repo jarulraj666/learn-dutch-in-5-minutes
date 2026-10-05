@@ -36,7 +36,8 @@ function SignInCard() {
         return;
       }
       if (mode === "signup" && result?.signup_completed) {
-        window.location.assign("/signin?signup=complete");
+        const next = new URLSearchParams({ signup: "complete", callbackUrl });
+        window.location.assign(`/signin?${next.toString()}`);
         return;
       }
       window.location.assign(callbackUrl);

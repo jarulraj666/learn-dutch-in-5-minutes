@@ -98,6 +98,12 @@ python -m pipeline.run_pipeline --cleanup output/A1A2/dialogue/episode_<topic_id
 sqlite3 db/content.db "SELECT id, status, category, level FROM topics ORDER BY order_index;"
 ```
 
+**Sync topics from `config/topic_backlog.yaml` into the local pipeline database:**
+```bash
+python -m pipeline.tools.sync_topic_backlog
+```
+This is safe to rerun: new topics are inserted, while existing topic statuses are preserved.
+
 ## Running the Pipeline
 
 **Generate next pending topic (single video):**

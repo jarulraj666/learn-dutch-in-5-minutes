@@ -88,6 +88,7 @@ export default async function HomePage() {
   const lessonCount = published.reduce((n, c) => n + c.lesson_count, 0);
   const unitCount = published.reduce((n, c) => n + c.module_count, 0);
   const examCount = mockExams.length;
+  const freePreviewExam = mockExams.find((exam) => exam.is_free_preview && exam.section !== "speaking");
   const session = await learnerSession();
   let entitlements: Entitlement[] = [];
   if (session?.user) {
@@ -155,22 +156,36 @@ export default async function HomePage() {
               Browse courses
             </Link>
           </article>
-          <article className="card p-8">
+          <article className="relative overflow-hidden rounded-2xl border-2 border-brand-200 bg-gradient-to-br from-white via-white to-brand-50 p-8 shadow-sm">
+            <span className="absolute right-5 top-5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
+              TRY ONE FREE
+            </span>
             <span className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-700">
               <PenSquare size={22} />
             </span>
-            <h3 className="mt-4 text-xl font-semibold">Inburgering Exams</h3>
-            <p className="mt-2 text-sm text-slate-600">
-              {examCount > 0 ? `${examCount} full-length exams` : "Full-length exams"} that look and feel just like the
-              real exam — reading, listening, writing, speaking and KNM. Practice the format and timing before
-              test day.
+            <h3 className="mt-4 text-xl font-semibold">Feel ready for your inburgering exam</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Try a full-length A2 practice exam in a realistic exam interface. Practice reading, listening, writing,
+              speaking or KNM — with timed questions to help you prepare for test day.
             </p>
-            <span className="mt-4 inline-block rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-              Free preview, then one-time unlock
-            </span>
-            <Link href="/#mock-exams" className="btn-primary mt-4 block w-fit px-5 py-2 text-sm">
-              Start an exam
-            </Link>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">
+                {examCount > 0 ? `${examCount} practice exam${examCount === 1 ? "" : "s"}` : "Full-length practice exams"}
+              </span>
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">No payment to try</span>
+            </div>
+            <p className="mt-4 text-xs text-slate-500">Start this free exam without signing in. Sign in later if you want to save your result.</p>
+            <div className="mt-5 flex flex-wrap items-center gap-4">
+              <Link
+                href={freePreviewExam ? `/mock-exams/${freePreviewExam.section}/${freePreviewExam.id}` : "/#mock-exams"}
+                className="btn-primary px-5 py-2.5 text-sm"
+              >
+                {freePreviewExam ? "Try a free exam" : "Explore practice exams"}
+              </Link>
+              <Link href="/#mock-exams" className="text-sm font-semibold text-brand-700 hover:underline">
+                See all sections
+              </Link>
+            </div>
           </article>
         </div>
       </section>

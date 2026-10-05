@@ -57,6 +57,13 @@ export function MockExamsSection({
         timer and question format as the real Staatsexamen NT2 Programma I. Build confidence before it counts.
       </p>
 
+      <div className="mx-auto mt-6 max-w-3xl rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-center sm:px-8">
+        <p className="font-semibold text-emerald-950">Try a real-format practice exam before you decide</p>
+        <p className="mt-1 text-sm text-emerald-800">
+          Start with a free exam in any available section. See how the questions and timer feel, then unlock more practice only if it helps.
+        </p>
+      </div>
+
       <div className="mx-auto mt-6 flex max-w-5xl justify-center gap-2">
         {LEVEL_TABS.map((tab) => (
           <button
@@ -86,16 +93,17 @@ export function MockExamsSection({
             const exams = mockExams.filter((e) => e.section === key);
             const freeCount = exams.filter((e) => e.is_free_preview).length;
             const premiumCount = exams.length - freeCount;
+            const freeExam = exams.find((exam) => exam.is_free_preview);
             const expiry = fullExpiry ?? sectionExpiry[key];
-            const cardBody = (
-              <>
+            return (
+              <article key={key} className="card flex flex-col p-5 transition hover:-translate-y-0.5 hover:shadow-md">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold uppercase text-brand-700">
                     {key}
                   </span>
                   {freeCount > 0 && (
                     <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                      Free preview
+                      First exam free
                     </span>
                   )}
                   {premiumCount > 0 && <PremiumBadge label={`+${premiumCount} more`} linkToPricing={false} />}
@@ -104,20 +112,27 @@ export function MockExamsSection({
                 {expiry && <p className="mt-2 text-xs font-semibold text-emerald-700">Expires {formatDate(expiry)}</p>}
                 {exams.length > 0 ? (
                   <p className="mt-2 text-sm text-slate-600">
-                    {exams.length} practice exam{exams.length > 1 ? "s" : ""} available — click to start
+                    {exams.length} practice exam{exams.length > 1 ? "s" : ""} available
                   </p>
                 ) : (
                   <p className="mt-2 text-sm font-medium text-slate-500">Coming soon</p>
                 )}
-              </>
-            );
-            return exams.length > 0 ? (
-              <Link key={key} href={`/mock-exams/${key}`} className="card block p-5 transition hover:-translate-y-0.5">
-                {cardBody}
-              </Link>
-            ) : (
-              <article key={key} className="card p-5">
-                {cardBody}
+                {exams.length > 0 && (
+                  <div className="mt-auto flex flex-col items-start gap-2 pt-5">
+                    {freeExam ? (
+                      <Link href={`/mock-exams/${key}/${freeExam.id}`} className="btn-primary w-full px-5 py-2.5 text-center text-sm">
+                        Try a free {key} exam
+                      </Link>
+                    ) : (
+                      <Link href={`/mock-exams/${key}`} className="btn-primary w-full px-5 py-2.5 text-center text-sm">
+                        View {key} exams
+                      </Link>
+                    )}
+                    <Link href={`/mock-exams/${key}`} className="text-sm font-semibold text-brand-700 hover:underline">
+                      See all exams
+                    </Link>
+                  </div>
+                )}
               </article>
             );
           })}
